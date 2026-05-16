@@ -1,9 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { getToken } from "@/stores/auth";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-    component: RouteComponent,
+    beforeLoad: () => {
+        const token = getToken();
+        if (token) {
+            throw redirect({ to: "/dashboard" });
+        }
+        throw redirect({ to: "/login" });
+    },
 });
-
-function RouteComponent() {
-    return <div>Hello "/"!</div>;
-}
