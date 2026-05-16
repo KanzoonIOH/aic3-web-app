@@ -1,4 +1,5 @@
 import { getToken, useAuthStore } from "@/stores/auth";
+import { useThemeStore, type Theme } from "@/stores/theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +22,11 @@ import {
     HelpCircle,
     LayoutDashboard,
     LogOut,
+    Monitor,
+    Moon,
     Plug,
     Settings,
+    Sun,
     Users,
     ChevronsUpDownIcon,
 } from "lucide-react";
@@ -46,6 +50,39 @@ const navItems = [
     { to: "/mcps", label: "MCPs", icon: Plug },
     { to: "/members", label: "Members", icon: Users },
 ] as const;
+
+const themeOptions: { value: Theme; label: string; icon: React.ElementType }[] =
+    [
+        { value: "light", label: "Light", icon: Sun },
+        { value: "dark", label: "Dark", icon: Moon },
+        { value: "system", label: "System", icon: Monitor },
+    ];
+
+function ThemeToggle() {
+    const theme = useThemeStore((s) => s.theme);
+    const setTheme = useThemeStore((s) => s.setTheme);
+
+    return (
+        <div className="flex gap-1 p-1">
+            {themeOptions.map(({ value, label, icon: Icon }) => (
+                <button
+                    key={value}
+                    onClick={() => setTheme(value)}
+                    title={label}
+                    className={cn(
+                        "flex flex-1 flex-col items-center gap-1 rounded-md px-2 py-1.5 text-xs transition-colors",
+                        theme === value
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-accent text-muted-foreground hover:text-accent-foreground",
+                    )}
+                >
+                    <Icon className="size-3.5" />
+                    {label}
+                </button>
+            ))}
+        </div>
+    );
+}
 
 function getInitials(username: string) {
     return username
@@ -120,6 +157,10 @@ function UserSection() {
                         Help
                     </Button>
                 </div>
+
+                <Separator />
+
+                <ThemeToggle />
 
                 <Separator />
 
