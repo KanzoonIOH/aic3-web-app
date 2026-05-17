@@ -13,13 +13,15 @@ import { Route as mainRouteRouteImport } from './routes/(main)/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as mainMembersRouteImport } from './routes/(main)/members'
-import { Route as mainMcpsRouteImport } from './routes/(main)/mcps'
-import { Route as mainKnowledgesRouteImport } from './routes/(main)/knowledges'
 import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainAnalyticsRouteImport } from './routes/(main)/analytics'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
+import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
+import { Route as mainMcpsIdRouteImport } from './routes/(main)/mcps/$id'
+import { Route as mainKnowledgesIdRouteImport } from './routes/(main)/knowledges/$id'
 import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
 
 const mainRouteRoute = mainRouteRouteImport.update({
@@ -38,16 +40,6 @@ const IndexRoute = IndexRouteImport.update({
 const mainMembersRoute = mainMembersRouteImport.update({
   id: '/members',
   path: '/members',
-  getParentRoute: () => mainRouteRoute,
-} as any)
-const mainMcpsRoute = mainMcpsRouteImport.update({
-  id: '/mcps',
-  path: '/mcps',
-  getParentRoute: () => mainRouteRoute,
-} as any)
-const mainKnowledgesRoute = mainKnowledgesRouteImport.update({
-  id: '/knowledges',
-  path: '/knowledges',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainDashboardRoute = mainDashboardRouteImport.update({
@@ -70,9 +62,29 @@ const authLoginRoute = authLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => authRouteRoute,
 } as any)
+const mainMcpsIndexRoute = mainMcpsIndexRouteImport.update({
+  id: '/mcps/',
+  path: '/mcps/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainKnowledgesIndexRoute = mainKnowledgesIndexRouteImport.update({
+  id: '/knowledges/',
+  path: '/knowledges/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 const mainAgentsIndexRoute = mainAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainMcpsIdRoute = mainMcpsIdRouteImport.update({
+  id: '/mcps/$id',
+  path: '/mcps/$id',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainKnowledgesIdRoute = mainKnowledgesIdRouteImport.update({
+  id: '/knowledges/$id',
+  path: '/knowledges/$id',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
@@ -87,11 +99,13 @@ export interface FileRoutesByFullPath {
   '/signup': typeof authSignupRoute
   '/analytics': typeof mainAnalyticsRoute
   '/dashboard': typeof mainDashboardRoute
-  '/knowledges': typeof mainKnowledgesRoute
-  '/mcps': typeof mainMcpsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
+  '/knowledges/$id': typeof mainKnowledgesIdRoute
+  '/mcps/$id': typeof mainMcpsIdRoute
   '/agents/': typeof mainAgentsIndexRoute
+  '/knowledges/': typeof mainKnowledgesIndexRoute
+  '/mcps/': typeof mainMcpsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,11 +113,13 @@ export interface FileRoutesByTo {
   '/signup': typeof authSignupRoute
   '/analytics': typeof mainAnalyticsRoute
   '/dashboard': typeof mainDashboardRoute
-  '/knowledges': typeof mainKnowledgesRoute
-  '/mcps': typeof mainMcpsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
+  '/knowledges/$id': typeof mainKnowledgesIdRoute
+  '/mcps/$id': typeof mainMcpsIdRoute
   '/agents': typeof mainAgentsIndexRoute
+  '/knowledges': typeof mainKnowledgesIndexRoute
+  '/mcps': typeof mainMcpsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,11 +130,13 @@ export interface FileRoutesById {
   '/(auth)/signup': typeof authSignupRoute
   '/(main)/analytics': typeof mainAnalyticsRoute
   '/(main)/dashboard': typeof mainDashboardRoute
-  '/(main)/knowledges': typeof mainKnowledgesRoute
-  '/(main)/mcps': typeof mainMcpsRoute
   '/(main)/members': typeof mainMembersRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
+  '/(main)/knowledges/$id': typeof mainKnowledgesIdRoute
+  '/(main)/mcps/$id': typeof mainMcpsIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
+  '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
+  '/(main)/mcps/': typeof mainMcpsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,11 +146,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/analytics'
     | '/dashboard'
-    | '/knowledges'
-    | '/mcps'
     | '/members'
     | '/agents/$id'
+    | '/knowledges/$id'
+    | '/mcps/$id'
     | '/agents/'
+    | '/knowledges/'
+    | '/mcps/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,11 +160,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/analytics'
     | '/dashboard'
-    | '/knowledges'
-    | '/mcps'
     | '/members'
     | '/agents/$id'
+    | '/knowledges/$id'
+    | '/mcps/$id'
     | '/agents'
+    | '/knowledges'
+    | '/mcps'
   id:
     | '__root__'
     | '/'
@@ -154,11 +176,13 @@ export interface FileRouteTypes {
     | '/(auth)/signup'
     | '/(main)/analytics'
     | '/(main)/dashboard'
-    | '/(main)/knowledges'
-    | '/(main)/mcps'
     | '/(main)/members'
     | '/(main)/agents/$id'
+    | '/(main)/knowledges/$id'
+    | '/(main)/mcps/$id'
     | '/(main)/agents/'
+    | '/(main)/knowledges/'
+    | '/(main)/mcps/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,20 +221,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainMembersRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/mcps': {
-      id: '/(main)/mcps'
-      path: '/mcps'
-      fullPath: '/mcps'
-      preLoaderRoute: typeof mainMcpsRouteImport
-      parentRoute: typeof mainRouteRoute
-    }
-    '/(main)/knowledges': {
-      id: '/(main)/knowledges'
-      path: '/knowledges'
-      fullPath: '/knowledges'
-      preLoaderRoute: typeof mainKnowledgesRouteImport
-      parentRoute: typeof mainRouteRoute
-    }
     '/(main)/dashboard': {
       id: '/(main)/dashboard'
       path: '/dashboard'
@@ -239,11 +249,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authLoginRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/(main)/mcps/': {
+      id: '/(main)/mcps/'
+      path: '/mcps'
+      fullPath: '/mcps/'
+      preLoaderRoute: typeof mainMcpsIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/knowledges/': {
+      id: '/(main)/knowledges/'
+      path: '/knowledges'
+      fullPath: '/knowledges/'
+      preLoaderRoute: typeof mainKnowledgesIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
     '/(main)/agents/': {
       id: '/(main)/agents/'
       path: '/agents'
       fullPath: '/agents/'
       preLoaderRoute: typeof mainAgentsIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/mcps/$id': {
+      id: '/(main)/mcps/$id'
+      path: '/mcps/$id'
+      fullPath: '/mcps/$id'
+      preLoaderRoute: typeof mainMcpsIdRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/knowledges/$id': {
+      id: '/(main)/knowledges/$id'
+      path: '/knowledges/$id'
+      fullPath: '/knowledges/$id'
+      preLoaderRoute: typeof mainKnowledgesIdRouteImport
       parentRoute: typeof mainRouteRoute
     }
     '/(main)/agents/$id': {
@@ -273,21 +311,25 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 interface mainRouteRouteChildren {
   mainAnalyticsRoute: typeof mainAnalyticsRoute
   mainDashboardRoute: typeof mainDashboardRoute
-  mainKnowledgesRoute: typeof mainKnowledgesRoute
-  mainMcpsRoute: typeof mainMcpsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
+  mainKnowledgesIdRoute: typeof mainKnowledgesIdRoute
+  mainMcpsIdRoute: typeof mainMcpsIdRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
+  mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
+  mainMcpsIndexRoute: typeof mainMcpsIndexRoute
 }
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainAnalyticsRoute: mainAnalyticsRoute,
   mainDashboardRoute: mainDashboardRoute,
-  mainKnowledgesRoute: mainKnowledgesRoute,
-  mainMcpsRoute: mainMcpsRoute,
   mainMembersRoute: mainMembersRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
+  mainKnowledgesIdRoute: mainKnowledgesIdRoute,
+  mainMcpsIdRoute: mainMcpsIdRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
+  mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,
+  mainMcpsIndexRoute: mainMcpsIndexRoute,
 }
 
 const mainRouteRouteWithChildren = mainRouteRoute._addFileChildren(
