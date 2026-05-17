@@ -1,6 +1,8 @@
+import { getAgents, type Agent } from "@/api/agents";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
     BookIcon,
@@ -16,100 +18,16 @@ export const Route = createFileRoute("/(main)/agents/")({
     component: RouteComponent,
 });
 
-interface Agent {
-    id: string;
-    name: string;
-    description: string;
-    // is_active: boolean;
-    // webhook_uri: string;
-    initials: string;
-    tools: number;
-    mcps: number;
-    pinned: boolean;
-}
-
-const agents: Agent[] = [
-    {
-        id: "atlas",
-        name: "Atlas",
-        description: "Deep-web research, citations, briefings.",
-        initials: "AT",
-        tools: 14,
-        mcps: 6,
-        pinned: true,
-    },
-    {
-        id: "nova",
-        name: "Nova",
-        description: "Inbound triage, drafts replies, escalates.",
-        initials: "NV",
-        tools: 22,
-        mcps: 4,
-        pinned: true,
-    },
-    {
-        id: "quill",
-        name: "Quill",
-        description: "Long-form drafts in your house style.",
-        initials: "QL",
-        tools: 8,
-        mcps: 2,
-        pinned: true,
-    },
-    {
-        id: "forge",
-        name: "Forge",
-        description: "PR review, refactor proposals, tests.",
-        initials: "FG",
-        tools: 11,
-        mcps: 9,
-        pinned: false,
-    },
-    {
-        id: "pulse",
-        name: "Pulse",
-        description: "Watches KPIs, anomaly digests, posts to Slack.",
-        initials: "PL",
-        tools: 5,
-        mcps: 7,
-        pinned: false,
-    },
-    {
-        id: "lark",
-        name: "Lark",
-        description: "Enriches leads from CRM, drafts outreach.",
-        initials: "LK",
-        tools: 9,
-        mcps: 5,
-        pinned: false,
-    },
-    {
-        id: "echo",
-        name: "Echo",
-        description: "Multilingual responses tuned to your tone.",
-        initials: "EC",
-        tools: 3,
-        mcps: 1,
-        pinned: false,
-    },
-    {
-        id: "sage",
-        name: "Sage",
-        description: "Contract review, redline suggestions.",
-        initials: "SG",
-        tools: 6,
-        mcps: 2,
-        pinned: false,
-    },
-] as Agent[];
-
 function AgentInitialsAvatar({
-    initials,
+    name,
     className,
 }: {
-    initials: string;
+    name: string;
     className?: string;
 }) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    const initial = (parts[0][0] + parts[1][0]).toUpperCase();
     return (
         <div
             className={cn(
@@ -117,7 +35,7 @@ function AgentInitialsAvatar({
                 className,
             )}
         >
-            {initials}
+            {initial}
         </div>
     );
 }
@@ -126,7 +44,7 @@ function AgentCard({ agent }: { agent: Agent }) {
     return (
         <Card className="rounded-lg bg-inherit flex flex-col gap-1 overflow-hidden p-2 pl-4">
             <div className="flex items-center gap-3 pt-2">
-                <AgentInitialsAvatar initials={agent.initials} />
+                <AgentInitialsAvatar name={agent.name} />
                 <span className="truncate font-medium text-lg">
                     {agent.name}
                 </span>
@@ -156,8 +74,53 @@ function AgentCard({ agent }: { agent: Agent }) {
     );
 }
 
+function AgentListRow({ agent }: { agent: Agent }) {
+    return (
+        <div className="border rounded-lg flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
+            <AgentInitialsAvatar name={agent.name} className="size-8 text-xs" />
+            <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{agent.name}</span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {agent.description}
+                </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                    <BookIcon className="size-3" />
+                    {agent.tools}
+                </span>
+                <span className="flex items-center gap-1">
+                    <Plug className="size-3" />
+                    {agent.mcps}
+                </span>
+            </div>
+            <Button
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0 text-muted-foreground"
+                asChild
+            >
+                <Link to="/agents/$id" params={{ id: agent.id }}>
+                    <ChevronRight className="size-4" />
+                </Link>
+            </Button>
+        </div>
+    );
+}
+
 function RouteComponent() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+    const {
+        data: agents = [],
+        isPending,
+        isError,
+    } = useQuery({
+        queryKey: ["agents"],
+        queryFn: getAgents,
+    });
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -199,7 +162,20 @@ function RouteComponent() {
                 </div>
 
                 <div className="p-6">
-                    {agents.length === 0 ? (
+                    {isPending ? (
+                        <div className="flex flex-col items-center justify-center gap-2 py-16">
+                            <p className="text-sm text-muted-foreground">
+                                Loading agents...
+                            </p>
+                        </div>
+                    ) : isError ? (
+                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+                            <Bot className="size-8 text-muted-foreground/40" />
+                            <p className="text-sm text-muted-foreground">
+                                Failed to load agents
+                            </p>
+                        </div>
+                    ) : agents.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
                             <Bot className="size-8 text-muted-foreground/40" />
                             <p className="text-sm text-muted-foreground">
@@ -222,45 +198,6 @@ function RouteComponent() {
                     )}
                 </div>
             </div>
-        </div>
-    );
-}
-
-function AgentListRow({ agent }: { agent: Agent }) {
-    return (
-        <div className="border rounded-lg flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
-            <AgentInitialsAvatar
-                initials={agent.initials}
-                className="size-8 text-xs"
-            />
-            <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{agent.name}</span>
-                </div>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {agent.description}
-                </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <BookIcon className="size-3" />
-                    {agent.tools}
-                </span>
-                <span className="flex items-center gap-1">
-                    <Plug className="size-3" />
-                    {agent.mcps}
-                </span>
-            </div>
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0 text-muted-foreground"
-                asChild
-            >
-                <Link to="/agents/$id" params={{ id: agent.id }}>
-                    <ChevronRight className="size-4" />
-                </Link>
-            </Button>
         </div>
     );
 }
