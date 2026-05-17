@@ -8,7 +8,7 @@ ENV VITE_API_URL=$VITE_API_URL
 WORKDIR /app
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g pnpm@10
 
 # Install dependencies
 COPY package.json pnpm-lock.yaml ./
