@@ -17,9 +17,10 @@ import { Route as mainMcpsRouteImport } from './routes/(main)/mcps'
 import { Route as mainKnowledgesRouteImport } from './routes/(main)/knowledges'
 import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainAnalyticsRouteImport } from './routes/(main)/analytics'
-import { Route as mainAgentsRouteImport } from './routes/(main)/agents'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
+import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
 
 const mainRouteRoute = mainRouteRouteImport.update({
   id: '/(main)',
@@ -59,11 +60,6 @@ const mainAnalyticsRoute = mainAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => mainRouteRoute,
 } as any)
-const mainAgentsRoute = mainAgentsRouteImport.update({
-  id: '/agents',
-  path: '/agents',
-  getParentRoute: () => mainRouteRoute,
-} as any)
 const authSignupRoute = authSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -74,28 +70,40 @@ const authLoginRoute = authLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => authRouteRoute,
 } as any)
+const mainAgentsIndexRoute = mainAgentsIndexRouteImport.update({
+  id: '/agents/',
+  path: '/agents/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
+  id: '/agents/$id',
+  path: '/agents/$id',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
-  '/agents': typeof mainAgentsRoute
   '/analytics': typeof mainAnalyticsRoute
   '/dashboard': typeof mainDashboardRoute
   '/knowledges': typeof mainKnowledgesRoute
   '/mcps': typeof mainMcpsRoute
   '/members': typeof mainMembersRoute
+  '/agents/$id': typeof mainAgentsIdRoute
+  '/agents/': typeof mainAgentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
-  '/agents': typeof mainAgentsRoute
   '/analytics': typeof mainAnalyticsRoute
   '/dashboard': typeof mainDashboardRoute
   '/knowledges': typeof mainKnowledgesRoute
   '/mcps': typeof mainMcpsRoute
   '/members': typeof mainMembersRoute
+  '/agents/$id': typeof mainAgentsIdRoute
+  '/agents': typeof mainAgentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,12 +112,13 @@ export interface FileRoutesById {
   '/(main)': typeof mainRouteRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
-  '/(main)/agents': typeof mainAgentsRoute
   '/(main)/analytics': typeof mainAnalyticsRoute
   '/(main)/dashboard': typeof mainDashboardRoute
   '/(main)/knowledges': typeof mainKnowledgesRoute
   '/(main)/mcps': typeof mainMcpsRoute
   '/(main)/members': typeof mainMembersRoute
+  '/(main)/agents/$id': typeof mainAgentsIdRoute
+  '/(main)/agents/': typeof mainAgentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,23 +126,25 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/agents'
     | '/analytics'
     | '/dashboard'
     | '/knowledges'
     | '/mcps'
     | '/members'
+    | '/agents/$id'
+    | '/agents/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
-    | '/agents'
     | '/analytics'
     | '/dashboard'
     | '/knowledges'
     | '/mcps'
     | '/members'
+    | '/agents/$id'
+    | '/agents'
   id:
     | '__root__'
     | '/'
@@ -141,12 +152,13 @@ export interface FileRouteTypes {
     | '/(main)'
     | '/(auth)/login'
     | '/(auth)/signup'
-    | '/(main)/agents'
     | '/(main)/analytics'
     | '/(main)/dashboard'
     | '/(main)/knowledges'
     | '/(main)/mcps'
     | '/(main)/members'
+    | '/(main)/agents/$id'
+    | '/(main)/agents/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,13 +225,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainAnalyticsRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/agents': {
-      id: '/(main)/agents'
-      path: '/agents'
-      fullPath: '/agents'
-      preLoaderRoute: typeof mainAgentsRouteImport
-      parentRoute: typeof mainRouteRoute
-    }
     '/(auth)/signup': {
       id: '/(auth)/signup'
       path: '/signup'
@@ -233,6 +238,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof authLoginRouteImport
       parentRoute: typeof authRouteRoute
+    }
+    '/(main)/agents/': {
+      id: '/(main)/agents/'
+      path: '/agents'
+      fullPath: '/agents/'
+      preLoaderRoute: typeof mainAgentsIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/agents/$id': {
+      id: '/(main)/agents/$id'
+      path: '/agents/$id'
+      fullPath: '/agents/$id'
+      preLoaderRoute: typeof mainAgentsIdRouteImport
+      parentRoute: typeof mainRouteRoute
     }
   }
 }
@@ -252,21 +271,23 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 )
 
 interface mainRouteRouteChildren {
-  mainAgentsRoute: typeof mainAgentsRoute
   mainAnalyticsRoute: typeof mainAnalyticsRoute
   mainDashboardRoute: typeof mainDashboardRoute
   mainKnowledgesRoute: typeof mainKnowledgesRoute
   mainMcpsRoute: typeof mainMcpsRoute
   mainMembersRoute: typeof mainMembersRoute
+  mainAgentsIdRoute: typeof mainAgentsIdRoute
+  mainAgentsIndexRoute: typeof mainAgentsIndexRoute
 }
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
-  mainAgentsRoute: mainAgentsRoute,
   mainAnalyticsRoute: mainAnalyticsRoute,
   mainDashboardRoute: mainDashboardRoute,
   mainKnowledgesRoute: mainKnowledgesRoute,
   mainMcpsRoute: mainMcpsRoute,
   mainMembersRoute: mainMembersRoute,
+  mainAgentsIdRoute: mainAgentsIdRoute,
+  mainAgentsIndexRoute: mainAgentsIndexRoute,
 }
 
 const mainRouteRouteWithChildren = mainRouteRoute._addFileChildren(
