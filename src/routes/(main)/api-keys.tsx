@@ -1,4 +1,9 @@
-import { getApiKeys, revokeApiKey, type ApiKey } from "@/api/api-keys";
+import {
+    createApiKey,
+    getApiKeys,
+    revokeApiKey,
+    type ApiKey,
+} from "@/api/api-keys";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -11,14 +16,194 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import axios from "axios";
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 
 export const Route = createFileRoute("/(main)/api-keys")({
     component: RouteComponent,
 });
+
+const createApiKeySchema = z.object({
+    name: z.string().trim().min(1, "Name is required"),
+});
+
+type CreateApiKeyValues = z.infer<typeof createApiKeySchema>;
+
+type ApiError = {
+    message?: string;
+};
+
+function resolveServerMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+        const data = error.response?.data as ApiError | undefined;
+        return data?.message ?? error.message;
+    }
+    return "An unexpected error occurred.";
+}
+
+function CreateApiKeyDialog() {
+    const [open, setOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: createApiKey,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+            setOpen(false);
+            form.reset();
+        },
+    });
+
+    const form = useForm({
+        defaultValues: {
+            name: "",
+        } satisfies CreateApiKeyValues,
+        onSubmit: async ({ value }) => {
+            const result = createApiKeySchema.safeParse(value);
+            if (!result.success) return;
+
+            await mutation.mutateAsync(result.data);
+        },
+    });
+
+    function handleOpenChange(nextOpen: boolean) {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+            mutation.reset();
+            form.reset();
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                    <KeyRound className="size-3.5" />
+                    Create API key
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create API key</DialogTitle>
+                    <DialogDescription>
+                        Create a new API key for programmatic access.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    {mutation.isError && (
+                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {resolveServerMessage(mutation.error)}
+                        </p>
+                    )}
+
+                    <form.Field
+                        name="name"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const result =
+                                    createApiKeySchema.shape.name.safeParse(
+                                        value,
+                                    );
+                                return result.success
+                                    ? undefined
+                                    : result.error.issues[0]?.message;
+                            },
+                            onSubmit: ({ value }) => {
+                                const result =
+                                    createApiKeySchema.shape.name.safeParse(
+                                        value,
+                                    );
+                                return result.success
+                                    ? undefined
+                                    : result.error.issues[0]?.message;
+                            },
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="Production integration"
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                    autoFocus
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <form.Subscribe
+                            selector={(state) => [
+                                state.canSubmit,
+                                state.isSubmitting,
+                            ]}
+                        >
+                            {([canSubmit, isSubmitting]) => (
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending
+                                    }
+                                >
+                                    {mutation.isPending
+                                        ? "Creating..."
+                                        : "Create key"}
+                                </Button>
+                            )}
+                        </form.Subscribe>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
     const [copied, setCopied] = useState(false);
@@ -130,7 +315,7 @@ function RouteComponent() {
         <div className="flex h-full flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto">
                 <div className="sticky top-0 px-6 py-4 flex items-center gap-4 bg-background border-b">
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <h1 className="font-heading text-2xl font-semibold">
                             API Keys
                         </h1>
@@ -138,6 +323,7 @@ function RouteComponent() {
                             Manage your API keys for programmatic access.
                         </p>
                     </div>
+                    <CreateApiKeyDialog />
                 </div>
 
                 <div className="p-6">
