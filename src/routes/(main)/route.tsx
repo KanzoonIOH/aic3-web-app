@@ -20,6 +20,7 @@ import {
     Bot,
     BookOpen,
     HelpCircle,
+    KeyRound,
     LayoutDashboard,
     LogOut,
     Monitor,
@@ -49,6 +50,7 @@ const navItems = [
     { to: "/knowledges", label: "Knowledges", icon: BookOpen },
     { to: "/mcps", label: "MCPs", icon: Plug },
     { to: "/members", label: "Members", icon: Users },
+    { to: "/api-keys", label: "API Keys", icon: KeyRound },
 ] as const;
 
 const themeOptions: { value: Theme; label: string; icon: React.ElementType }[] =
