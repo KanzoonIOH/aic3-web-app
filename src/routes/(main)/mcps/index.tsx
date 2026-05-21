@@ -4,13 +4,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-    ChevronRight,
-    LayoutGrid,
-    List,
-    Plug,
-    Wrench,
-} from "lucide-react";
+import { ChevronRight, LayoutGrid, List, Plug, Wrench } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/(main)/mcps/")({
@@ -105,7 +99,7 @@ function RouteComponent() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
     const {
-        data: mcps = [],
+        data: mcps,
         isPending,
         isError,
     } = useQuery({
@@ -166,7 +160,7 @@ function RouteComponent() {
                                 Failed to load MCPs
                             </p>
                         </div>
-                    ) : mcps.length === 0 ? (
+                    ) : mcps.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
                             <Plug className="size-8 text-muted-foreground/40" />
                             <p className="text-sm text-muted-foreground">
@@ -175,13 +169,13 @@ function RouteComponent() {
                         </div>
                     ) : viewMode === "grid" ? (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {mcps.map((mcp) => (
+                            {mcps.data.map((mcp) => (
                                 <McpCard key={mcp.id} mcp={mcp} />
                             ))}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-2">
-                            {mcps.map((mcp) => (
+                            {mcps.data.map((mcp) => (
                                 <McpListRow key={mcp.id} mcp={mcp} />
                             ))}
                         </div>

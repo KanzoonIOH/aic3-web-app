@@ -1,4 +1,5 @@
 import { client } from "./client";
+import type { ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
@@ -13,13 +14,17 @@ export interface Knowledge {
 }
 
 // ---------- API functions ----------
-
-export async function getKnowledges(): Promise<Knowledge[]> {
-    const { data } = await client.get<Knowledge[]>("/knowledges");
+//
+type ResponseGetKnowledges = ResponseTemplate<Knowledge[]>;
+export async function getKnowledges(): Promise<ResponseGetKnowledges> {
+    const { data } = await client.get<ResponseGetKnowledges>("/knowledges");
     return data;
 }
 
-export async function getKnowledge(id: string): Promise<Knowledge> {
-    const { data } = await client.get<Knowledge>(`/knowledges/${id}`);
+type ResponseGetKnowledge = ResponseTemplate<Knowledge>;
+export async function getKnowledge(id: string): Promise<ResponseGetKnowledge> {
+    const { data } = await client.get<ResponseGetKnowledge>(
+        `/knowledges/${id}`,
+    );
     return data;
 }

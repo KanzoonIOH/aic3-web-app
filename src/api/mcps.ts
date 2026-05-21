@@ -1,4 +1,5 @@
 import { client } from "./client";
+import type { ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
@@ -13,12 +14,14 @@ export interface Mcp {
 
 // ---------- API functions ----------
 
-export async function getMcps(): Promise<Mcp[]> {
-    const { data } = await client.get<Mcp[]>("/mcps");
+type ResponseGetMcps = ResponseTemplate<Mcp[]>;
+export async function getMcps(): Promise<ResponseGetMcps> {
+    const { data } = await client.get<ResponseGetMcps>("/mcps");
     return data;
 }
 
-export async function getMcp(id: string): Promise<Mcp> {
-    const { data } = await client.get<Mcp>(`/mcps/${id}`);
+type ResponseGetMcp = ResponseTemplate<Mcp>;
+export async function getMcp(id: string): Promise<ResponseGetMcp> {
+    const { data } = await client.get<ResponseGetMcp>(`/mcps/${id}`);
     return data;
 }

@@ -41,7 +41,7 @@ function RouteComponent() {
     const mutation = useMutation({
         mutationFn: register,
         onSuccess: (data) => {
-            setAuth(data);
+            setAuth(data.data);
             void router.navigate({ to: "/dashboard" });
         },
     });

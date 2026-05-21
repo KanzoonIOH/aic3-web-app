@@ -44,10 +44,10 @@ function RouteComponent() {
             <div className="flex-1 overflow-y-auto">
                 <div className="sticky top-0 px-6 py-4 bg-background border-b">
                     <h1 className="font-heading text-2xl font-semibold">
-                        {knowledge.name}
+                        {knowledge.data.name}
                     </h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                        {knowledge.description}
+                        {knowledge.data.description}
                     </p>
                 </div>
 
@@ -55,30 +55,34 @@ function RouteComponent() {
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                             <FileText className="size-4" />
-                            {knowledge.document_count} documents
+                            {knowledge.data.document_count} documents
                         </span>
-                        <span className="capitalize">{knowledge.type}</span>
+                        <span className="capitalize">
+                            {knowledge.data.type}
+                        </span>
                         <span>
                             Status:{" "}
                             <span
                                 className={
-                                    knowledge.is_active
+                                    knowledge.data.is_active
                                         ? "text-green-500"
                                         : "text-muted-foreground"
                                 }
                             >
-                                {knowledge.is_active ? "Active" : "Inactive"}
+                                {knowledge.data.is_active
+                                    ? "Active"
+                                    : "Inactive"}
                             </span>
                         </span>
                     </div>
 
-                    {knowledge.source_uri && (
+                    {knowledge.data.source_uri && (
                         <div className="rounded-lg border p-4">
                             <p className="text-xs font-medium text-muted-foreground mb-1">
                                 Source URI
                             </p>
                             <p className="text-sm font-mono break-all">
-                                {knowledge.source_uri}
+                                {knowledge.data.source_uri}
                             </p>
                         </div>
                     )}

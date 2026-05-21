@@ -113,7 +113,7 @@ function RouteComponent() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
     const {
-        data: knowledges = [],
+        data: knowledges,
         isPending,
         isError,
     } = useQuery({
@@ -174,7 +174,7 @@ function RouteComponent() {
                                 Failed to load knowledges
                             </p>
                         </div>
-                    ) : knowledges.length === 0 ? (
+                    ) : knowledges.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
                             <BookOpen className="size-8 text-muted-foreground/40" />
                             <p className="text-sm text-muted-foreground">
@@ -183,7 +183,7 @@ function RouteComponent() {
                         </div>
                     ) : viewMode === "grid" ? (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {knowledges.map((knowledge) => (
+                            {knowledges.data.map((knowledge) => (
                                 <KnowledgeCard
                                     key={knowledge.id}
                                     knowledge={knowledge}
@@ -192,7 +192,7 @@ function RouteComponent() {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-2">
-                            {knowledges.map((knowledge) => (
+                            {knowledges.data.map((knowledge) => (
                                 <KnowledgeListRow
                                     key={knowledge.id}
                                     knowledge={knowledge}

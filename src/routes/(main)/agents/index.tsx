@@ -45,9 +45,14 @@ function AgentCard({ agent }: { agent: Agent }) {
         <Card className="rounded-lg bg-inherit flex flex-col gap-1 overflow-hidden p-2 pl-4">
             <div className="flex items-center gap-3 pt-2">
                 <AgentInitialsAvatar name={agent.name} />
-                <span className="truncate font-medium text-lg">
-                    {agent.name}
-                </span>
+                <div className="flex flex-col">
+                    <span className="text-foreground/70 text-xs">
+                        {agent.is_active ? "Active" : "Inactive"}
+                    </span>
+                    <span className="truncate font-medium text-lg">
+                        {agent.name}
+                    </span>
+                </div>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
                 {agent.description}
@@ -56,11 +61,11 @@ function AgentCard({ agent }: { agent: Agent }) {
                 <div className="flex gap-4">
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <BookIcon className="size-3" />
-                        {agent.tools}
+                        {agent.knowledges_count}
                     </span>
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Plug className="size-3" />
-                        {agent.mcps}
+                        {agent.mcps_count}
                     </span>
                 </div>
                 <Button size={"sm"} className="text-xs" asChild>
@@ -89,11 +94,11 @@ function AgentListRow({ agent }: { agent: Agent }) {
             <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                     <BookIcon className="size-3" />
-                    {agent.tools}
+                    {agent.knowledges_count}
                 </span>
                 <span className="flex items-center gap-1">
                     <Plug className="size-3" />
-                    {agent.mcps}
+                    {agent.mcps_count}
                 </span>
             </div>
             <Button
@@ -114,7 +119,7 @@ function RouteComponent() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
     const {
-        data: agents = [],
+        data: agents,
         isPending,
         isError,
     } = useQuery({
@@ -175,7 +180,7 @@ function RouteComponent() {
                                 Failed to load agents
                             </p>
                         </div>
-                    ) : agents.length === 0 ? (
+                    ) : agents.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
                             <Bot className="size-8 text-muted-foreground/40" />
                             <p className="text-sm text-muted-foreground">
@@ -184,14 +189,14 @@ function RouteComponent() {
                         </div>
                     ) : viewMode === "grid" ? (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {agents.map((agent) => (
+                            {agents.data.map((agent) => (
                                 <AgentCard key={agent.id} agent={agent} />
                             ))}
                         </div>
                     ) : (
                         // <div className="flex flex-col divide-y rounded-lg border">
                         <div className="flex flex-col gap-2">
-                            {agents.map((agent) => (
+                            {agents.data.map((agent) => (
                                 <AgentListRow key={agent.id} agent={agent} />
                             ))}
                         </div>

@@ -42,10 +42,10 @@ function RouteComponent() {
             <div className="flex-1 overflow-y-auto">
                 <div className="sticky top-0 px-6 py-4 bg-background border-b">
                     <h1 className="font-heading text-2xl font-semibold">
-                        {mcp.name}
+                        {mcp.data.name}
                     </h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                        {mcp.description}
+                        {mcp.data.description}
                     </p>
                 </div>
 
@@ -53,29 +53,29 @@ function RouteComponent() {
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                             <Wrench className="size-4" />
-                            {mcp.tool_count} tools
+                            {mcp.data.tool_count} tools
                         </span>
                         <span>
                             Status:{" "}
                             <span
                                 className={
-                                    mcp.is_active
+                                    mcp.data.is_active
                                         ? "text-green-500"
                                         : "text-muted-foreground"
                                 }
                             >
-                                {mcp.is_active ? "Active" : "Inactive"}
+                                {mcp.data.is_active ? "Active" : "Inactive"}
                             </span>
                         </span>
                     </div>
 
-                    {mcp.endpoint_url && (
+                    {mcp.data.endpoint_url && (
                         <div className="rounded-lg border p-4">
                             <p className="text-xs font-medium text-muted-foreground mb-1">
                                 Endpoint URL
                             </p>
                             <p className="text-sm font-mono break-all">
-                                {mcp.endpoint_url}
+                                {mcp.data.endpoint_url}
                             </p>
                         </div>
                     )}
