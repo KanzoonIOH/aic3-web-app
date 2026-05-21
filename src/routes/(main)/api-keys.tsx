@@ -1,8 +1,19 @@
-import { getApiKeys, type ApiKey } from "@/api/api-keys";
+import { getApiKeys, revokeApiKey, type ApiKey } from "@/api/api-keys";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, KeyRound } from "lucide-react";
+import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/(main)/api-keys")({
@@ -11,6 +22,7 @@ export const Route = createFileRoute("/(main)/api-keys")({
 
 function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
     const [copied, setCopied] = useState(false);
+    const queryClient = useQueryClient();
 
     const maskedKey =
         apiKey.token.length > 8
@@ -28,6 +40,13 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     }
+
+    const { mutate: revoke, isPending: isRevoking } = useMutation({
+        mutationFn: () => revokeApiKey(apiKey.id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+        },
+    });
 
     return (
         <div className="border rounded-lg flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
@@ -57,6 +76,42 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
             <span className="shrink-0 text-xs text-muted-foreground">
                 {formattedDate}
             </span>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    >
+                        <Trash2 className="size-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Revoke API key?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <span className="font-medium text-foreground">
+                                {apiKey.name}
+                            </span>{" "}
+                            will be permanently revoked. Any integrations using
+                            this key will stop working immediately.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel variant={"ghost"}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            variant={"destructive"}
+                            // className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={isRevoking}
+                            onClick={() => revoke()}
+                        >
+                            {isRevoking ? "Revoking..." : "Revoke"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
