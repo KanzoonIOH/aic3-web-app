@@ -19,10 +19,19 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import axios from "axios";
-import { Pencil } from "lucide-react";
+import {
+    BookIcon,
+    LayoutGridIcon,
+    MessagesSquareIcon,
+    Pencil,
+    PlugIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { ChatSanbox } from "./-ChatSandbox";
+import { Overview } from "./-Overview";
+import { Knowledges } from "./-Knowledges";
+import { Mcps } from "./-Mcps";
 
 export const Route = createFileRoute("/(main)/agents/$id")({
     component: RouteComponent,
@@ -381,25 +390,33 @@ function RouteComponent() {
             >
                 <div className="border-b">
                     <TabsList variant="line">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="knowledge">Knowledges</TabsTrigger>
-                        <TabsTrigger value="mcp">MCPs</TabsTrigger>
-                        <TabsTrigger value="chat">Chat Sandbox</TabsTrigger>
+                        <TabsTrigger value="overview">
+                            <LayoutGridIcon />
+                            Overview
+                        </TabsTrigger>
+                        <TabsTrigger value="knowledge">
+                            <BookIcon />
+                            Knowledges
+                        </TabsTrigger>
+                        <TabsTrigger value="mcp">
+                            <PlugIcon />
+                            MCPs
+                        </TabsTrigger>
+                        <TabsTrigger value="chat">
+                            <MessagesSquareIcon />
+                            Chat Sandbox
+                        </TabsTrigger>
                     </TabsList>
                 </div>
 
                 <TabsContent value="overview" className="overflow-hidden">
-                    <ScrollArea className="h-full">
-                        <h1 className="h-[1000px] bg-neutral-800">
-                            A long content
-                        </h1>
-                    </ScrollArea>
+                    <Overview agentId={id} />
                 </TabsContent>
                 <TabsContent value="knowledge" className="overflow-hidden">
-                    <ScrollArea className="h-full">Knowledges</ScrollArea>
+                    <Knowledges agentId={id} />
                 </TabsContent>
                 <TabsContent value="mcp" className="overflow-hidden">
-                    <ScrollArea className="h-full">MCPs</ScrollArea>
+                    <Mcps agentId={id} />
                 </TabsContent>
                 <TabsContent value="chat" className="overflow-hidden">
                     <ChatSanbox agentId={id} />
