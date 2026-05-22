@@ -22,6 +22,7 @@ import axios from "axios";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { ChatSanbox } from "./-ChatSandbox";
 
 export const Route = createFileRoute("/(main)/agents/$id")({
     component: RouteComponent,
@@ -31,16 +32,19 @@ const updateAgentSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim(),
     is_active: z.boolean(),
-    webhook_uri: z.string().trim().refine((value) => {
-        if (value.length === 0) return true;
+    webhook_uri: z
+        .string()
+        .trim()
+        .refine((value) => {
+            if (value.length === 0) return true;
 
-        try {
-            new URL(value);
-            return true;
-        } catch {
-            return false;
-        }
-    }, "Webhook URI must be a valid URL"),
+            try {
+                new URL(value);
+                return true;
+            } catch {
+                return false;
+            }
+        }, "Webhook URI must be a valid URL"),
 });
 
 type UpdateAgentValues = z.infer<typeof updateAgentSchema>;
@@ -71,7 +75,8 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (payload: UpdateAgentValues) => updateAgent(agent.id, payload),
+        mutationFn: (payload: UpdateAgentValues) =>
+            updateAgent(agent.id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["agents"] });
             queryClient.invalidateQueries({ queryKey: ["agents", agent.id] });
@@ -372,14 +377,16 @@ function RouteComponent() {
 
             <Tabs
                 defaultValue="overview"
-                className="grid grid-rows-[auto_1fr] flex-1 overflow-hidden px-3 py-2"
+                className="flex-1 grid grid-rows-[auto_1fr] overflow-hidden gap-0"
             >
-                <TabsList variant="line">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="knowledge">Knowledges</TabsTrigger>
-                    <TabsTrigger value="mcp">MCPs</TabsTrigger>
-                    <TabsTrigger value="chat">Chat Sandbox</TabsTrigger>
-                </TabsList>
+                <div className="border-b">
+                    <TabsList variant="line">
+                        <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="knowledge">Knowledges</TabsTrigger>
+                        <TabsTrigger value="mcp">MCPs</TabsTrigger>
+                        <TabsTrigger value="chat">Chat Sandbox</TabsTrigger>
+                    </TabsList>
+                </div>
 
                 <TabsContent value="overview" className="overflow-hidden">
                     <ScrollArea className="h-full">
@@ -388,17 +395,14 @@ function RouteComponent() {
                         </h1>
                     </ScrollArea>
                 </TabsContent>
-                <TabsContent
-                    value="knowledge"
-                    className="flex-1 overflow-hidden"
-                >
+                <TabsContent value="knowledge" className="overflow-hidden">
                     <ScrollArea className="h-full">Knowledges</ScrollArea>
                 </TabsContent>
-                <TabsContent value="mcp" className="flex-1 overflow-hidden">
+                <TabsContent value="mcp" className="overflow-hidden">
                     <ScrollArea className="h-full">MCPs</ScrollArea>
                 </TabsContent>
-                <TabsContent value="chat" className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-full">Chat Sandbox</ScrollArea>
+                <TabsContent value="chat" className="overflow-hidden">
+                    <ChatSanbox agentId={id} />
                 </TabsContent>
             </Tabs>
         </div>
