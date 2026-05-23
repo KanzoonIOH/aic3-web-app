@@ -1,3 +1,10 @@
+import { UnderConstruction } from "@/components/under-construction";
+
 export function Overview({ agentId }: { agentId: string }) {
-    return <>{agentId}</>;
+    return (
+        <>
+            <UnderConstruction />
+            <div hidden>{agentId}</div>
+        </>
+    );
 }

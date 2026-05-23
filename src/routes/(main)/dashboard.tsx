@@ -1,9 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { UnderConstruction } from "@/components/under-construction";
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/(main)/dashboard')({
-  component: RouteComponent,
-})
+export const Route = createFileRoute("/(main)/dashboard")({
+    component: RouteComponent,
+});
 
 function RouteComponent() {
-  return <div>Hello "/(main)/dashboard"!</div>
+    return <UnderConstruction />;
 }
