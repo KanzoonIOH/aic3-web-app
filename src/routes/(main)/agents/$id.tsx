@@ -384,7 +384,7 @@ function RouteComponent() {
             </div>
 
             <Tabs
-                defaultValue="overview"
+                defaultValue="chat"
                 className="flex-1 grid grid-rows-[auto_1fr] overflow-hidden gap-0"
             >
                 <div className="border-b">
