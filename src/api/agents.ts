@@ -47,8 +47,24 @@ export async function updateAgent(
     return data;
 }
 
+export interface NextStep {
+    label: string;
+    target_id?: number;
+    target_intent?: string;
+}
+
+export interface CcProduct {
+    card_type: "classic" | "gold" | "platinum";
+    limit: { min: number; max: number };
+    welcome_bonus: number;
+    free_lounge: boolean;
+    benefit: string[];
+}
+
 export interface ChatResponse {
     reply: string;
+    next_step?: NextStep[] | null;
+    product?: CcProduct[] | null;
 }
 
 export async function chatWithAgent(

@@ -1,4 +1,4 @@
-import { chatWithAgent } from "@/api/agents";
+import { chatWithAgent, type NextStep } from "@/api/agents";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -222,9 +222,10 @@ function TypingBubble() {
 export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
+    const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const sessionId = new Date().toLocaleTimeString();
+    const sessionId = useRef(new Date().toLocaleTimeString()).current;
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
@@ -238,24 +239,30 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
 
     const mutation = useMutation({
         mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
-        onSuccess: (res) =>
+        onSuccess: (res) => {
             setMessages((p) => [
                 ...p,
                 { role: "assistant", text: res.reply, time: getTime() },
-            ]),
+            ]);
+            setNextSteps(res.next_step ?? null);
+        },
     });
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, mutation.isPending]);
+    }, [messages, mutation.isPending, nextSteps]);
 
-    function handleSend() {
-        const text = input.trim();
-        if (!text || mutation.isPending) return;
+    function sendText(text: string) {
+        if (!text.trim() || mutation.isPending) return;
+        setNextSteps(null);
         setInput("");
         setMessages((p) => [...p, { role: "user", text, time: getTime() }]);
         mutation.mutate(text);
         requestAnimationFrame(() => resizeTextarea());
+    }
+
+    function handleSend() {
+        sendText(input);
     }
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -264,6 +271,9 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
             handleSend();
         }
     }
+
+    const lastIsAssistant = messages.length > 0 && messages[messages.length - 1].role === "assistant";
+    const showNextSteps = lastIsAssistant && !mutation.isPending && nextSteps && nextSteps.length > 0;
 
     return (
         /* outer fills the tab panel and centers the phone */
@@ -472,6 +482,28 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
                                     <span className="rounded-lg px-3 py-1 text-[11px] bg-red-900/60 text-red-300">
                                         Something went wrong. Please try again.
                                     </span>
+                                </div>
+                            )}
+
+                            {showNextSteps && (
+                                <div className="flex justify-start pt-2">
+                                    <div className="flex max-w-[85%] flex-col gap-1.5">
+                                        {nextSteps!.map((step) => (
+                                            <button
+                                                key={step.label}
+                                                type="button"
+                                                onClick={() => sendText(step.label)}
+                                                className="rounded-lg border px-3 py-2 text-left text-[13px] leading-snug shadow-sm transition-opacity active:opacity-80"
+                                                style={{
+                                                    backgroundColor: C.incoming,
+                                                    borderColor: "rgba(0,168,132,0.45)",
+                                                    color: C.accent,
+                                                }}
+                                            >
+                                                {step.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 

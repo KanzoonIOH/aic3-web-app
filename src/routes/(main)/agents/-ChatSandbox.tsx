@@ -1,32 +1,304 @@
-import { chatWithAgent } from "@/api/agents";
+import { chatWithAgent, type CcProduct, type NextStep } from "@/api/agents";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BotMessageSquare, Smartphone } from "lucide-react";
+import { BotMessageSquare, MessageSquare, Smartphone } from "lucide-react";
 import { ChatSandboxWhatsApp } from "./-ChatSandboxWhatsApp";
 import { MarkdownMessage } from "./-MarkdownMessage";
+
+// ---------- Types ----------
 
 interface Message {
     role: "user" | "assistant";
     text: string;
 }
 
+interface SuggestionItem {
+    label: string;
+}
+
+interface SuggestionGroup {
+    service_category: string;
+    list: SuggestionItem[];
+}
+
+// ---------- Constants ----------
+
+const INITIAL_SUGGESTIONS: SuggestionGroup[] = [
+    {
+        service_category: "Account Inquiry",
+        list: [
+            { label: "Ringkasan saldo semua rekening" },
+            { label: "Limit tersedia kartu kredit" },
+            { label: "Cek saldo rekening saat ini" },
+        ],
+    },
+    {
+        service_category: "Action",
+        list: [
+            { label: "Mulai pembukaan rekening tabungan" },
+            { label: "Mulai pengajuan kartu kredit" },
+            { label: "Mulai pengajuan KTA" },
+        ],
+    },
+    {
+        service_category: "Complaint",
+        list: [
+            { label: "Aplikasi error atau gagal login" },
+            { label: "Uang ATM tidak keluar atau jumlah tidak sesuai" },
+            { label: "Masalah kartu debit atau kredit" },
+        ],
+    },
+    {
+        service_category: "Credit Card",
+        list: [
+            { label: "Syarat pengajuan kartu kredit" },
+            { label: "Langkah pengajuan kartu kredit" },
+            { label: "Penjelasan tagihan kartu kredit" },
+        ],
+    },
+    {
+        service_category: "Loans",
+        list: [
+            { label: "Syarat pengajuan KTA" },
+            { label: "Langkah pengajuan KTA" },
+            { label: "Informasi KTA" },
+        ],
+    },
+    {
+        service_category: "Mortgage",
+        list: [
+            { label: "Syarat pengajuan KPR" },
+            { label: "Langkah pengajuan KPR" },
+            { label: "Informasi KPR" },
+        ],
+    },
+    {
+        service_category: "Promotions",
+        list: [
+            { label: "Promo dining kartu kredit" },
+            { label: "Promo cicilan 0% kartu kredit" },
+            { label: "Program reward dan poin" },
+        ],
+    },
+    {
+        service_category: "Savings",
+        list: [
+            { label: "Syarat pembukaan Tabungan Reguler" },
+            { label: "Langkah pembukaan Tabungan Reguler" },
+            { label: "Informasi Tabungan Reguler" },
+        ],
+    },
+];
+
+const CC_TITLE: Record<CcProduct["card_type"], string> = {
+    classic: "Hasanah Card Classic",
+    gold: "Hasanah Card Gold",
+    platinum: "Hasanah Card Platinum",
+};
+
+const CC_GRADIENT: Record<CcProduct["card_type"], string> = {
+    classic: "linear-gradient(135deg, #c8c5bc 0%, #888780 100%)",
+    gold: "linear-gradient(135deg, #FAC775 0%, #BA7517 100%)",
+    platinum: "linear-gradient(135deg, #c4b5fd 0%, #7C3AED 100%)",
+};
+
+const CC_ACCENT: Record<CcProduct["card_type"], string> = {
+    classic: "#888780",
+    gold: "#BA7517",
+    platinum: "#7C3AED",
+};
+
 const MAX_ROWS = 8;
+
+// ---------- Sub-components ----------
+
+function InitialSuggestions({
+    groups,
+    onSelect,
+}: {
+    groups: SuggestionGroup[];
+    onSelect: (label: string) => void;
+}) {
+    return (
+        <div className="shrink-0 border-t bg-background pt-3 pb-1">
+            <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                What can I help you with?
+            </p>
+            <ScrollArea type="scroll" className="w-full">
+                <div className="flex min-w-max gap-3 px-4 pb-3">
+                    {groups.map((group) => (
+                        <div key={group.service_category} className="flex flex-col gap-1.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                                {group.service_category}
+                            </p>
+                            <div className="flex flex-col gap-1.5">
+                                {group.list.map((item) => (
+                                    <button
+                                        key={item.label}
+                                        type="button"
+                                        onClick={() => onSelect(item.label)}
+                                        className="shrink-0 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring whitespace-nowrap"
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+        </div>
+    );
+}
+
+function NextStepSuggestions({
+    steps,
+    onSelect,
+}: {
+    steps: NextStep[];
+    onSelect: (label: string) => void;
+}) {
+    return (
+        <div className="shrink-0 border-t bg-background pt-3 pb-2">
+            <div className="flex items-center gap-1.5 mb-2 px-4 text-xs text-muted-foreground">
+                <MessageSquare className="size-3.5" />
+                <span>Suggested replies</span>
+            </div>
+            <div className="flex flex-col gap-1.5 px-4">
+                {steps.map((step) => (
+                    <button
+                        key={step.label}
+                        type="button"
+                        onClick={() => onSelect(step.label)}
+                        className="w-full text-left rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-muted hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        {step.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function CcProductCards({
+    products,
+    onSelect,
+}: {
+    products: CcProduct[];
+    onSelect: (label: string) => void;
+}) {
+    const [openDetail, setOpenDetail] = useState<Record<string, boolean>>({});
+
+    function toggleDetail(cardType: string) {
+        setOpenDetail((prev) => ({ ...prev, [cardType]: !prev[cardType] }));
+    }
+
+    return (
+        <div className="shrink-0 border-t bg-background pt-3 pb-2">
+            <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Pilih kartu kredit
+            </p>
+            <ScrollArea type="scroll" className="w-full">
+                <div className="flex gap-3 px-4 pb-3">
+                    {products.map((p) => (
+                        <div
+                            key={p.card_type}
+                            className="w-52 shrink-0 flex flex-col gap-3 rounded-xl border border-border bg-background p-4"
+                        >
+                            {/* Card art */}
+                            <div
+                                className="h-20 rounded-lg"
+                                style={{ background: CC_GRADIENT[p.card_type] }}
+                            />
+
+                            {/* Title */}
+                            <p className="text-sm font-medium text-foreground leading-snug">
+                                {CC_TITLE[p.card_type]}
+                            </p>
+
+                            <div className="h-px bg-border" />
+
+                            {/* Benefits */}
+                            <ul className="flex flex-col gap-1.5">
+                                {p.benefit.map((b) => (
+                                    <li key={b} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                                        <svg className="mt-0.5 size-3.5 shrink-0" viewBox="0 0 14 14" fill="none">
+                                            <circle cx="7" cy="7" r="6.5" stroke={CC_ACCENT[p.card_type]} strokeWidth="0.8" />
+                                            <path d="M4 7l2 2 4-4" stroke={CC_ACCENT[p.card_type]} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                        {b}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            {/* Pick button */}
+                            <button
+                                type="button"
+                                onClick={() => onSelect(`Saya mau daftar ${CC_TITLE[p.card_type]}`)}
+                                className="w-full rounded-lg border border-border py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                                style={p.card_type === "platinum" ? { borderColor: CC_ACCENT.platinum, color: CC_ACCENT.platinum } : {}}
+                            >
+                                Pilih {CC_TITLE[p.card_type].replace("Hasanah Card ", "")}
+                            </button>
+
+                            {/* Detail toggle */}
+                            <button
+                                type="button"
+                                onClick={() => toggleDetail(p.card_type)}
+                                className="w-full text-center text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                            >
+                                {openDetail[p.card_type] ? "Sembunyikan ▲" : "Lihat detail ▼"}
+                            </button>
+
+                            {/* Detail rows */}
+                            {openDetail[p.card_type] && (
+                                <div className="rounded-lg bg-muted/50 px-3 py-2.5 flex flex-col gap-1.5 text-xs">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Limit maks</span>
+                                        <span className="font-medium">Rp {p.limit.max.toLocaleString("id-ID")}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Welcome bonus</span>
+                                        <span className="font-medium">
+                                            {p.welcome_bonus > 0 ? `Rp ${p.welcome_bonus.toLocaleString("id-ID")}` : "–"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Lounge bandara</span>
+                                        <span className="font-medium">{p.free_lounge ? "✓ Gratis" : "–"}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+        </div>
+    );
+}
+
+// ---------- ChatDefault ----------
 
 function ChatDefault({ agentId }: { agentId: string }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
+    const [showInitialSuggestions, setShowInitialSuggestions] = useState(true);
+    const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
+    const [ccProducts, setCcProducts] = useState<CcProduct[] | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const sessionId = new Date().toLocaleTimeString();
+    const sessionId = useRef(new Date().toLocaleTimeString()).current;
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
         if (!el) return;
         el.style.height = "auto";
         const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
-        const maxHeight = lineHeight * MAX_ROWS + /* py-2 top+bottom */ 16;
+        const maxHeight = lineHeight * MAX_ROWS + 16;
         el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
         el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
     }, []);
@@ -34,48 +306,48 @@ function ChatDefault({ agentId }: { agentId: string }) {
     const mutation = useMutation({
         mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
         onSuccess: (response) => {
-            console.log(response);
-            setMessages((prev) => [
-                ...prev,
-                {
-                    role: "assistant",
-                    text: response.reply,
-                },
-            ]);
+            setMessages((prev) => [...prev, { role: "assistant", text: response.reply }]);
+            setNextSteps(response.next_step ?? null);
+            setCcProducts(response.product ?? null);
         },
-        onError: (response) => {
-            console.log(response);
+        onError: () => {
+            // errors shown inline
         },
     });
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    }, [messages, nextSteps, ccProducts]);
 
-    function handleSend() {
-        const text = input.trim();
-        if (!text || mutation.isPending) return;
+    function sendText(text: string) {
+        if (!text.trim() || mutation.isPending) return;
+        setShowInitialSuggestions(false);
+        setNextSteps(null);
+        setCcProducts(null);
         setInput("");
         setMessages((prev) => [...prev, { role: "user", text }]);
         mutation.mutate(text);
         requestAnimationFrame(() => resizeTextarea());
     }
 
+    function handleSend() { sendText(input); }
     function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
     }
+
+    const lastIsAssistant = messages.length > 0 && messages[messages.length - 1].role === "assistant";
+    const showNextSteps = lastIsAssistant && !mutation.isPending && nextSteps && nextSteps.length > 0;
+    const showCcProducts = lastIsAssistant && !mutation.isPending && ccProducts && ccProducts.length > 0;
 
     return (
         <div className="flex h-full flex-col">
             <ScrollArea className="flex-1 px-4 py-4 w-full max-w-3xl mx-auto">
-                {messages.length === 0 && (
+                {messages.length === 0 && !showInitialSuggestions && (
                     <p className="mt-8 text-center text-sm text-muted-foreground">
                         Send a message to start the conversation.
                     </p>
                 )}
+
                 <div className="flex flex-col gap-4">
                     {messages.map((msg, i) =>
                         msg.role === "user" ? (
@@ -95,21 +367,33 @@ function ChatDefault({ agentId }: { agentId: string }) {
                     )}
                     {mutation.isPending && (
                         <div className="flex justify-start">
-                            <p className="text-sm text-muted-foreground animate-pulse">
-                                Thinking...
-                            </p>
+                            <p className="text-sm text-muted-foreground animate-pulse">Thinking...</p>
                         </div>
                     )}
                     {mutation.isError && (
                         <div className="flex justify-start">
-                            <p className="text-sm text-destructive">
-                                Something went wrong. Please try again.
-                            </p>
+                            <p className="text-sm text-destructive">Something went wrong. Please try again.</p>
                         </div>
                     )}
                 </div>
+
                 <div ref={bottomRef} />
             </ScrollArea>
+
+            {/* CC product cards — shown above next_step suggestions */}
+            {showCcProducts && (
+                <CcProductCards products={ccProducts!} onSelect={sendText} />
+            )}
+
+            {/* Next-step suggestions */}
+            {showNextSteps && (
+                <NextStepSuggestions steps={nextSteps!} onSelect={sendText} />
+            )}
+
+            {/* Initial grouped suggestions (only before first message) */}
+            {showInitialSuggestions && messages.length === 0 && (
+                <InitialSuggestions groups={INITIAL_SUGGESTIONS} onSelect={sendText} />
+            )}
 
             <div className="shrink-0 pt-3 pb-8 mx-5">
                 <div className="flex items-end gap-2 w-full max-w-3xl mx-auto">
@@ -119,10 +403,7 @@ function ChatDefault({ agentId }: { agentId: string }) {
                         placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
                         rows={1}
                         value={input}
-                        onChange={(e) => {
-                            setInput(e.target.value);
-                            resizeTextarea();
-                        }}
+                        onChange={(e) => { setInput(e.target.value); resizeTextarea(); }}
                         onKeyDown={handleKeyDown}
                         disabled={mutation.isPending}
                     />
@@ -130,12 +411,14 @@ function ChatDefault({ agentId }: { agentId: string }) {
                         hidden
                         onClick={handleSend}
                         disabled={!input.trim() || mutation.isPending}
-                    ></Button>
+                    />
                 </div>
             </div>
         </div>
     );
 }
+
+// ---------- ChatSanbox (exported, owns view toggle) ----------
 
 type ViewMode = "chatbot" | "whatsapp";
 
