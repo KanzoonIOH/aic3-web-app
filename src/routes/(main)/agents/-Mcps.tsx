@@ -1,3 +1,3 @@
 export function Mcps({ agentId }: { agentId: string }) {
-    return <></>;
+    return <>{agentId}</>;
 }

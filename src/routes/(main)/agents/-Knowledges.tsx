@@ -1,3 +1,3 @@
 export function Knowledges({ agentId }: { agentId: string }) {
-    return <></>;
+    return <>{agentId}</>;
 }
