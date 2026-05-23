@@ -54,9 +54,11 @@ export interface ChatResponse {
 export async function chatWithAgent(
     id: string,
     chatInput: string,
+    sessionId: string,
 ): Promise<ChatResponse> {
     const { data } = await client.post<ChatResponse>(`/chat/${id}`, {
         chatInput,
+        sessionId,
     });
     return data;
 }

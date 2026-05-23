@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BotMessageSquare, Smartphone } from "lucide-react";
+import { ChatSandboxWhatsApp } from "./-ChatSandboxWhatsApp";
+import { MarkdownMessage } from "./-MarkdownMessage";
 
 interface Message {
     role: "user" | "assistant";
@@ -11,11 +14,12 @@ interface Message {
 
 const MAX_ROWS = 8;
 
-export function ChatSanbox({ agentId }: { agentId: string }) {
+function ChatDefault({ agentId }: { agentId: string }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const sessionId = new Date().toLocaleTimeString();
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
@@ -28,20 +32,19 @@ export function ChatSanbox({ agentId }: { agentId: string }) {
     }, []);
 
     const mutation = useMutation({
-        mutationFn: (text: string) => chatWithAgent(agentId, text),
+        mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
         onSuccess: (response) => {
             console.log(response);
             setMessages((prev) => [
                 ...prev,
-                { role: "assistant", text: response.reply },
+                {
+                    role: "assistant",
+                    text: response.reply,
+                },
             ]);
         },
         onError: (response) => {
             console.log(response);
-            // setMessages((prev) => [
-            //     ...prev,
-            //     { role: "assistant", text: response.data.reply },
-            // ]);
         },
     });
 
@@ -55,7 +58,6 @@ export function ChatSanbox({ agentId }: { agentId: string }) {
         setInput("");
         setMessages((prev) => [...prev, { role: "user", text }]);
         mutation.mutate(text);
-        // reset height after clearing input
         requestAnimationFrame(() => resizeTextarea());
     }
 
@@ -84,9 +86,10 @@ export function ChatSanbox({ agentId }: { agentId: string }) {
                             </div>
                         ) : (
                             <div key={i} className="flex justify-start">
-                                <p className="max-w-[75%] text-sm leading-relaxed">
-                                    {msg.text}
-                                </p>
+                                <MarkdownMessage
+                                    text={msg.text}
+                                    className="max-w-[75%] text-sm leading-relaxed"
+                                />
                             </div>
                         ),
                     )}
@@ -108,11 +111,11 @@ export function ChatSanbox({ agentId }: { agentId: string }) {
                 <div ref={bottomRef} />
             </ScrollArea>
 
-            <div className="shrink-0 pt-3 pb-9">
+            <div className="shrink-0 pt-3 pb-8 mx-5">
                 <div className="flex items-end gap-2 w-full max-w-3xl mx-auto">
                     <textarea
                         ref={textareaRef}
-                        className="h-auto flex-1 resize-none rounded-md border border-input bg-transparent px-5 py-5 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
+                        className="h-auto flex-1 resize-none rounded-full border border-input bg-transparent px-5 py-5 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
                         placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
                         rows={1}
                         value={input}
@@ -129,6 +132,53 @@ export function ChatSanbox({ agentId }: { agentId: string }) {
                         disabled={!input.trim() || mutation.isPending}
                     ></Button>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+type ViewMode = "chatbot" | "whatsapp";
+
+export function ChatSanbox({ agentId }: { agentId: string }) {
+    const [view, setView] = useState<ViewMode>("chatbot");
+
+    return (
+        <div className="flex h-full flex-col overflow-hidden">
+            {/* Toggle bar */}
+            <div className="shrink-0 flex items-center justify-center gap-1.5 border-b px-4 py-2 bg-background">
+                <button
+                    type="button"
+                    onClick={() => setView("chatbot")}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        view === "chatbot"
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                >
+                    <BotMessageSquare className="size-4" />
+                    Chatbot
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setView("whatsapp")}
+                    className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        view === "whatsapp"
+                            ? "bg-[#075e54] text-white"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                >
+                    <Smartphone className="size-4" />
+                    WhatsApp
+                </button>
+            </div>
+
+            {/* View content */}
+            <div className="flex-1 overflow-hidden">
+                {view === "chatbot" ? (
+                    <ChatDefault agentId={agentId} />
+                ) : (
+                    <ChatSandboxWhatsApp agentId={agentId} />
+                )}
             </div>
         </div>
     );
