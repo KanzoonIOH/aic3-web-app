@@ -5,8 +5,9 @@ function normalizeMarkdown(text: string) {
     return text
         .replace(/---(?=#{1,6}\s)/g, "---\n\n")
         .replace(/([^\n])(?=#{1,6}\s)/g, "$1\n\n")
-        .replace(/([^\n])(?=\d+\.\s)/g, "$1\n\n")
+        .replace(/([^\n])(?=\d+\. )/g, "$1\n\n")
         .replace(/([^\n])(?=-\s)/g, "$1\n")
+        .replace(/([^\n])(?=\*\s)/g, "$1\n")
         .replace(/([^\n])(?=>\s)/g, "$1\n\n");
 }
 
