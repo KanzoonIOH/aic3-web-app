@@ -129,7 +129,10 @@ function InitialSuggestions({
             <ScrollArea type="scroll" className="w-full">
                 <div className="flex min-w-max gap-3 px-4 pb-3">
                     {groups.map((group) => (
-                        <div key={group.service_category} className="flex flex-col gap-1.5">
+                        <div
+                            key={group.service_category}
+                            className="flex flex-col gap-1.5"
+                        >
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                                 {group.service_category}
                             </p>
@@ -224,10 +227,29 @@ function CcProductCards({
                             {/* Benefits */}
                             <ul className="flex flex-col gap-1.5">
                                 {p.benefit.map((b) => (
-                                    <li key={b} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                                        <svg className="mt-0.5 size-3.5 shrink-0" viewBox="0 0 14 14" fill="none">
-                                            <circle cx="7" cy="7" r="6.5" stroke={CC_ACCENT[p.card_type]} strokeWidth="0.8" />
-                                            <path d="M4 7l2 2 4-4" stroke={CC_ACCENT[p.card_type]} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <li
+                                        key={b}
+                                        className="flex items-start gap-1.5 text-xs text-muted-foreground"
+                                    >
+                                        <svg
+                                            className="mt-0.5 size-3.5 shrink-0"
+                                            viewBox="0 0 14 14"
+                                            fill="none"
+                                        >
+                                            <circle
+                                                cx="7"
+                                                cy="7"
+                                                r="6.5"
+                                                stroke={CC_ACCENT[p.card_type]}
+                                                strokeWidth="0.8"
+                                            />
+                                            <path
+                                                d="M4 7l2 2 4-4"
+                                                stroke={CC_ACCENT[p.card_type]}
+                                                strokeWidth="1.2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
                                         </svg>
                                         {b}
                                     </li>
@@ -237,11 +259,26 @@ function CcProductCards({
                             {/* Pick button */}
                             <button
                                 type="button"
-                                onClick={() => onSelect(`Saya mau daftar ${CC_TITLE[p.card_type]}`)}
+                                onClick={() =>
+                                    onSelect(
+                                        `Saya mau daftar ${CC_TITLE[p.card_type]}`,
+                                    )
+                                }
                                 className="w-full rounded-lg border border-border py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted"
-                                style={p.card_type === "platinum" ? { borderColor: CC_ACCENT.platinum, color: CC_ACCENT.platinum } : {}}
+                                style={
+                                    p.card_type === "platinum"
+                                        ? {
+                                              borderColor: CC_ACCENT.platinum,
+                                              color: CC_ACCENT.platinum,
+                                          }
+                                        : {}
+                                }
                             >
-                                Pilih {CC_TITLE[p.card_type].replace("Hasanah Card ", "")}
+                                Pilih{" "}
+                                {CC_TITLE[p.card_type].replace(
+                                    "Hasanah Card ",
+                                    "",
+                                )}
                             </button>
 
                             {/* Detail toggle */}
@@ -250,25 +287,42 @@ function CcProductCards({
                                 onClick={() => toggleDetail(p.card_type)}
                                 className="w-full text-center text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                             >
-                                {openDetail[p.card_type] ? "Sembunyikan ▲" : "Lihat detail ▼"}
+                                {openDetail[p.card_type]
+                                    ? "Sembunyikan ▲"
+                                    : "Lihat detail ▼"}
                             </button>
 
                             {/* Detail rows */}
                             {openDetail[p.card_type] && (
                                 <div className="rounded-lg bg-muted/50 px-3 py-2.5 flex flex-col gap-1.5 text-xs">
                                     <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Limit maks</span>
-                                        <span className="font-medium">Rp {p.limit.max.toLocaleString("id-ID")}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Welcome bonus</span>
+                                        <span className="text-muted-foreground">
+                                            Limit maks
+                                        </span>
                                         <span className="font-medium">
-                                            {p.welcome_bonus > 0 ? `Rp ${p.welcome_bonus.toLocaleString("id-ID")}` : "–"}
+                                            Rp{" "}
+                                            {p.limit.max.toLocaleString(
+                                                "id-ID",
+                                            )}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Lounge bandara</span>
-                                        <span className="font-medium">{p.free_lounge ? "✓ Gratis" : "–"}</span>
+                                        <span className="text-muted-foreground">
+                                            Welcome bonus
+                                        </span>
+                                        <span className="font-medium">
+                                            {p.welcome_bonus > 0
+                                                ? `Rp ${p.welcome_bonus.toLocaleString("id-ID")}`
+                                                : "–"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                            Lounge bandara
+                                        </span>
+                                        <span className="font-medium">
+                                            {p.free_lounge ? "✓ Gratis" : "–"}
+                                        </span>
                                     </div>
                                 </div>
                             )}
@@ -306,7 +360,10 @@ function ChatDefault({ agentId }: { agentId: string }) {
     const mutation = useMutation({
         mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
         onSuccess: (response) => {
-            setMessages((prev) => [...prev, { role: "assistant", text: response.reply }]);
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", text: response.reply },
+            ]);
             setNextSteps(response.next_step ?? null);
             setCcProducts(response.product ?? null);
         },
@@ -330,18 +387,33 @@ function ChatDefault({ agentId }: { agentId: string }) {
         requestAnimationFrame(() => resizeTextarea());
     }
 
-    function handleSend() { sendText(input); }
+    function handleSend() {
+        sendText(input);
+    }
     function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
     }
 
-    const lastIsAssistant = messages.length > 0 && messages[messages.length - 1].role === "assistant";
-    const showNextSteps = lastIsAssistant && !mutation.isPending && nextSteps && nextSteps.length > 0;
-    const showCcProducts = lastIsAssistant && !mutation.isPending && ccProducts && ccProducts.length > 0;
+    const lastIsAssistant =
+        messages.length > 0 &&
+        messages[messages.length - 1].role === "assistant";
+    const showNextSteps =
+        lastIsAssistant &&
+        !mutation.isPending &&
+        nextSteps &&
+        nextSteps.length > 0;
+    const showCcProducts =
+        lastIsAssistant &&
+        !mutation.isPending &&
+        ccProducts &&
+        ccProducts.length > 0;
 
     return (
-        <div className="flex h-full flex-col">
-            <ScrollArea className="flex-1 px-4 py-4 w-full max-w-3xl mx-auto">
+        <div className="flex h-full min-h-0 flex-col">
+            <ScrollArea className="min-h-0 flex-1 px-4 py-4 w-full max-w-3xl mx-auto">
                 {messages.length === 0 && !showInitialSuggestions && (
                     <p className="mt-8 text-center text-sm text-muted-foreground">
                         Send a message to start the conversation.
@@ -367,12 +439,16 @@ function ChatDefault({ agentId }: { agentId: string }) {
                     )}
                     {mutation.isPending && (
                         <div className="flex justify-start">
-                            <p className="text-sm text-muted-foreground animate-pulse">Thinking...</p>
+                            <p className="text-sm text-muted-foreground animate-pulse">
+                                Thinking...
+                            </p>
                         </div>
                     )}
                     {mutation.isError && (
                         <div className="flex justify-start">
-                            <p className="text-sm text-destructive">Something went wrong. Please try again.</p>
+                            <p className="text-sm text-destructive">
+                                Something went wrong. Please try again.
+                            </p>
                         </div>
                     )}
                 </div>
@@ -392,7 +468,10 @@ function ChatDefault({ agentId }: { agentId: string }) {
 
             {/* Initial grouped suggestions (only before first message) */}
             {showInitialSuggestions && messages.length === 0 && (
-                <InitialSuggestions groups={INITIAL_SUGGESTIONS} onSelect={sendText} />
+                <InitialSuggestions
+                    groups={INITIAL_SUGGESTIONS}
+                    onSelect={sendText}
+                />
             )}
 
             <div className="shrink-0 pt-3 pb-8 mx-5">
@@ -403,7 +482,10 @@ function ChatDefault({ agentId }: { agentId: string }) {
                         placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
                         rows={1}
                         value={input}
-                        onChange={(e) => { setInput(e.target.value); resizeTextarea(); }}
+                        onChange={(e) => {
+                            setInput(e.target.value);
+                            resizeTextarea();
+                        }}
                         onKeyDown={handleKeyDown}
                         disabled={mutation.isPending}
                     />
