@@ -418,7 +418,7 @@ function RouteComponent() {
                     <Mcps agentId={id} />
                 </TabsContent>
                 <TabsContent value="chat" className="overflow-hidden">
-                    <ChatSanbox agentId={id} />
+                    <ChatSanbox agentId={id} agentName={agent.data.name} />
                 </TabsContent>
             </Tabs>
         </div>

@@ -337,10 +337,12 @@ function CcProductCards({
 
 // ---------- ChatDefault ----------
 
-function ChatDefault({ agentId }: { agentId: string }) {
+function ChatDefault({ agentId, agentName }: { agentId: string; agentName: string }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
-    const [showInitialSuggestions, setShowInitialSuggestions] = useState(true);
+    const [showInitialSuggestions, setShowInitialSuggestions] = useState(
+        agentName.toLowerCase().includes("customer care"),
+    );
     const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
     const [ccProducts, setCcProducts] = useState<CcProduct[] | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -504,7 +506,7 @@ function ChatDefault({ agentId }: { agentId: string }) {
 
 type ViewMode = "chatbot" | "whatsapp";
 
-export function ChatSanbox({ agentId }: { agentId: string }) {
+export function ChatSanbox({ agentId, agentName }: { agentId: string; agentName: string }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
     return (
@@ -540,7 +542,7 @@ export function ChatSanbox({ agentId }: { agentId: string }) {
             {/* View content */}
             <div className="flex-1 overflow-hidden">
                 {view === "chatbot" ? (
-                    <ChatDefault agentId={agentId} />
+                    <ChatDefault agentId={agentId} agentName={agentName} />
                 ) : (
                     <ChatSandboxWhatsApp agentId={agentId} />
                 )}
