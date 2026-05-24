@@ -51,10 +51,13 @@ import {
     BookOpen,
     Check,
     Copy,
+    FileUp,
+    Loader2,
     MoreHorizontal,
+    Paperclip,
     Plus,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/(main)/knowledges/")({
@@ -98,10 +101,31 @@ const editKnowledgeSchema = z.object({
 type CreateKnowledgeValues = z.infer<typeof createKnowledgeSchema>;
 type EditKnowledgeValues = z.infer<typeof editKnowledgeSchema>;
 
+// ---------- Fake upload ----------
+
+const RUSTFS_BASE = "https://aiac-store.kocakhost.com/aiac/";
+
+type UploadState =
+    | { status: "idle" }
+    | { status: "uploading"; fileName: string }
+    | { status: "done"; fileName: string; url: string };
+
+function simulateUpload(file: File): Promise<string> {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const safeName = file.name.replace(/\s+/g, "_");
+            const ts = Date.now();
+            resolve(`${RUSTFS_BASE}${ts}_${safeName}`);
+        }, 1500);
+    });
+}
+
 // ---------- Create dialog ----------
 
 function CreateKnowledgeDialog() {
     const [open, setOpen] = useState(false);
+    const [upload, setUpload] = useState<UploadState>({ status: "idle" });
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -110,6 +134,7 @@ function CreateKnowledgeDialog() {
             queryClient.invalidateQueries({ queryKey: ["knowledges"] });
             setOpen(false);
             form.reset();
+            setUpload({ status: "idle" });
         },
     });
 
@@ -132,7 +157,19 @@ function CreateKnowledgeDialog() {
         if (!nextOpen) {
             mutation.reset();
             form.reset();
+            setUpload({ status: "idle" });
         }
+    }
+
+    async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUpload({ status: "uploading", fileName: file.name });
+        const url = await simulateUpload(file);
+        setUpload({ status: "done", fileName: file.name, url });
+        form.setFieldValue("source_uri", url);
+        // reset input so the same file can be re-selected if needed
+        e.target.value = "";
     }
 
     return (
@@ -263,25 +300,62 @@ function CreateKnowledgeDialog() {
                         )}
                     </form.Field>
 
-                    {/* Source URI */}
-                    <form.Field name="source_uri">
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Source URI</Label>
-                                <Input
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    placeholder="https://example.com/data"
-                                />
+                    {/* Document upload */}
+                    <div className="flex flex-col gap-1.5">
+                        <Label>Document</Label>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            disabled={upload.status === "uploading"}
+                        />
+
+                        {upload.status === "idle" && (
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 rounded-md border border-dashed border-input px-3 py-4 text-sm text-muted-foreground hover:border-ring hover:text-foreground transition-colors w-full justify-center"
+                            >
+                                <FileUp className="size-4" />
+                                Click to upload a document
+                            </button>
+                        )}
+
+                        {upload.status === "uploading" && (
+                            <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
+                                <Loader2 className="size-4 animate-spin shrink-0" />
+                                <span className="truncate">
+                                    Uploading{" "}
+                                    <span className="font-medium text-foreground">
+                                        {upload.fileName}
+                                    </span>
+                                    …
+                                </span>
                             </div>
                         )}
-                    </form.Field>
+
+                        {upload.status === "done" && (
+                            <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm">
+                                <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                                <span className="truncate flex-1 text-foreground font-medium">
+                                    {upload.fileName}
+                                </span>
+                                <Check className="size-4 shrink-0 text-green-500" />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setUpload({ status: "idle" });
+                                        form.setFieldValue("source_uri", "");
+                                        fileInputRef.current?.click();
+                                    }}
+                                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
+                                >
+                                    Change
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     <DialogFooter>
                         <DialogClose asChild>
@@ -295,7 +369,12 @@ function CreateKnowledgeDialog() {
                             {([canSubmit, isSubmitting]) => (
                                 <Button
                                     type="submit"
-                                    disabled={!canSubmit || isSubmitting || mutation.isPending}
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending ||
+                                        upload.status === "uploading"
+                                    }
                                 >
                                     {mutation.isPending ? "Creating..." : "Create"}
                                 </Button>
