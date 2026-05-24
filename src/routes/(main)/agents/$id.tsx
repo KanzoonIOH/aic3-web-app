@@ -389,7 +389,7 @@ function RouteComponent() {
             >
                 <div className="border-b">
                     <TabsList variant="line">
-                        <TabsTrigger value="overview">
+                        {/*<TabsTrigger value="overview">
                             <LayoutGridIcon />
                             Overview
                         </TabsTrigger>
@@ -400,7 +400,7 @@ function RouteComponent() {
                         <TabsTrigger value="mcp">
                             <PlugIcon />
                             MCPs
-                        </TabsTrigger>
+                        </TabsTrigger>*/}
                         <TabsTrigger value="chat">
                             <MessagesSquareIcon />
                             Chat Sandbox

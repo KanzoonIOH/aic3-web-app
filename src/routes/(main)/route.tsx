@@ -1,7 +1,5 @@
-import { getToken, useAuthStore } from "@/stores/auth";
-import { useThemeStore, type Theme } from "@/stores/theme";
-import logoLight from "@/assets/logo_ioh_light.svg";
 import logoDark from "@/assets/logo_ioh_dark.svg";
+import logoLight from "@/assets/logo_ioh_light.svg";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +8,9 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { getToken, useAuthStore } from "@/stores/auth";
+import { useThemeStore, type Theme } from "@/stores/theme";
 import {
     createFileRoute,
     Link,
@@ -19,21 +20,18 @@ import {
 } from "@tanstack/react-router";
 import {
     BarChart3,
-    Bot,
     BookOpen,
+    Bot,
+    ChevronsUpDownIcon,
     HelpCircle,
     KeyRound,
-    LayoutDashboard,
     LogOut,
     Monitor,
     Moon,
     Plug,
     Settings,
     Sun,
-    Users,
-    ChevronsUpDownIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/(main)")({
     beforeLoad: () => {
@@ -46,12 +44,12 @@ export const Route = createFileRoute("/(main)")({
 });
 
 const navItems = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    // { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/agents", label: "Agents", icon: Bot },
     { to: "/knowledges", label: "Knowledges", icon: BookOpen },
     { to: "/mcps", label: "MCPs", icon: Plug },
-    { to: "/members", label: "Members", icon: Users },
+    // { to: "/members", label: "Members", icon: Users },
     { to: "/api-keys", label: "API Keys", icon: KeyRound },
 ] as const;
 

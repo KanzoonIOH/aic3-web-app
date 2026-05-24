@@ -272,21 +272,22 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
         }
     }
 
-    const lastIsAssistant = messages.length > 0 && messages[messages.length - 1].role === "assistant";
-    const showNextSteps = lastIsAssistant && !mutation.isPending && nextSteps && nextSteps.length > 0;
+    const lastIsAssistant =
+        messages.length > 0 &&
+        messages[messages.length - 1].role === "assistant";
+    const showNextSteps =
+        lastIsAssistant &&
+        !mutation.isPending &&
+        nextSteps &&
+        nextSteps.length > 0;
 
     return (
         /* outer fills the tab panel and centers the phone */
-        <div
-            className="flex h-full items-center justify-center"
-            style={{ backgroundColor: C.pageBg }}
-        >
+        <div className="flex h-full items-center justify-center">
             {/* Phone shell */}
             <div
-                className="flex flex-col overflow-hidden shadow-2xl max-h-[98%]"
+                className="flex flex-col overflow-hidden shadow-2xl h-full max-h-[98%] aspect-[9/16]"
                 style={{
-                    width: 390,
-                    height: "min(780px, calc(100vh - 160px))",
                     borderRadius: 20,
                     border: "1px solid rgba(255,255,255,0.06)",
                 }}
@@ -492,11 +493,14 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
                                             <button
                                                 key={step.label}
                                                 type="button"
-                                                onClick={() => sendText(step.label)}
+                                                onClick={() =>
+                                                    sendText(step.label)
+                                                }
                                                 className="rounded-lg border px-3 py-2 text-left text-[13px] leading-snug shadow-sm transition-opacity active:opacity-80"
                                                 style={{
                                                     backgroundColor: C.incoming,
-                                                    borderColor: "rgba(0,168,132,0.45)",
+                                                    borderColor:
+                                                        "rgba(0,168,132,0.45)",
                                                     color: C.accent,
                                                 }}
                                             >
