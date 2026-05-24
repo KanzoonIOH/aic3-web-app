@@ -53,6 +53,16 @@ export interface NextStep {
     target_intent?: string;
 }
 
+export interface SuggestionItem {
+    label: string;
+    target_id?: number;
+    target_intent?: string;
+    faq_code?: string;
+    subtype?: string;
+    product_code?: string;
+    product_name?: string;
+}
+
 export interface CcProduct {
     card_type: "classic" | "gold" | "platinum";
     limit: { min: number; max: number };
@@ -71,12 +81,12 @@ export async function chatWithAgent(
     id: string,
     chatInput: string,
     sessionId: string,
-    usedMilvus?: boolean,
+    suggestion?: SuggestionItem,
 ): Promise<ChatResponse> {
     const { data } = await client.post<ChatResponse>(`/chat/${id}`, {
         chatInput,
         sessionId,
-        ...(usedMilvus !== undefined && { milvus: usedMilvus }),
+        ...(suggestion && { milvus: true, ...suggestion }),
     });
     return data;
 }
