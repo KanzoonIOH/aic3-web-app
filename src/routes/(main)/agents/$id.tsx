@@ -18,19 +18,13 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import axios from "axios";
-import {
-    BookIcon,
-    LayoutGridIcon,
-    MessagesSquareIcon,
-    Pencil,
-    PlugIcon,
-} from "lucide-react";
+import { Check, Copy, Link, MessagesSquareIcon, Pencil, TerminalSquare } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { ChatSanbox } from "./-ChatSandbox";
-import { Overview } from "./-Overview";
 import { Knowledges } from "./-Knowledges";
 import { Mcps } from "./-Mcps";
+import { Overview } from "./-Overview";
 
 export const Route = createFileRoute("/(main)/agents/$id")({
     component: RouteComponent,
@@ -337,6 +331,91 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     );
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL as string;
+
+function useCopyState() {
+    const [copied, setCopied] = useState(false);
+    function copy(text: string) {
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }
+    return { copied, copy };
+}
+
+function ApiTab({ agentId }: { agentId: string }) {
+    const endpointUrl = `${API_BASE_URL}/chat/${agentId}`;
+
+    const curlSnippet = `curl --request POST \\
+  --url ${endpointUrl} \\
+  --header 'authorization: Bearer [your token here]' \\
+  --header 'content-type: application/json' \\
+  --data '{
+  "sessionId": "string",
+  "chatInput": "apa yg bagus untuk dibeli di tahun 2025"
+}'`;
+
+    const curlCopy = useCopyState();
+    const urlCopy = useCopyState();
+
+    return (
+        <div className="h-full overflow-y-auto px-6 py-6">
+            <div className="max-w-2xl flex flex-col gap-6">
+                <div>
+                    <h2 className="text-base font-semibold mb-1">Chat endpoint</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Send a <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">POST</code> request to chat with this agent programmatically. Replace{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">[your token here]</code>{" "}
+                        with a valid API key.
+                    </p>
+                </div>
+
+                {/* Endpoint URL row */}
+                <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Endpoint URL</p>
+                    <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                        <code className="flex-1 text-sm font-mono break-all text-foreground">
+                            {endpointUrl}
+                        </code>
+                        <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            onClick={() => urlCopy.copy(endpointUrl)}
+                            title="Copy URL"
+                            className="shrink-0"
+                        >
+                            {urlCopy.copied
+                                ? <Check className="size-3.5 text-green-500" />
+                                : <Link className="size-3.5" />}
+                        </Button>
+                    </div>
+                </div>
+
+                {/* cURL snippet */}
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">cURL example</p>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => curlCopy.copy(curlSnippet)}
+                            className="gap-1.5 h-7 text-xs"
+                        >
+                            {curlCopy.copied
+                                ? <><Check className="size-3.5 text-green-500" /> Copied</>
+                                : <><Copy className="size-3.5" /> Copy cURL</>}
+                        </Button>
+                    </div>
+                    <pre className="overflow-x-auto rounded-lg border border-border bg-muted/40 px-4 py-3.5 text-xs font-mono leading-relaxed text-foreground whitespace-pre">
+                        {curlSnippet}
+                    </pre>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function RouteComponent() {
     const { id } = Route.useParams();
 
@@ -405,6 +484,10 @@ function RouteComponent() {
                             <MessagesSquareIcon />
                             Chat Sandbox
                         </TabsTrigger>
+                        <TabsTrigger value="api">
+                            <TerminalSquare />
+                            API
+                        </TabsTrigger>
                     </TabsList>
                 </div>
 
@@ -419,6 +502,9 @@ function RouteComponent() {
                 </TabsContent>
                 <TabsContent value="chat" className="overflow-hidden">
                     <ChatSanbox agentId={id} agentName={agent.data.name} />
+                </TabsContent>
+                <TabsContent value="api" className="overflow-hidden">
+                    <ApiTab agentId={id} />
                 </TabsContent>
             </Tabs>
         </div>
