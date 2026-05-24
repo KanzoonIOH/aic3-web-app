@@ -76,7 +76,7 @@ export async function chatWithAgent(
     const { data } = await client.post<ChatResponse>(`/chat/${id}`, {
         chatInput,
         sessionId,
-        ...(usedMilvus !== undefined && { used_milvus: usedMilvus }),
+        ...(usedMilvus !== undefined && { milvus: usedMilvus }),
     });
     return data;
 }
