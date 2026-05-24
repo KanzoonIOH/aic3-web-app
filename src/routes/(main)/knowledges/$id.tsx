@@ -1,7 +1,6 @@
 import { getKnowledge } from "@/api/knowledges";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
 
 export const Route = createFileRoute("/(main)/knowledges/$id")({
     component: RouteComponent,
@@ -53,26 +52,8 @@ function RouteComponent() {
 
                 <div className="p-6 flex flex-col gap-4">
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                            <FileText className="size-4" />
-                            {knowledge.data.document_count} documents
-                        </span>
                         <span className="capitalize">
-                            {knowledge.data.type}
-                        </span>
-                        <span>
-                            Status:{" "}
-                            <span
-                                className={
-                                    knowledge.data.is_active
-                                        ? "text-green-500"
-                                        : "text-muted-foreground"
-                                }
-                            >
-                                {knowledge.data.is_active
-                                    ? "Active"
-                                    : "Inactive"}
-                            </span>
+                            {knowledge.data.source_type}
                         </span>
                     </div>
 

@@ -18,7 +18,14 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import axios from "axios";
-import { Check, Copy, Link, MessagesSquareIcon, Pencil, TerminalSquare } from "lucide-react";
+import {
+    Check,
+    Copy,
+    Link,
+    MessagesSquareIcon,
+    Pencil,
+    TerminalSquare,
+} from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { ChatSanbox } from "./-ChatSandbox";
@@ -363,17 +370,28 @@ function ApiTab({ agentId }: { agentId: string }) {
         <div className="h-full overflow-y-auto px-6 py-6">
             <div className="max-w-2xl flex flex-col gap-6">
                 <div>
-                    <h2 className="text-base font-semibold mb-1">Chat endpoint</h2>
+                    <h2 className="text-base font-semibold mb-1">
+                        Chat endpoint
+                    </h2>
                     <p className="text-sm text-muted-foreground">
-                        Send a <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">POST</code> request to chat with this agent programmatically. Replace{" "}
-                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">[your token here]</code>{" "}
+                        Send a{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                            POST
+                        </code>{" "}
+                        request to chat with this agent programmatically.
+                        Replace{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                            [your token here]
+                        </code>{" "}
                         with a valid API key.
                     </p>
                 </div>
 
                 {/* Endpoint URL row */}
                 <div className="flex flex-col gap-1.5">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Endpoint URL</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Endpoint URL
+                    </p>
                     <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
                         <code className="flex-1 text-sm font-mono break-all text-foreground">
                             {endpointUrl}
@@ -385,9 +403,11 @@ function ApiTab({ agentId }: { agentId: string }) {
                             title="Copy URL"
                             className="shrink-0"
                         >
-                            {urlCopy.copied
-                                ? <Check className="size-3.5 text-green-500" />
-                                : <Link className="size-3.5" />}
+                            {urlCopy.copied ? (
+                                <Check className="size-3.5 text-green-500" />
+                            ) : (
+                                <Link className="size-3.5" />
+                            )}
                         </Button>
                     </div>
                 </div>
@@ -395,16 +415,25 @@ function ApiTab({ agentId }: { agentId: string }) {
                 {/* cURL snippet */}
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">cURL example</p>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            cURL example
+                        </p>
                         <Button
                             size="sm"
                             variant="outline"
                             onClick={() => curlCopy.copy(curlSnippet)}
                             className="gap-1.5 h-7 text-xs"
                         >
-                            {curlCopy.copied
-                                ? <><Check className="size-3.5 text-green-500" /> Copied</>
-                                : <><Copy className="size-3.5" /> Copy cURL</>}
+                            {curlCopy.copied ? (
+                                <>
+                                    <Check className="size-3.5 text-green-500" />{" "}
+                                    Copied
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="size-3.5" /> Copy cURL
+                                </>
+                            )}
                         </Button>
                     </div>
                     <pre className="overflow-x-auto rounded-lg border border-border bg-muted/40 px-4 py-3.5 text-xs font-mono leading-relaxed text-foreground whitespace-pre">

@@ -1,7 +1,6 @@
 import { getMcp } from "@/api/mcps";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/(main)/mcps/$id")({
     component: RouteComponent,
@@ -50,32 +49,13 @@ function RouteComponent() {
                 </div>
 
                 <div className="p-6 flex flex-col gap-4">
-                    <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                            <Wrench className="size-4" />
-                            {mcp.data.tool_count} tools
-                        </span>
-                        <span>
-                            Status:{" "}
-                            <span
-                                className={
-                                    mcp.data.is_active
-                                        ? "text-green-500"
-                                        : "text-muted-foreground"
-                                }
-                            >
-                                {mcp.data.is_active ? "Active" : "Inactive"}
-                            </span>
-                        </span>
-                    </div>
-
-                    {mcp.data.endpoint_url && (
+                    {mcp.data.uri && (
                         <div className="rounded-lg border p-4">
                             <p className="text-xs font-medium text-muted-foreground mb-1">
-                                Endpoint URL
+                                URI
                             </p>
                             <p className="text-sm font-mono break-all">
-                                {mcp.data.endpoint_url}
+                                {mcp.data.uri}
                             </p>
                         </div>
                     )}

@@ -6,15 +6,29 @@ import type { ResponseTemplate } from "./types";
 export interface Knowledge {
     id: string;
     name: string;
+    description: string | null;
+    source_type: string;
+    source_uri: string | null;
+    agents_count?: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+export interface CreateKnowledgeRequest {
+    name: string;
     description: string;
-    is_active: boolean;
-    type: string;
+    source_type: string;
     source_uri: string;
-    document_count: number;
+}
+
+export interface UpdateKnowledgeRequest {
+    name: string;
+    description: string;
 }
 
 // ---------- API functions ----------
-//
+
 type ResponseGetKnowledges = ResponseTemplate<Knowledge[]>;
 export async function getKnowledges(): Promise<ResponseGetKnowledges> {
     const { data } = await client.get<ResponseGetKnowledges>("/knowledges");
@@ -27,4 +41,31 @@ export async function getKnowledge(id: string): Promise<ResponseGetKnowledge> {
         `/knowledges/${id}`,
     );
     return data;
+}
+
+type ResponseCreateKnowledge = ResponseTemplate<Knowledge>;
+export async function createKnowledge(
+    payload: CreateKnowledgeRequest,
+): Promise<ResponseCreateKnowledge> {
+    const { data } = await client.post<ResponseCreateKnowledge>(
+        "/knowledges",
+        payload,
+    );
+    return data;
+}
+
+type ResponseUpdateKnowledge = ResponseTemplate<Knowledge>;
+export async function updateKnowledge(
+    id: string,
+    payload: UpdateKnowledgeRequest,
+): Promise<ResponseUpdateKnowledge> {
+    const { data } = await client.patch<ResponseUpdateKnowledge>(
+        `/knowledges/${id}`,
+        payload,
+    );
+    return data;
+}
+
+export async function deleteKnowledge(id: string): Promise<void> {
+    await client.delete(`/knowledges/${id}`);
 }

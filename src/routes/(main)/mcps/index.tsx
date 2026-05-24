@@ -1,103 +1,418 @@
-import { getMcps, type Mcp } from "@/api/mcps";
+import { getMcps, updateMcp, type Mcp } from "@/api/mcps";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronRight, LayoutGrid, List, Plug, Wrench } from "lucide-react";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import axios from "axios";
+import { MoreHorizontal, Plug, Plus } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
 
 export const Route = createFileRoute("/(main)/mcps/")({
     component: RouteComponent,
 });
 
-function InitialsAvatar({
-    name,
-    className,
-}: {
-    name: string;
-    className?: string;
-}) {
-    const parts = name.trim().split(/\s+/);
-    const initials =
-        parts.length === 1
-            ? parts[0][0].toUpperCase()
-            : (parts[0][0] + parts[1][0]).toUpperCase();
-    return (
-        <div
-            className={cn(
-                "flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary border",
-                className,
-            )}
-        >
-            {initials}
-        </div>
-    );
+// ---------- Helpers ----------
+
+type ApiError = { message?: string };
+
+function resolveServerMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+        const data = error.response?.data as ApiError | undefined;
+        return data?.message ?? error.message;
+    }
+    return "An unexpected error occurred.";
 }
 
-function McpCard({ mcp }: { mcp: Mcp }) {
+const textareaClass = cn(
+    "min-h-20 w-full rounded-md border border-input bg-transparent px-2.5 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground",
+    "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+    "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+    "md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+);
+
+// ---------- Schema ----------
+
+const editMcpSchema = z.object({
+    name: z.string().trim().min(1, "Name is required"),
+    description: z.string().trim(),
+});
+
+type EditMcpValues = z.infer<typeof editMcpSchema>;
+
+// ---------- Add MCP — request notice dialog ----------
+
+function AddMcpDialog() {
+    const [open, setOpen] = useState(false);
+
     return (
-        <Card className="rounded-lg bg-inherit flex flex-col gap-1 overflow-hidden p-2 pl-4">
-            <div className="flex items-center gap-3 pt-2">
-                <InitialsAvatar name={mcp.name} />
-                <span className="truncate font-medium text-lg">{mcp.name}</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-                {mcp.description}
-            </p>
-            <div className="flex justify-between items-center pt-1 mt-auto">
-                <div className="flex gap-4">
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Wrench className="size-3" />
-                        {mcp.tool_count} tools
-                    </span>
-                </div>
-                <Button size={"sm"} className="text-xs" asChild>
-                    <Link to="/mcps/$id" params={{ id: mcp.id }}>
-                        Details
-                        <ChevronRight className="size-3" />
-                    </Link>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                    <Plus className="size-3.5" />
+                    Add MCP
                 </Button>
-            </div>
-        </Card>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add MCP</DialogTitle>
+                    <DialogDescription>
+                        Adding a new MCP requires an official request.
+                    </DialogDescription>
+                </DialogHeader>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                    MCP integrations are provisioned through a formal request
+                    process. Please contact your administrator or submit a
+                    request through the official channel to have a new MCP
+                    added.
+                </p>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Close</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
-function McpListRow({ mcp }: { mcp: Mcp }) {
+// ---------- Edit MCP dialog ----------
+
+function EditMcpDialog({
+    mcp,
+    open,
+    onOpenChange,
+}: {
+    mcp: Mcp;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (payload: EditMcpValues) => updateMcp(mcp.id, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            onOpenChange(false);
+        },
+    });
+
+    const form = useForm({
+        defaultValues: {
+            name: mcp.name,
+            description: mcp.description ?? "",
+        } satisfies EditMcpValues,
+        onSubmit: async ({ value }) => {
+            const result = editMcpSchema.safeParse(value);
+            if (!result.success) return;
+            await mutation.mutateAsync(result.data);
+        },
+    });
+
+    function handleOpenChange(nextOpen: boolean) {
+        onOpenChange(nextOpen);
+        mutation.reset();
+        form.reset({ name: mcp.name, description: mcp.description ?? "" });
+    }
+
     return (
-        <div className="border rounded-lg flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
-            <InitialsAvatar name={mcp.name} className="size-8 text-xs" />
-            <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{mcp.name}</span>
-                </div>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {mcp.description}
-                </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <Wrench className="size-3" />
-                    {mcp.tool_count} tools
-                </span>
-            </div>
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0 text-muted-foreground"
-                asChild
-            >
-                <Link to="/mcps/$id" params={{ id: mcp.id }}>
-                    <ChevronRight className="size-4" />
-                </Link>
-            </Button>
-        </div>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit MCP</DialogTitle>
+                    <DialogDescription>
+                        Update the name and description.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    {mutation.isError && (
+                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {resolveServerMessage(mutation.error)}
+                        </p>
+                    )}
+
+                    {/* Name */}
+                    <form.Field
+                        name="name"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const r =
+                                    editMcpSchema.shape.name.safeParse(value);
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
+                            },
+                            onSubmit: ({ value }) => {
+                                const r =
+                                    editMcpSchema.shape.name.safeParse(value);
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
+                            },
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                    autoFocus
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    {/* Description */}
+                    <form.Field
+                        name="description"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const r =
+                                    editMcpSchema.shape.description.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
+                            },
+                            onSubmit: ({ value }) => {
+                                const r =
+                                    editMcpSchema.shape.description.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
+                            },
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Description</Label>
+                                <textarea
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    className={textareaClass}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <form.Subscribe
+                            selector={(state) => [
+                                state.canSubmit,
+                                state.isSubmitting,
+                            ]}
+                        >
+                            {([canSubmit, isSubmitting]) => (
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending
+                                    }
+                                >
+                                    {mutation.isPending ? "Saving..." : "Save"}
+                                </Button>
+                            )}
+                        </form.Subscribe>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
+
+// ---------- Table row ----------
+
+function McpRow({ mcp }: { mcp: Mcp }) {
+    const [editOpen, setEditOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    // const queryClient = useQueryClient();
+
+    // const { mutate: remove, isPending: isDeleting } = useMutation({
+    //     mutationFn: () => deleteMcp(mcp.id),
+    //     onSuccess: () => {
+    //         queryClient.invalidateQueries({ queryKey: ["mcps"] });
+    //         setDeleteOpen(false);
+    //     },
+    // });
+
+    return (
+        <>
+            <TableRow>
+                <TableCell className="font-medium">{mcp.name}</TableCell>
+                <TableCell className="text-muted-foreground text-sm max-w-64">
+                    {mcp.description ?? (
+                        <span className="italic text-muted-foreground/50">
+                            —
+                        </span>
+                    )}
+                </TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground max-w-56 truncate">
+                    {mcp.uri}
+                </TableCell>
+                <TableCell className="text-right">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                className="text-muted-foreground hover:text-foreground"
+                                aria-label="Open menu"
+                            >
+                                <MoreHorizontal className="size-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                onSelect={() => setEditOpen(true)}
+                            >
+                                Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setDeleteOpen(true)}
+                            >
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </TableCell>
+            </TableRow>
+
+            <EditMcpDialog
+                mcp={mcp}
+                open={editOpen}
+                onOpenChange={setEditOpen}
+            />
+
+            {/* Delete — request notice */}
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete MCP</DialogTitle>
+                        <DialogDescription>
+                            Deleting an MCP requires an official request.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                        MCP deletion will effect agents reply success rate.
+                        Please contact your administrator or submit a request
+                        through the official channel to have an MCP removed.
+                    </p>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Close</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/*<AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete MCP?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <span className="font-medium text-foreground">
+                                {mcp.name}
+                            </span>{" "}
+                            will be permanently deleted. This action cannot be
+                            undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel variant="ghost">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            disabled={isDeleting}
+                            onClick={() => remove()}
+                        >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>*/}
+        </>
+    );
+}
+
+// ---------- Route ----------
 
 function RouteComponent() {
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
     const {
         data: mcps,
         isPending,
@@ -110,45 +425,18 @@ function RouteComponent() {
     return (
         <div className="flex h-full flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto">
-                <div className="sticky top-0 px-6 py-4 flex flex-wrap items-start gap-4 bg-background border-b">
-                    <div>
+                <div className="sticky top-0 px-6 py-4 flex items-center gap-4 bg-background border-b">
+                    <div className="min-w-0 flex-1">
                         <h1 className="font-heading text-2xl font-semibold">
                             All MCPs
                         </h1>
-                        <p className="mt-0.5 text-sm text-muted-foreground flex gap-2"></p>
                     </div>
-
-                    <div className="ml-auto flex items-center gap-2">
-                        <div className="flex items-center gap-0.5 rounded-lg border bg-muted/40 p-0.5">
-                            <button
-                                onClick={() => setViewMode("grid")}
-                                className={cn(
-                                    "rounded-md p-1.5 transition-colors",
-                                    viewMode === "grid"
-                                        ? "bg-background text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <LayoutGrid className="size-3.5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode("list")}
-                                className={cn(
-                                    "rounded-md p-1.5 transition-colors",
-                                    viewMode === "list"
-                                        ? "bg-background text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <List className="size-3.5" />
-                            </button>
-                        </div>
-                    </div>
+                    <AddMcpDialog />
                 </div>
 
                 <div className="p-6">
                     {isPending ? (
-                        <div className="flex flex-col items-center justify-center gap-2 py-16">
+                        <div className="flex items-center justify-center py-16">
                             <p className="text-sm text-muted-foreground">
                                 Loading MCPs...
                             </p>
@@ -167,17 +455,23 @@ function RouteComponent() {
                                 No MCPs found
                             </p>
                         </div>
-                    ) : viewMode === "grid" ? (
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {mcps.data.map((mcp) => (
-                                <McpCard key={mcp.id} mcp={mcp} />
-                            ))}
-                        </div>
                     ) : (
-                        <div className="flex flex-col gap-2">
-                            {mcps.data.map((mcp) => (
-                                <McpListRow key={mcp.id} mcp={mcp} />
-                            ))}
+                        <div className="rounded-lg border overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>URI</TableHead>
+                                        <TableHead />
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {mcps.data.map((mcp) => (
+                                        <McpRow key={mcp.id} mcp={mcp} />
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </div>
