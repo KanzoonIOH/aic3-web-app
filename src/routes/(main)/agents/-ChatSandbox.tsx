@@ -360,7 +360,8 @@ function ChatDefault({ agentId, agentName }: { agentId: string; agentName: strin
     }, []);
 
     const mutation = useMutation({
-        mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
+        mutationFn: ({ text, usedMilvus }: { text: string; usedMilvus?: boolean }) =>
+            chatWithAgent(agentId, text, sessionId, usedMilvus),
         onSuccess: (response) => {
             setMessages((prev) => [
                 ...prev,
@@ -378,14 +379,14 @@ function ChatDefault({ agentId, agentName }: { agentId: string; agentName: strin
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, nextSteps, ccProducts]);
 
-    function sendText(text: string) {
+    function sendText(text: string, usedMilvus?: boolean) {
         if (!text.trim() || mutation.isPending) return;
         setShowInitialSuggestions(false);
         setNextSteps(null);
         setCcProducts(null);
         setInput("");
         setMessages((prev) => [...prev, { role: "user", text }]);
-        mutation.mutate(text);
+        mutation.mutate({ text, usedMilvus });
         requestAnimationFrame(() => resizeTextarea());
     }
 
@@ -472,7 +473,7 @@ function ChatDefault({ agentId, agentName }: { agentId: string; agentName: strin
             {showInitialSuggestions && messages.length === 0 && (
                 <InitialSuggestions
                     groups={INITIAL_SUGGESTIONS}
-                    onSelect={sendText}
+                    onSelect={(label) => sendText(label, true)}
                 />
             )}
 

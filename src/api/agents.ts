@@ -71,10 +71,12 @@ export async function chatWithAgent(
     id: string,
     chatInput: string,
     sessionId: string,
+    usedMilvus?: boolean,
 ): Promise<ChatResponse> {
     const { data } = await client.post<ChatResponse>(`/chat/${id}`, {
         chatInput,
         sessionId,
+        ...(usedMilvus !== undefined && { used_milvus: usedMilvus }),
     });
     return data;
 }

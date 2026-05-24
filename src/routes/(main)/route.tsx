@@ -1,5 +1,7 @@
 import { getToken, useAuthStore } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
+import logoLight from "@/assets/logo_ioh_light.svg";
+import logoDark from "@/assets/logo_ioh_dark.svg";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -182,14 +184,27 @@ function UserSection() {
     );
 }
 
+function SidebarLogo() {
+    const theme = useThemeStore((s) => s.theme);
+    const isDark =
+        theme === "dark" ||
+        (theme === "system" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+    return (
+        <img
+            src={isDark ? logoDark : logoLight}
+            alt="Logo"
+            className="h-8 w-auto"
+        />
+    );
+}
+
 function RouteComponent() {
     return (
         <div className="h-dvh w-full grid grid-cols-[200px_1fr]">
             <aside className="flex flex-col border-r bg-sidebar">
                 <div className="flex-cc p-3">
-                    <span className="font-heading font-semibold">
-                        AIAConsole
-                    </span>
+                    <SidebarLogo />
                 </div>
                 <Separator />
                 <nav className="flex flex-col flex-1 gap-0.5 p-2 overflow-y-auto">
