@@ -45,7 +45,7 @@ function AgentCard({ agent }: { agent: Agent }) {
         <Card className="rounded-lg bg-inherit flex flex-col gap-1 overflow-hidden p-2 pl-4">
             <div className="flex items-center gap-3 pt-2">
                 <AgentInitialsAvatar name={agent.name} />
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                     <span className="text-foreground/70 text-xs">
                         {agent.is_active ? "Active" : "Inactive"}
                     </span>

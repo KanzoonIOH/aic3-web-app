@@ -611,8 +611,8 @@ function KnowledgeRow({ knowledge }: { knowledge: Knowledge }) {
     return (
         <>
             <TableRow>
-                <TableCell className="font-medium">{knowledge.name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm max-w-56">
+                <TableCell className="font-medium max-w-48 truncate">{knowledge.name}</TableCell>
+                <TableCell className="text-muted-foreground text-sm max-w-56 truncate">
                     {knowledge.description ?? (
                         <span className="italic text-muted-foreground/50">—</span>
                     )}

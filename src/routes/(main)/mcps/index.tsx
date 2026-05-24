@@ -31,7 +31,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import axios from "axios";
-import { MoreHorizontal, Plug, Plus } from "lucide-react";
+import { Check, Copy, MoreHorizontal, Plug, Plus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -58,6 +58,44 @@ const textareaClass = cn(
     "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
     "md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
 );
+
+function CopyableUri({ uri }: { uri: string }) {
+    const [copied, setCopied] = useState(false);
+
+    function handleCopy() {
+        navigator.clipboard.writeText(uri).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+        });
+    }
+
+    const MAX = 32;
+    const clipped = uri.length > MAX ? uri.slice(0, MAX) + "…" : uri;
+
+    return (
+        <div className="flex items-center gap-1.5 min-w-0">
+            <span
+                className="truncate font-mono text-xs text-muted-foreground"
+                title={uri}
+            >
+                {clipped}
+            </span>
+            <Button
+                variant="ghost"
+                size="icon-xs"
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={handleCopy}
+                aria-label="Copy URI"
+            >
+                {copied ? (
+                    <Check className="size-3 text-green-500" />
+                ) : (
+                    <Copy className="size-3" />
+                )}
+            </Button>
+        </div>
+    );
+}
 
 // ---------- Schema ----------
 
@@ -322,7 +360,8 @@ function McpRow({ mcp }: { mcp: Mcp }) {
                     )}
                 </TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground max-w-56 truncate">
-                    {mcp.uri}
+                    <CopyableUri uri={mcp.uri} />
+                    {/*{mcp.uri}*/}
                 </TableCell>
                 <TableCell className="text-right">
                     <DropdownMenu>
