@@ -31,6 +31,7 @@ import {
     Plug,
     Settings,
     Sun,
+    Users,
 } from "lucide-react";
 
 export const Route = createFileRoute("/(main)")({
@@ -49,7 +50,7 @@ const navItems = [
     { to: "/agents", label: "Agents", icon: Bot },
     { to: "/knowledges", label: "Knowledges", icon: BookOpen },
     { to: "/mcps", label: "MCPs", icon: Plug },
-    // { to: "/members", label: "Members", icon: Users },
+    { to: "/members", label: "Members", icon: Users },
     { to: "/api-keys", label: "API Keys", icon: KeyRound },
 ] as const;
 
