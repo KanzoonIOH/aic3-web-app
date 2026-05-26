@@ -19,12 +19,12 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import {
-    BarChart3,
     BookOpen,
     Bot,
     ChevronsUpDownIcon,
     HelpCircle,
     KeyRound,
+    LayoutDashboardIcon,
     LogOut,
     Monitor,
     Moon,
@@ -44,8 +44,8 @@ export const Route = createFileRoute("/(main)")({
 });
 
 const navItems = [
-    // { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/analytics", label: "Analytics", icon: BarChart3 },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+    // { to: "/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/agents", label: "Agents", icon: Bot },
     { to: "/knowledges", label: "Knowledges", icon: BookOpen },
     { to: "/mcps", label: "MCPs", icon: Plug },
