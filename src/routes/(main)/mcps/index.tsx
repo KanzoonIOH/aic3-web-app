@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import axios from "axios";
 import { Check, Copy, MoreHorizontal, Plug, Plus } from "lucide-react";
 import { useState } from "react";
@@ -359,6 +359,7 @@ function McpRow({ mcp }: { mcp: Mcp }) {
                         </span>
                     )}
                 </TableCell>
+                <TableCell className="font-medium">{mcp.tools_count}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground max-w-56 truncate">
                     <CopyableUri uri={mcp.uri} />
                     {/*{mcp.uri}*/}
@@ -376,6 +377,11 @@ function McpRow({ mcp }: { mcp: Mcp }) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                                <Link to={"/mcps/$id"} params={{ id: mcp.id }}>
+                                    Details
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 onSelect={() => setEditOpen(true)}
                             >
@@ -501,6 +507,7 @@ function RouteComponent() {
                                     <TableRow>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Description</TableHead>
+                                        <TableHead>Tools</TableHead>
                                         <TableHead>URI</TableHead>
                                         <TableHead />
                                     </TableRow>

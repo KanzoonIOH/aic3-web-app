@@ -29,6 +29,7 @@ import {
     Monitor,
     Moon,
     Plug,
+    ScrollText,
     Settings,
     Sun,
     Users,
@@ -45,11 +46,12 @@ export const Route = createFileRoute("/(main)")({
 });
 
 const navItems = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+    { to: "/dashboard2", label: "Dashboard", icon: LayoutDashboardIcon },
     // { to: "/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/agents", label: "Agents", icon: Bot },
     { to: "/knowledges", label: "Knowledges", icon: BookOpen },
     { to: "/mcps", label: "MCPs", icon: Plug },
+    { to: "/logs", label: "Logs", icon: ScrollText },
     { to: "/members", label: "Members", icon: Users },
     { to: "/api-keys", label: "API Keys", icon: KeyRound },
 ] as const;

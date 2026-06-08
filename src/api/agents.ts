@@ -77,6 +77,19 @@ export interface ChatResponse {
     product?: CcProduct[] | null;
 }
 
+export interface PersonaRequest {
+    tone: string;
+    response_length: string;
+    communication_style: string;
+}
+
+export async function saveAgentPersona(
+    id: string,
+    payload: PersonaRequest,
+): Promise<void> {
+    await client.patch(`/agents/${id}/persona`, payload);
+}
+
 export async function chatWithAgent(
     id: string,
     chatInput: string,

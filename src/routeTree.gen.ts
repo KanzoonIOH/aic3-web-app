@@ -13,6 +13,8 @@ import { Route as mainRouteRouteImport } from './routes/(main)/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as mainMembersRouteImport } from './routes/(main)/members'
+import { Route as mainLogsRouteImport } from './routes/(main)/logs'
+import { Route as mainDashboard2RouteImport } from './routes/(main)/dashboard2'
 import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
 import { Route as mainAnalyticsRouteImport } from './routes/(main)/analytics'
@@ -41,6 +43,16 @@ const IndexRoute = IndexRouteImport.update({
 const mainMembersRoute = mainMembersRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainLogsRoute = mainLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainDashboard2Route = mainDashboard2RouteImport.update({
+  id: '/dashboard2',
+  path: '/dashboard2',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainDashboardRoute = mainDashboardRouteImport.update({
@@ -106,6 +118,8 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof mainAnalyticsRoute
   '/api-keys': typeof mainApiKeysRoute
   '/dashboard': typeof mainDashboardRoute
+  '/dashboard2': typeof mainDashboard2Route
+  '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
   '/knowledges/$id': typeof mainKnowledgesIdRoute
@@ -121,6 +135,8 @@ export interface FileRoutesByTo {
   '/analytics': typeof mainAnalyticsRoute
   '/api-keys': typeof mainApiKeysRoute
   '/dashboard': typeof mainDashboardRoute
+  '/dashboard2': typeof mainDashboard2Route
+  '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
   '/knowledges/$id': typeof mainKnowledgesIdRoute
@@ -139,6 +155,8 @@ export interface FileRoutesById {
   '/(main)/analytics': typeof mainAnalyticsRoute
   '/(main)/api-keys': typeof mainApiKeysRoute
   '/(main)/dashboard': typeof mainDashboardRoute
+  '/(main)/dashboard2': typeof mainDashboard2Route
+  '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
   '/(main)/knowledges/$id': typeof mainKnowledgesIdRoute
@@ -156,6 +174,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/api-keys'
     | '/dashboard'
+    | '/dashboard2'
+    | '/logs'
     | '/members'
     | '/agents/$id'
     | '/knowledges/$id'
@@ -171,6 +191,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/api-keys'
     | '/dashboard'
+    | '/dashboard2'
+    | '/logs'
     | '/members'
     | '/agents/$id'
     | '/knowledges/$id'
@@ -188,6 +210,8 @@ export interface FileRouteTypes {
     | '/(main)/analytics'
     | '/(main)/api-keys'
     | '/(main)/dashboard'
+    | '/(main)/dashboard2'
+    | '/(main)/logs'
     | '/(main)/members'
     | '/(main)/agents/$id'
     | '/(main)/knowledges/$id'
@@ -231,6 +255,20 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof mainMembersRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/logs': {
+      id: '/(main)/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof mainLogsRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/dashboard2': {
+      id: '/(main)/dashboard2'
+      path: '/dashboard2'
+      fullPath: '/dashboard2'
+      preLoaderRoute: typeof mainDashboard2RouteImport
       parentRoute: typeof mainRouteRoute
     }
     '/(main)/dashboard': {
@@ -331,6 +369,8 @@ interface mainRouteRouteChildren {
   mainAnalyticsRoute: typeof mainAnalyticsRoute
   mainApiKeysRoute: typeof mainApiKeysRoute
   mainDashboardRoute: typeof mainDashboardRoute
+  mainDashboard2Route: typeof mainDashboard2Route
+  mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
   mainKnowledgesIdRoute: typeof mainKnowledgesIdRoute
@@ -344,6 +384,8 @@ const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainAnalyticsRoute: mainAnalyticsRoute,
   mainApiKeysRoute: mainApiKeysRoute,
   mainDashboardRoute: mainDashboardRoute,
+  mainDashboard2Route: mainDashboard2Route,
+  mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
   mainKnowledgesIdRoute: mainKnowledgesIdRoute,

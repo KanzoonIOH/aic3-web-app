@@ -5,7 +5,7 @@ export const Route = createFileRoute("/(auth)")({
     beforeLoad: () => {
         const token = getToken();
         if (token) {
-            throw redirect({ to: "/dashboard" });
+            throw redirect({ to: "/dashboard2" });
         }
     },
     component: RouteComponent,

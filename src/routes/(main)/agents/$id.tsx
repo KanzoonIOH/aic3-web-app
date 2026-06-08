@@ -1,4 +1,5 @@
 import { getAgent, updateAgent, type Agent } from "@/api/agents";
+import { LogsTable } from "@/components/logs-table";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -24,6 +25,8 @@ import {
     Link,
     MessagesSquareIcon,
     Pencil,
+    ScrollText,
+    SmilePlusIcon,
     TerminalSquare,
 } from "lucide-react";
 import { useState } from "react";
@@ -32,6 +35,7 @@ import { ChatSanbox } from "./-ChatSandbox";
 import { Knowledges } from "./-Knowledges";
 import { Mcps } from "./-Mcps";
 import { Overview } from "./-Overview";
+import { Persona } from "./-Persona";
 
 export const Route = createFileRoute("/(main)/agents/$id")({
     component: RouteComponent,
@@ -358,6 +362,7 @@ function ApiTab({ agentId }: { agentId: string }) {
   --url ${endpointUrl} \\
   --header 'authorization: Bearer [your token here]' \\
   --header 'content-type: application/json' \\
+  --header 'x-session-id: [existing session id]' \\
   --data '{
   "sessionId": "string",
   "chatInput": "apa yg bagus untuk dibeli di tahun 2025"
@@ -383,7 +388,12 @@ function ApiTab({ agentId }: { agentId: string }) {
                         <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
                             [your token here]
                         </code>{" "}
-                        with a valid API key.
+                        with a valid API key. Include the{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                            x-session-id
+                        </code>{" "}
+                        header only when continuing an existing session;
+                        omit it to start a new one.
                     </p>
                 </div>
 
@@ -497,6 +507,10 @@ function RouteComponent() {
             >
                 <div className="border-b">
                     <TabsList variant="line">
+                        <TabsTrigger value="persona">
+                            <SmilePlusIcon />
+                            Persona
+                        </TabsTrigger>
                         {/*<TabsTrigger value="overview">
                             <LayoutGridIcon />
                             Overview
@@ -513,6 +527,10 @@ function RouteComponent() {
                             <MessagesSquareIcon />
                             Chat Sandbox
                         </TabsTrigger>
+                        <TabsTrigger value="logs">
+                            <ScrollText />
+                            Logs
+                        </TabsTrigger>
                         <TabsTrigger value="api">
                             <TerminalSquare />
                             API
@@ -520,6 +538,9 @@ function RouteComponent() {
                     </TabsList>
                 </div>
 
+                <TabsContent value="persona" className="overflow-hidden">
+                    <Persona agentId={id} />
+                </TabsContent>
                 <TabsContent value="overview" className="overflow-hidden">
                     <Overview agentId={id} />
                 </TabsContent>
@@ -531,6 +552,11 @@ function RouteComponent() {
                 </TabsContent>
                 <TabsContent value="chat" className="overflow-hidden">
                     <ChatSanbox agentId={id} agentName={agent.data.name} />
+                </TabsContent>
+                <TabsContent value="logs" className="overflow-y-auto">
+                    <div className="p-6">
+                        <LogsTable agentId={id} />
+                    </div>
                 </TabsContent>
                 <TabsContent value="api" className="overflow-hidden">
                     <ApiTab agentId={id} />
