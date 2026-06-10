@@ -5,6 +5,7 @@ import {
     updateKnowledge,
     type Knowledge,
 } from "@/api/knowledges";
+import { KnowledgeAgentAccessDialog } from "@/components/agent-knowledge-access-dialog";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -32,16 +33,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,12 +49,12 @@ import {
     Check,
     Copy,
     FileUp,
-    Loader2,
     MoreHorizontal,
     Paperclip,
     Plus,
 } from "lucide-react";
 import { useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/(main)/knowledges/")({
@@ -90,7 +87,6 @@ const createKnowledgeSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim(),
     source_type: z.string().trim().min(1, "Source type is required"),
-    source_uri: z.string().trim(),
 });
 
 const editKnowledgeSchema = z.object({
@@ -101,30 +97,11 @@ const editKnowledgeSchema = z.object({
 type CreateKnowledgeValues = z.infer<typeof createKnowledgeSchema>;
 type EditKnowledgeValues = z.infer<typeof editKnowledgeSchema>;
 
-// ---------- Fake upload ----------
-
-const RUSTFS_BASE = "https://aiac-store.kocakhost.com/aiac/";
-
-type UploadState =
-    | { status: "idle" }
-    | { status: "uploading"; fileName: string }
-    | { status: "done"; fileName: string; url: string };
-
-function simulateUpload(file: File): Promise<string> {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const safeName = file.name.replace(/\s+/g, "_");
-            const ts = Date.now();
-            resolve(`${RUSTFS_BASE}${ts}_${safeName}`);
-        }, 1500);
-    });
-}
-
 // ---------- Create dialog ----------
 
 function CreateKnowledgeDialog() {
     const [open, setOpen] = useState(false);
-    const [upload, setUpload] = useState<UploadState>({ status: "idle" });
+    const [file, setFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
@@ -134,7 +111,7 @@ function CreateKnowledgeDialog() {
             queryClient.invalidateQueries({ queryKey: ["knowledges"] });
             setOpen(false);
             form.reset();
-            setUpload({ status: "idle" });
+            setFile(null);
         },
     });
 
@@ -143,12 +120,11 @@ function CreateKnowledgeDialog() {
             name: "",
             description: "",
             source_type: "",
-            source_uri: "",
         } satisfies CreateKnowledgeValues,
         onSubmit: async ({ value }) => {
             const result = createKnowledgeSchema.safeParse(value);
-            if (!result.success) return;
-            await mutation.mutateAsync(result.data);
+            if (!result.success || !file) return;
+            await mutation.mutateAsync({ ...result.data, file });
         },
     });
 
@@ -157,19 +133,22 @@ function CreateKnowledgeDialog() {
         if (!nextOpen) {
             mutation.reset();
             form.reset();
-            setUpload({ status: "idle" });
+            setFile(null);
         }
     }
 
-    async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setUpload({ status: "uploading", fileName: file.name });
-        const url = await simulateUpload(file);
-        setUpload({ status: "done", fileName: file.name, url });
-        form.setFieldValue("source_uri", url);
+    function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const picked = e.target.files?.[0];
+        if (!picked) return;
+        setFile(picked);
+        mutation.reset();
         // reset input so the same file can be re-selected if needed
         e.target.value = "";
+    }
+
+    function handleChangeFile() {
+        setFile(null);
+        fileInputRef.current?.click();
     }
 
     return (
@@ -300,7 +279,7 @@ function CreateKnowledgeDialog() {
                         )}
                     </form.Field>
 
-                    {/* Document upload */}
+                    {/* File upload */}
                     <div className="flex flex-col gap-1.5">
                         <Label>Document</Label>
                         <input
@@ -308,10 +287,9 @@ function CreateKnowledgeDialog() {
                             type="file"
                             className="hidden"
                             onChange={handleFileChange}
-                            disabled={upload.status === "uploading"}
                         />
 
-                        {upload.status === "idle" && (
+                        {!file ? (
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
@@ -320,35 +298,15 @@ function CreateKnowledgeDialog() {
                                 <FileUp className="size-4" />
                                 Click to upload a document
                             </button>
-                        )}
-
-                        {upload.status === "uploading" && (
-                            <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
-                                <Loader2 className="size-4 animate-spin shrink-0" />
-                                <span className="truncate">
-                                    Uploading{" "}
-                                    <span className="font-medium text-foreground">
-                                        {upload.fileName}
-                                    </span>
-                                    …
-                                </span>
-                            </div>
-                        )}
-
-                        {upload.status === "done" && (
+                        ) : (
                             <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm">
                                 <Paperclip className="size-4 shrink-0 text-muted-foreground" />
                                 <span className="truncate flex-1 text-foreground font-medium">
-                                    {upload.fileName}
+                                    {file.name}
                                 </span>
-                                <Check className="size-4 shrink-0 text-green-500" />
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setUpload({ status: "idle" });
-                                        form.setFieldValue("source_uri", "");
-                                        fileInputRef.current?.click();
-                                    }}
+                                    onClick={handleChangeFile}
                                     className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
                                 >
                                     Change
@@ -373,7 +331,7 @@ function CreateKnowledgeDialog() {
                                         !canSubmit ||
                                         isSubmitting ||
                                         mutation.isPending ||
-                                        upload.status === "uploading"
+                                        !file
                                     }
                                 >
                                     {mutation.isPending ? "Creating..." : "Create"}
@@ -592,13 +550,13 @@ function CopyableUri({ uri }: { uri: string }) {
     );
 }
 
-// ---------- Table row ----------
+// ---------- Row actions ----------
 
-function KnowledgeRow({ knowledge }: { knowledge: Knowledge }) {
+function KnowledgeRowActions({ knowledge }: { knowledge: Knowledge }) {
+    const [accessOpen, setAccessOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const queryClient = useQueryClient();
-    const agentsCount = knowledge.agents_count ?? 3;
 
     const { mutate: remove, isPending: isDeleting } = useMutation({
         mutationFn: () => deleteKnowledge(knowledge.id),
@@ -610,52 +568,38 @@ function KnowledgeRow({ knowledge }: { knowledge: Knowledge }) {
 
     return (
         <>
-            <TableRow>
-                <TableCell className="font-medium max-w-48 truncate">{knowledge.name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm max-w-56 truncate">
-                    {knowledge.description ?? (
-                        <span className="italic text-muted-foreground/50">—</span>
-                    )}
-                </TableCell>
-                <TableCell>
-                    <span className="capitalize text-sm">{knowledge.source_type}</span>
-                </TableCell>
-                <TableCell className="max-w-48">
-                    {knowledge.source_uri ? (
-                        <CopyableUri uri={knowledge.source_uri} />
-                    ) : (
-                        <span className="text-muted-foreground/50 text-sm italic">—</span>
-                    )}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                    {agentsCount} {agentsCount === 1 ? "agent" : "agents"}
-                </TableCell>
-                <TableCell className="text-right">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                className="text-muted-foreground hover:text-foreground"
-                                aria-label="Open menu"
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                                Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => setDeleteOpen(true)}
-                            >
-                                Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </TableCell>
-            </TableRow>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label="Open menu"
+                    >
+                        <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setAccessOpen(true)}>
+                        Access
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                        Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={() => setDeleteOpen(true)}
+                    >
+                        Delete
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <KnowledgeAgentAccessDialog
+                knowledge={knowledge}
+                open={accessOpen}
+                onOpenChange={setAccessOpen}
+            />
 
             <EditKnowledgeDialog
                 knowledge={knowledge}
@@ -693,6 +637,75 @@ function KnowledgeRow({ knowledge }: { knowledge: Knowledge }) {
     );
 }
 
+// ---------- Columns ----------
+
+export function createKnowledgeColumns({
+    renderActions,
+}: {
+    renderActions?: (knowledge: Knowledge) => ReactNode;
+} = {}): ColumnDef<Knowledge>[] {
+    return [
+        {
+            id: "name",
+            header: "Name",
+            meta: { className: "font-medium max-w-48 truncate" },
+            cell: ({ row }) => row.original.name,
+        },
+        {
+            id: "description",
+            header: "Description",
+            meta: { className: "text-muted-foreground text-sm max-w-56 truncate" },
+            cell: ({ row }) =>
+                row.original.description ?? (
+                    <span className="italic text-muted-foreground/50">—</span>
+                ),
+        },
+        {
+            id: "source_type",
+            header: "Source Type",
+            cell: ({ row }) => (
+                <span className="capitalize text-sm">
+                    {row.original.source_type}
+                </span>
+            ),
+        },
+        {
+            id: "source_uri",
+            header: "Source URI",
+            meta: { className: "max-w-48" },
+            cell: ({ row }) =>
+                row.original.source_uri ? (
+                    <CopyableUri uri={row.original.source_uri} />
+                ) : (
+                    <span className="text-muted-foreground/50 text-sm italic">
+                        —
+                    </span>
+                ),
+        },
+        {
+            id: "used_by",
+            header: "Used By",
+            meta: { className: "text-sm text-muted-foreground" },
+            cell: ({ row }) => {
+                const agentsCount = row.original.agents_count ?? 3;
+                return `${agentsCount} ${agentsCount === 1 ? "agent" : "agents"}`;
+            },
+        },
+        {
+            id: "actions",
+            meta: { cellClassName: "text-right" },
+            cell: ({ row }) =>
+                renderActions ? (
+                    renderActions(row.original)
+                ) : (
+                    <KnowledgeRowActions knowledge={row.original} />
+                ),
+        },
+    ];
+}
+
+export const knowledgeColumns = createKnowledgeColumns();
+
 // ---------- Route ----------
 
 function RouteComponent() {
@@ -718,50 +731,20 @@ function RouteComponent() {
                 </div>
 
                 <div className="p-6">
-                    {isPending ? (
-                        <div className="flex items-center justify-center py-16">
-                            <p className="text-sm text-muted-foreground">
-                                Loading knowledges...
-                            </p>
-                        </div>
-                    ) : isError ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+                    <TanStackDataTable
+                        columns={knowledgeColumns}
+                        data={knowledges?.data ?? []}
+                        getRowKey={(knowledge) => knowledge.id}
+                        enableSorting={false}
+                        isLoading={isPending}
+                        isError={isError}
+                        loadingMessage="Loading knowledges..."
+                        errorMessage="Failed to load knowledges"
+                        emptyMessage="No knowledges found"
+                        emptyIcon={
                             <BookOpen className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                Failed to load knowledges
-                            </p>
-                        </div>
-                    ) : knowledges.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-                            <BookOpen className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                No knowledges found
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="rounded-lg border overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Source Type</TableHead>
-                                        <TableHead>Source URI</TableHead>
-                                        <TableHead>Used By</TableHead>
-                                        <TableHead />
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {knowledges.data.map((knowledge) => (
-                                        <KnowledgeRow
-                                            key={knowledge.id}
-                                            knowledge={knowledge}
-                                        />
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                        }
+                    />
                 </div>
             </div>
         </div>

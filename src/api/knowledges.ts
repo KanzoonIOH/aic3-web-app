@@ -19,7 +19,7 @@ export interface CreateKnowledgeRequest {
     name: string;
     description: string;
     source_type: string;
-    source_uri: string;
+    file: File;
 }
 
 export interface UpdateKnowledgeRequest {
@@ -47,9 +47,16 @@ type ResponseCreateKnowledge = ResponseTemplate<Knowledge>;
 export async function createKnowledge(
     payload: CreateKnowledgeRequest,
 ): Promise<ResponseCreateKnowledge> {
+    const form = new FormData();
+    form.append("name", payload.name);
+    form.append("description", payload.description);
+    form.append("source_type", payload.source_type);
+    form.append("file", payload.file);
+
     const { data } = await client.post<ResponseCreateKnowledge>(
         "/knowledges",
-        payload,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
     );
     return data;
 }

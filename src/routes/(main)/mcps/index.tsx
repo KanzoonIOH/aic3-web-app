@@ -16,16 +16,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -333,9 +329,9 @@ function EditMcpDialog({
     );
 }
 
-// ---------- Table row ----------
+// ---------- Row actions ----------
 
-function McpRow({ mcp }: { mcp: Mcp }) {
+function McpRowActions({ mcp }: { mcp: Mcp }) {
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     // const queryClient = useQueryClient();
@@ -350,53 +346,34 @@ function McpRow({ mcp }: { mcp: Mcp }) {
 
     return (
         <>
-            <TableRow>
-                <TableCell className="font-medium">{mcp.name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm max-w-64">
-                    {mcp.description ?? (
-                        <span className="italic text-muted-foreground/50">
-                            —
-                        </span>
-                    )}
-                </TableCell>
-                <TableCell className="font-medium">{mcp.tools_count}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground max-w-56 truncate">
-                    <CopyableUri uri={mcp.uri} />
-                    {/*{mcp.uri}*/}
-                </TableCell>
-                <TableCell className="text-right">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                className="text-muted-foreground hover:text-foreground"
-                                aria-label="Open menu"
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link to={"/mcps/$id"} params={{ id: mcp.id }}>
-                                    Details
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onSelect={() => setEditOpen(true)}
-                            >
-                                Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => setDeleteOpen(true)}
-                            >
-                                Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </TableCell>
-            </TableRow>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label="Open menu"
+                    >
+                        <MoreHorizontal className="size-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                        <Link to={"/mcps/$id"} params={{ id: mcp.id }}>
+                            Details
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                        Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={() => setDeleteOpen(true)}
+                    >
+                        Delete
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             <EditMcpDialog
                 mcp={mcp}
@@ -455,6 +432,78 @@ function McpRow({ mcp }: { mcp: Mcp }) {
     );
 }
 
+// ---------- Columns ----------
+
+export const mcpColumns: ColumnDef<Mcp>[] = [
+    {
+        id: "name",
+        header: "Name",
+        meta: { className: "font-medium" },
+        cell: ({ row }) => row.original.name,
+    },
+    {
+        id: "description",
+        header: "Description",
+        meta: { className: "text-muted-foreground text-sm max-w-64" },
+        cell: ({ row }) =>
+            row.original.description ?? (
+                <span className="italic text-muted-foreground/50">—</span>
+            ),
+    },
+    {
+        id: "tools",
+        header: "Tools",
+        meta: { className: "font-medium" },
+        cell: ({ row }) => row.original.tools_count,
+    },
+    {
+        id: "uri",
+        header: "URI",
+        meta: {
+            className: "font-mono text-xs text-muted-foreground max-w-56 truncate",
+        },
+        cell: ({ row }) => <CopyableUri uri={row.original.uri} />,
+    },
+    {
+        id: "actions",
+        meta: { cellClassName: "text-right" },
+        cell: ({ row }) => <McpRowActions mcp={row.original} />,
+    },
+    {
+        id: "description",
+        accessorKey: "description",
+        header: "Description",
+        meta: { className: "text-muted-foreground text-sm max-w-64" },
+        cell: ({ row }) =>
+            row.original.description ?? (
+                <span className="italic text-muted-foreground/50">—</span>
+            ),
+    },
+    {
+        id: "tools",
+        accessorKey: "tools_count",
+        header: "Tools",
+        meta: { className: "font-medium" },
+        cell: ({ row }) => row.original.tools_count,
+    },
+    {
+        id: "uri",
+        header: "URI",
+        enableSorting: false,
+        meta: {
+            className:
+                "font-mono text-xs text-muted-foreground max-w-56 truncate",
+        },
+        cell: ({ row }) => <CopyableUri uri={row.original.uri} />,
+    },
+    {
+        id: "actions",
+        enableSorting: false,
+        meta: { cellClassName: "text-right" },
+        cell: ({ row }) => <McpRowActions mcp={row.original} />,
+    },
+];
+
 // ---------- Route ----------
 
 function RouteComponent() {
@@ -480,46 +529,20 @@ function RouteComponent() {
                 </div>
 
                 <div className="p-6">
-                    {isPending ? (
-                        <div className="flex items-center justify-center py-16">
-                            <p className="text-sm text-muted-foreground">
-                                Loading MCPs...
-                            </p>
-                        </div>
-                    ) : isError ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+                    <TanStackDataTable
+                        columns={mcpColumns}
+                        data={mcps?.data ?? []}
+                        getRowKey={(mcp) => mcp.id}
+                        enableSorting={false}
+                        isLoading={isPending}
+                        isError={isError}
+                        loadingMessage="Loading MCPs..."
+                        errorMessage="Failed to load MCPs"
+                        emptyMessage="No MCPs found"
+                        emptyIcon={
                             <Plug className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                Failed to load MCPs
-                            </p>
-                        </div>
-                    ) : mcps.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-                            <Plug className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                No MCPs found
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="rounded-lg border overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Tools</TableHead>
-                                        <TableHead>URI</TableHead>
-                                        <TableHead />
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {mcps.data.map((mcp) => (
-                                        <McpRow key={mcp.id} mcp={mcp} />
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                        }
+                    />
                 </div>
             </div>
         </div>

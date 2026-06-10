@@ -1,5 +1,12 @@
 import { client } from "./client";
+import type { Knowledge } from "./knowledges";
+import type { Mcp } from "./mcps";
 import type { ResponseTemplate } from "./types";
+
+export interface PaginationParams {
+    page?: number;
+    limit?: number;
+}
 
 // ---------- Types ----------
 
@@ -43,6 +50,30 @@ export async function updateAgent(
     const { data } = await client.patch<ResponseUpdateAgent>(
         `/agents/${id}`,
         payload,
+    );
+    return data;
+}
+
+type ResponseGetAgentKnowledges = ResponseTemplate<Knowledge[]>;
+export async function getAgentKnowledges(
+    id: string,
+    params: PaginationParams = {},
+): Promise<ResponseGetAgentKnowledges> {
+    const { data } = await client.get<ResponseGetAgentKnowledges>(
+        `/agents/${id}/knowledges`,
+        { params },
+    );
+    return data;
+}
+
+type ResponseGetAgentMcps = ResponseTemplate<Mcp[]>;
+export async function getAgentMcps(
+    id: string,
+    params: PaginationParams = {},
+): Promise<ResponseGetAgentMcps> {
+    const { data } = await client.get<ResponseGetAgentMcps>(
+        `/agents/${id}/mcps`,
+        { params },
     );
     return data;
 }

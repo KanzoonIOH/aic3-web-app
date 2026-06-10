@@ -18,20 +18,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -205,80 +201,67 @@ function RouteComponent() {
                 </div>
 
                 <div className="p-6">
-                    {isPending ? (
-                        <div className="flex flex-col items-center justify-center gap-2 py-16">
-                            <p className="text-sm text-muted-foreground">
-                                Loading members...
-                            </p>
-                        </div>
-                    ) : isError ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+                    <TanStackDataTable
+                        columns={memberColumns}
+                        data={members?.data ?? []}
+                        getRowKey={(member) => member.id}
+                        enableSorting={false}
+                        isLoading={isPending}
+                        isError={isError}
+                        loadingMessage="Loading members..."
+                        errorMessage="Failed to load members"
+                        emptyMessage="No members found"
+                        emptyIcon={
                             <Users className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                Failed to load members
-                            </p>
-                        </div>
-                    ) : members.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-                            <Users className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                No members found
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="rounded-lg border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Username</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Joined</TableHead>
-                                        <TableHead className="w-0" />
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {members.data.map((member) => (
-                                        <MemberRow
-                                            key={member.id}
-                                            member={member}
-                                        />
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
+                        }
+                    />
                 </div>
             </div>
         </div>
     );
 }
 
-function MemberRow({ member }: { member: Member }) {
-    const formattedDate = new Date(member.created_at).toLocaleDateString(
-        undefined,
-        { year: "numeric", month: "short", day: "numeric" },
-    );
-
-    return (
-        <TableRow>
-            <TableCell className="font-medium">{member.name || "—"}</TableCell>
-            <TableCell className="text-muted-foreground">
-                {member.username}
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-                {member.email}
-            </TableCell>
-            <TableCell>
-                <RoleBadge role={member.role} />
-            </TableCell>
-            <TableCell className="text-muted-foreground text-xs">
-                {formattedDate}
-            </TableCell>
-            <TableCell>
-                <MemberActions member={member} />
-            </TableCell>
-        </TableRow>
-    );
+function formatJoinedDate(iso: string) {
+    return new Date(iso).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
 }
+
+const memberColumns: ColumnDef<Member>[] = [
+    {
+        id: "name",
+        header: "Name",
+        meta: { className: "font-medium" },
+        cell: ({ row }) => row.original.name || "—",
+    },
+    {
+        id: "username",
+        header: "Username",
+        meta: { className: "text-muted-foreground" },
+        cell: ({ row }) => row.original.username,
+    },
+    {
+        id: "email",
+        header: "Email",
+        meta: { className: "text-muted-foreground" },
+        cell: ({ row }) => row.original.email,
+    },
+    {
+        id: "role",
+        header: "Role",
+        cell: ({ row }) => <RoleBadge role={row.original.role} />,
+    },
+    {
+        id: "joined",
+        header: "Joined",
+        meta: { className: "text-muted-foreground text-xs" },
+        cell: ({ row }) => formatJoinedDate(row.original.created_at),
+    },
+    {
+        id: "actions",
+        meta: { headerClassName: "w-0" },
+        cell: ({ row }) => <MemberActions member={row.original} />,
+    },
+];

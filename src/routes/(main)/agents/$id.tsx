@@ -20,11 +20,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import axios from "axios";
 import {
+    BookIcon,
     Check,
     Copy,
+    LayoutGridIcon,
     Link,
     MessagesSquareIcon,
     Pencil,
+    PlugIcon,
     ScrollText,
     SmilePlusIcon,
     TerminalSquare,
@@ -392,8 +395,8 @@ function ApiTab({ agentId }: { agentId: string }) {
                         <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
                             x-session-id
                         </code>{" "}
-                        header only when continuing an existing session;
-                        omit it to start a new one.
+                        header only when continuing an existing session; omit it
+                        to start a new one.
                     </p>
                 </div>
 
@@ -507,13 +510,13 @@ function RouteComponent() {
             >
                 <div className="border-b">
                     <TabsList variant="line">
+                        <TabsTrigger value="overview">
+                            <LayoutGridIcon />
+                            Overview
+                        </TabsTrigger>
                         <TabsTrigger value="persona">
                             <SmilePlusIcon />
                             Persona
-                        </TabsTrigger>
-                        {/*<TabsTrigger value="overview">
-                            <LayoutGridIcon />
-                            Overview
                         </TabsTrigger>
                         <TabsTrigger value="knowledge">
                             <BookIcon />
@@ -522,7 +525,7 @@ function RouteComponent() {
                         <TabsTrigger value="mcp">
                             <PlugIcon />
                             MCPs
-                        </TabsTrigger>*/}
+                        </TabsTrigger>
                         <TabsTrigger value="chat">
                             <MessagesSquareIcon />
                             Chat Sandbox
@@ -533,7 +536,7 @@ function RouteComponent() {
                         </TabsTrigger>
                         <TabsTrigger value="api">
                             <TerminalSquare />
-                            API
+                            Integration
                         </TabsTrigger>
                     </TabsList>
                 </div>

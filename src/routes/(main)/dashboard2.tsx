@@ -1,5 +1,9 @@
-import { getLogSummary, getLogTimeseries } from "@/api/logs";
-import { LogsTable } from "@/components/logs-table";
+import {
+    getLogMessages,
+    getLogSummary,
+    getLogTimeseries,
+    type LogMessage,
+} from "@/api/logs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ChartContainer,
@@ -7,14 +11,21 @@ import {
     ChartTooltipContent,
     type ChartConfig,
 } from "@/components/ui/chart";
-import { useQuery } from "@tanstack/react-query";
+import {
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
+import { cn } from "@/lib/utils";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
     Activity,
     CheckCircle2,
     MessagesSquare,
+    ScrollText,
     Timer,
 } from "lucide-react";
+import { useState } from "react";
 import {
     Area,
     AreaChart,
@@ -45,6 +56,115 @@ function formatBucket(iso: string) {
         day: "2-digit",
         hour: "2-digit",
     });
+}
+
+const LOGS_LIMIT = 10;
+
+function formatDateTime(iso: string) {
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    });
+}
+
+function LogStatusBadge({ message }: { message: LogMessage }) {
+    return (
+        <span
+            className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
+                message.is_success
+                    ? "bg-chart-2/10 text-chart-2"
+                    : "bg-destructive/10 text-destructive",
+            )}
+        >
+            <span
+                className={cn(
+                    "size-1.5 rounded-full",
+                    message.is_success ? "bg-chart-2" : "bg-destructive",
+                )}
+            />
+            {message.status_code}
+        </span>
+    );
+}
+
+const recentLogColumns: ColumnDef<LogMessage>[] = [
+    {
+        id: "conversation",
+        header: "Conversation",
+        meta: { className: "font-mono text-xs text-muted-foreground" },
+        cell: ({ row }) => row.original.conversation_id,
+    },
+    {
+        id: "agent",
+        header: "Agent",
+        meta: { className: "font-mono text-xs text-muted-foreground" },
+        cell: ({ row }) => row.original.agent_id,
+    },
+    {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => <LogStatusBadge message={row.original} />,
+    },
+    {
+        id: "response_time",
+        header: "Response time",
+        meta: { className: "text-right tabular-nums" },
+        cell: ({ row }) => `${row.original.response_time_ms.toLocaleString()} ms`,
+    },
+    {
+        id: "occurred_at",
+        header: "Occurred at",
+        meta: { className: "text-right text-muted-foreground" },
+        cell: ({ row }) => formatDateTime(row.original.occurred_at),
+    },
+];
+
+function RecentLogsTable() {
+    const [page, setPage] = useState(1);
+
+    const { data, isPending, isError, isFetching } = useQuery({
+        queryKey: ["logs", "messages", "all", page],
+        queryFn: () =>
+            getLogMessages({
+                offset: (page - 1) * LOGS_LIMIT,
+                limit: LOGS_LIMIT,
+            }),
+        placeholderData: keepPreviousData,
+    });
+
+    const pagination = data?.pagination;
+
+    return (
+        <TanStackDataTable
+            columns={recentLogColumns}
+            data={data?.data ?? []}
+            getRowKey={(log, i) =>
+                `${page}-${i}-${log.conversation_id}-${log.occurred_at}`
+            }
+            enableSorting={false}
+            isLoading={isPending}
+            isError={isError}
+            loadingMessage="Loading logs..."
+            errorMessage="Failed to load logs"
+            emptyMessage="No logs found"
+            emptyIcon={
+                <ScrollText className="size-7 text-muted-foreground/40" />
+            }
+            pagination={{
+                page,
+                totalPage: pagination?.total_page ?? 1,
+                totalRow: pagination?.total_row ?? 0,
+                onPageChange: setPage,
+                disabled: isFetching,
+            }}
+        />
+    );
 }
 
 function StatCard({
@@ -285,7 +405,7 @@ function RouteComponent() {
                     <CardTitle>Recent messages</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <LogsTable />
+                    <RecentLogsTable />
                 </CardContent>
             </Card>
         </div>
