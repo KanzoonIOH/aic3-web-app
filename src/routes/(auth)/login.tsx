@@ -2,10 +2,9 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
-import axios from "axios";
 import { login } from "@/api/auth";
-import type { ApiError } from "@/api/auth";
 import { useAuthStore } from "@/stores/auth";
+import { resolveServerMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,14 +20,6 @@ const loginSchema = z.object({
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
-
-function resolveServerMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError | undefined;
-        return data?.message ?? error.message;
-    }
-    return "An unexpected error occurred.";
-}
 
 function RouteComponent() {
     const router = useRouter();

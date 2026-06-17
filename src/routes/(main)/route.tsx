@@ -22,7 +22,6 @@ import {
     BookOpen,
     Bot,
     ChevronsUpDownIcon,
-    HelpCircle,
     KeyRound,
     LayoutDashboardIcon,
     LogOut,
@@ -30,7 +29,6 @@ import {
     Moon,
     Plug,
     ScrollText,
-    Settings,
     Sun,
     Users,
 } from "lucide-react";
@@ -129,38 +127,11 @@ function UserSection() {
                 className="w-56 p-0"
             >
                 <div className="flex items-center gap-3 px-3.5 py-1.5">
-                    {/*<Avatar size="sm">
-                        <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>*/}
                     <div className="flex flex-col min-w-0">
-                        {/*<span className="truncate text-sm font-medium">
-                            {user?.username}
-                        </span>*/}
                         <span className="truncate text-sm text-muted-foreground">
                             {user?.email}
                         </span>
                     </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex flex-col gap-0.5 p-1">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start gap-2 font-normal"
-                    >
-                        <Settings className="size-4" />
-                        Account settings
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start gap-2 font-normal"
-                    >
-                        <HelpCircle className="size-4" />
-                        Help
-                    </Button>
                 </div>
 
                 <Separator />
@@ -204,7 +175,7 @@ function RouteComponent() {
     return (
         <div className="h-dvh w-full grid grid-cols-[200px_1fr]">
             <aside className="flex flex-col border-r bg-sidebar">
-                <div className="flex-cc p-3">
+                <div className="flex justify-center items-center p-3">
                     <SidebarLogo />
                 </div>
                 <Separator />

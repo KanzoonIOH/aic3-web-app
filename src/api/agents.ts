@@ -3,11 +3,6 @@ import type { Knowledge } from "./knowledges";
 import type { Mcp } from "./mcps";
 import type { ResponseTemplate } from "./types";
 
-export interface PaginationParams {
-    page?: number;
-    limit?: number;
-}
-
 // ---------- Types ----------
 
 export interface Agent {
@@ -30,48 +25,65 @@ export interface UpdateAgentRequest {
 
 // ---------- API functions ----------
 
-type ResponseGetAgents = ResponseTemplate<Agent[]>;
-export async function getAgents(): Promise<ResponseGetAgents> {
-    const { data } = await client.get<ResponseGetAgents>("/agents");
+export async function getAgents(): Promise<ResponseTemplate<Agent[]>> {
+    const { data } = await client.get<ResponseTemplate<Agent[]>>("/agents");
     return data;
 }
 
-type ResponseGetAgent = ResponseTemplate<Agent>;
-export async function getAgent(id: string): Promise<ResponseGetAgent> {
-    const { data } = await client.get<ResponseGetAgent>(`/agents/${id}`);
+export async function getAgent(id: string): Promise<ResponseTemplate<Agent>> {
+    const { data } = await client.get<ResponseTemplate<Agent>>(`/agents/${id}`);
     return data;
 }
 
-type ResponseUpdateAgent = ResponseTemplate<Agent>;
 export async function updateAgent(
     id: string,
     payload: UpdateAgentRequest,
-): Promise<ResponseUpdateAgent> {
-    const { data } = await client.patch<ResponseUpdateAgent>(
+): Promise<ResponseTemplate<Agent>> {
+    const { data } = await client.patch<ResponseTemplate<Agent>>(
         `/agents/${id}`,
         payload,
     );
     return data;
 }
 
-type ResponseGetAgentKnowledges = ResponseTemplate<Knowledge[]>;
+export interface AgentKnowledge extends Knowledge {
+    status: string;
+}
+
 export async function getAgentKnowledges(
     id: string,
-    params: PaginationParams = {},
-): Promise<ResponseGetAgentKnowledges> {
-    const { data } = await client.get<ResponseGetAgentKnowledges>(
+    params: { page?: number; limit?: number } = {},
+): Promise<ResponseTemplate<AgentKnowledge[]>> {
+    const { data } = await client.get<ResponseTemplate<AgentKnowledge[]>>(
         `/agents/${id}/knowledges`,
         { params },
     );
     return data;
 }
 
-type ResponseGetAgentMcps = ResponseTemplate<Mcp[]>;
+export interface AgentKnowledgeOption {
+    id: string;
+    name: string;
+    description: string | null;
+    connected: boolean;
+}
+
+export async function getAgentKnowledgesAll(
+    id: string,
+    params: { offset?: number; limit?: number } = {},
+): Promise<ResponseTemplate<AgentKnowledgeOption[]>> {
+    const { data } = await client.get<ResponseTemplate<AgentKnowledgeOption[]>>(
+        `/agents/${id}/knowledges/all`,
+        { params },
+    );
+    return data;
+}
+
 export async function getAgentMcps(
     id: string,
-    params: PaginationParams = {},
-): Promise<ResponseGetAgentMcps> {
-    const { data } = await client.get<ResponseGetAgentMcps>(
+    params: { page?: number; limit?: number } = {},
+): Promise<ResponseTemplate<Mcp[]>> {
+    const { data } = await client.get<ResponseTemplate<Mcp[]>>(
         `/agents/${id}/mcps`,
         { params },
     );

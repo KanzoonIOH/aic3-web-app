@@ -2,6 +2,7 @@
 FROM node:22-alpine AS builder
 
 # Build-time env var — passed via --build-arg VITE_API_URL=...
+# Vite inlines this into the static bundle at build time.
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 

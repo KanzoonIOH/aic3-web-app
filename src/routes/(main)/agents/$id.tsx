@@ -14,11 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { resolveServerMessage, textareaClass } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import axios from "axios";
 import {
     BookIcon,
     Check,
@@ -35,6 +34,7 @@ import {
 import { useState } from "react";
 import { z } from "zod";
 import { ChatSanbox } from "./-ChatSandbox";
+import { ChatWidget } from "./-ChatWidget";
 import { Knowledges } from "./-Knowledges";
 import { Mcps } from "./-Mcps";
 import { Overview } from "./-Overview";
@@ -65,27 +65,6 @@ const updateAgentSchema = z.object({
 
 type UpdateAgentValues = z.infer<typeof updateAgentSchema>;
 
-type ApiError = {
-    message?: string;
-};
-
-function resolveServerMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError | undefined;
-        return data?.message ?? error.message;
-    }
-    return "An unexpected error occurred.";
-}
-
-function getAgentFormValues(agent: Agent): UpdateAgentValues {
-    return {
-        name: agent.name,
-        description: agent.description,
-        is_active: agent.is_active,
-        webhook_uri: agent.webhook_uri,
-    };
-}
-
 function EditAgentDialog({ agent }: { agent: Agent }) {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
@@ -101,7 +80,7 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     });
 
     const form = useForm({
-        defaultValues: getAgentFormValues(agent),
+        defaultValues: { name: agent.name, description: agent.description, is_active: agent.is_active, webhook_uri: agent.webhook_uri },
         onSubmit: async ({ value }) => {
             const result = updateAgentSchema.safeParse(value);
             if (!result.success) return;
@@ -113,7 +92,7 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     function handleOpenChange(nextOpen: boolean) {
         setOpen(nextOpen);
         mutation.reset();
-        form.reset(getAgentFormValues(agent));
+        form.reset({ name: agent.name, description: agent.description, is_active: agent.is_active, webhook_uri: agent.webhook_uri });
     }
 
     return (
@@ -230,9 +209,7 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
                                         field.handleChange(e.target.value);
                                         mutation.reset();
                                     }}
-                                    className={cn(
-                                        "min-h-20 w-full rounded-md border border-input bg-transparent px-2.5 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-                                    )}
+                                     className={textareaClass}
                                     aria-invalid={
                                         field.state.meta.errors.length > 0
                                     }
@@ -358,6 +335,165 @@ function useCopyState() {
     return { copied, copy };
 }
 
+// ponytail: self-contained widget snippet — vanilla JS, zero deps, zero build
+// step. All colors live in one THEME block (oklch, copied from index.css) so
+// re-theming = edit one place. Markdown is rendered by a tiny built-in parser
+// (escape-first, then bold/italic/code/link/heading/list) — no markdown lib in
+// a paste-in script. Mirrors the real contract: POST /chat/{id} with
+// Authorization: Bearer, body { chatInput, sessionId }, response { reply }.
+function buildWidgetSnippet(endpointUrl: string) {
+    return `<!-- AIAC chat widget — paste before </body>, then set API_KEY below -->
+<script>
+(function () {
+  var API_URL = ${JSON.stringify(endpointUrl)};
+  var API_KEY = "PASTE_YOUR_API_KEY_HERE"; // <-- your API key
+
+  // ── THEME — all colors in one place (oklch, from the console palette) ──────
+  var THEME = {
+    background: "oklch(1 0 0)",
+    foreground: "oklch(0.141 0.005 285.823)",
+    primary: "oklch(0.841 0.238 128.85)",
+    primaryForeground: "oklch(0.405 0.101 131.063)",
+    muted: "oklch(0.967 0.001 286.375)",
+    mutedForeground: "oklch(0.552 0.016 285.938)",
+    border: "oklch(0.92 0.004 286.32)",
+    radius: "12px",
+  };
+
+  var sessionId = "web-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  var open = false;
+
+  var css = "" +
+    ":root{--aiac-bg:" + THEME.background + ";--aiac-fg:" + THEME.foreground +
+      ";--aiac-primary:" + THEME.primary + ";--aiac-primary-fg:" + THEME.primaryForeground +
+      ";--aiac-muted:" + THEME.muted + ";--aiac-muted-fg:" + THEME.mutedForeground +
+      ";--aiac-border:" + THEME.border + ";--aiac-radius:" + THEME.radius + "}" +
+    ".aiac-btn{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:var(--aiac-primary);color:var(--aiac-primary-fg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:2147483000}" +
+    ".aiac-panel{position:fixed;right:20px;bottom:88px;width:340px;max-width:calc(100vw - 40px);height:460px;max-height:calc(100vh - 120px);display:none;flex-direction:column;background:var(--aiac-bg);color:var(--aiac-fg);border:1px solid var(--aiac-border);border-radius:var(--aiac-radius);overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:2147483000;font-family:system-ui,sans-serif}" +
+    ".aiac-panel.open{display:flex}" +
+    ".aiac-head{padding:12px 14px;background:var(--aiac-primary);color:var(--aiac-primary-fg);font-weight:600;font-size:14px}" +
+    ".aiac-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--aiac-bg)}" +
+    ".aiac-m{max-width:85%;padding:8px 10px;border-radius:10px;font-size:13px;line-height:1.45;word-break:break-word}" +
+    ".aiac-m p{margin:0 0 6px}.aiac-m p:last-child{margin:0}.aiac-m ul,.aiac-m ol{margin:4px 0;padding-left:18px}.aiac-m code{background:rgba(0,0,0,.08);padding:1px 4px;border-radius:4px;font-size:.92em}.aiac-m a{color:inherit;text-decoration:underline}.aiac-m h1,.aiac-m h2,.aiac-m h3{margin:6px 0 4px;font-size:1em;font-weight:600}" +
+    ".aiac-u{align-self:flex-end;background:var(--aiac-primary);color:var(--aiac-primary-fg)}" +
+    ".aiac-a{align-self:flex-start;background:var(--aiac-muted);color:var(--aiac-fg)}" +
+    ".aiac-form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--aiac-border);background:var(--aiac-bg)}" +
+    ".aiac-in{flex:1;border:1px solid var(--aiac-border);border-radius:8px;padding:8px;font-size:13px;outline:none;background:var(--aiac-bg);color:var(--aiac-fg)}" +
+    ".aiac-send{border:none;background:var(--aiac-primary);color:var(--aiac-primary-fg);border-radius:8px;padding:0 14px;cursor:pointer;font-size:13px}" +
+    ".aiac-send:disabled{opacity:.5;cursor:default}";
+
+  var style = document.createElement("style");
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  // ── tiny markdown — escape FIRST (trust boundary), then format ─────────────
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function mdToHtml(src) {
+    var lines = esc(src).split(/\\r?\\n/);
+    var html = "", inList = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var li = line.match(/^\\s*[-*]\\s+(.*)$/);
+      if (li) {
+        if (!inList) { html += "<ul>"; inList = true; }
+        html += "<li>" + inline(li[1]) + "</li>";
+        continue;
+      }
+      if (inList) { html += "</ul>"; inList = false; }
+      var h = line.match(/^(#{1,3})\\s+(.*)$/);
+      if (h) { html += "<h" + h[1].length + ">" + inline(h[2]) + "</h" + h[1].length + ">"; continue; }
+      if (line.trim() === "") continue;
+      html += "<p>" + inline(line) + "</p>";
+    }
+    if (inList) html += "</ul>";
+    return html;
+  }
+  function inline(s) {
+    return s
+      .replace(/\\*\\*([^*]+)\\*\\*/g, "<strong>$1</strong>")
+      .replace(/\\*([^*]+)\\*/g, "<em>$1</em>")
+      .replace(/\`([^\`]+)\`/g, "<code>$1</code>")
+      .replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g,
+        '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+
+  var btn = document.createElement("button");
+  btn.className = "aiac-btn";
+  btn.setAttribute("aria-label", "Open chat");
+  btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
+
+  var panel = document.createElement("div");
+  panel.className = "aiac-panel";
+  panel.innerHTML =
+    '<div class="aiac-head">Chat</div>' +
+    '<div class="aiac-msgs"></div>' +
+    '<form class="aiac-form">' +
+    '<input class="aiac-in" placeholder="Type a message..." autocomplete="off" />' +
+    '<button class="aiac-send" type="submit">Send</button>' +
+    "</form>";
+
+  document.body.appendChild(btn);
+  document.body.appendChild(panel);
+
+  var msgs = panel.querySelector(".aiac-msgs");
+  var form = panel.querySelector(".aiac-form");
+  var input = panel.querySelector(".aiac-in");
+  var send = panel.querySelector(".aiac-send");
+
+  function addMsg(text, who) {
+    var el = document.createElement("div");
+    el.className = "aiac-m " + (who === "user" ? "aiac-u" : "aiac-a");
+    if (who === "assistant") el.innerHTML = mdToHtml(text);
+    else el.textContent = text;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  btn.addEventListener("click", function () {
+    open = !open;
+    panel.classList.toggle("open", open);
+    if (open) input.focus();
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    addMsg(text, "user");
+    send.disabled = true;
+    var typing = addMsg("...", "assistant");
+
+    fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + API_KEY,
+      },
+      body: JSON.stringify({ chatInput: text, sessionId: sessionId }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        typing.innerHTML = mdToHtml(data.reply || "(no reply)");
+      })
+      .catch(function () {
+        typing.textContent = "Something went wrong. Try again.";
+      })
+      .finally(function () {
+        send.disabled = false;
+        msgs.scrollTop = msgs.scrollHeight;
+      });
+  });
+})();
+</script>`;
+}
+
 function ApiTab({ agentId }: { agentId: string }) {
     const endpointUrl = `${API_BASE_URL}/chat/${agentId}`;
 
@@ -371,8 +507,11 @@ function ApiTab({ agentId }: { agentId: string }) {
   "chatInput": "apa yg bagus untuk dibeli di tahun 2025"
 }'`;
 
+    const widgetSnippet = buildWidgetSnippet(endpointUrl);
+
     const curlCopy = useCopyState();
     const urlCopy = useCopyState();
+    const widgetCopy = useCopyState();
 
     return (
         <div className="h-full overflow-y-auto px-6 py-6">
@@ -451,6 +590,53 @@ function ApiTab({ agentId }: { agentId: string }) {
                     </div>
                     <pre className="overflow-x-auto rounded-lg border border-border bg-muted/40 px-4 py-3.5 text-xs font-mono leading-relaxed text-foreground whitespace-pre">
                         {curlSnippet}
+                    </pre>
+                </div>
+
+                {/* Embeddable chat widget */}
+                <div className="flex flex-col gap-1.5">
+                    <div>
+                        <h2 className="text-base font-semibold mb-1">
+                            Embeddable chat widget
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                            Paste this snippet before{" "}
+                            <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                                {"</body>"}
+                            </code>{" "}
+                            on any website, then replace{" "}
+                            <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                                PASTE_YOUR_API_KEY_HERE
+                            </code>{" "}
+                            with a valid API key. A chat bubble appears in the
+                            bottom-right corner — no build step or dependencies
+                            required.
+                        </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Widget snippet
+                        </p>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => widgetCopy.copy(widgetSnippet)}
+                            className="gap-1.5 h-7 text-xs"
+                        >
+                            {widgetCopy.copied ? (
+                                <>
+                                    <Check className="size-3.5 text-green-500" />{" "}
+                                    Copied
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="size-3.5" /> Copy widget
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                    <pre className="max-h-80 overflow-auto rounded-lg border border-border bg-muted/40 px-4 py-3.5 text-xs font-mono leading-relaxed text-foreground whitespace-pre">
+                        {widgetSnippet}
                     </pre>
                 </div>
             </div>
@@ -565,6 +751,8 @@ function RouteComponent() {
                     <ApiTab agentId={id} />
                 </TabsContent>
             </Tabs>
+
+            <ChatWidget agentId={id} agentName={agent.data.name} />
         </div>
     );
 }

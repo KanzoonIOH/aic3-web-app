@@ -1,42 +1,54 @@
-import { getAgentKnowledges } from "@/api/agents";
+import { getAgentKnowledges, type AgentKnowledge } from "@/api/agents";
 import { AgentKnowledgeAccessDialog } from "@/components/agent-knowledge-access-dialog";
 import { Button } from "@/components/ui/button";
-import { TanStackDataTable } from "@/components/ui/tanstack-table";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { BookOpen, MoreHorizontal } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { useState } from "react";
 import { createKnowledgeColumns } from "../knowledges/index";
 
 const LIMIT = 10;
 
+const STATUS_STYLES: Record<string, string> = {
+    completed: "bg-emerald-500/10 text-emerald-600",
+    pending: "bg-amber-500/10 text-amber-600",
+    failed: "bg-destructive/10 text-destructive",
+};
+
+const statusColumn: ColumnDef<AgentKnowledge> = {
+    id: "status",
+    header: "Status",
+    cell: ({ row }) => {
+        const status = row.original.status;
+        return (
+            <span
+                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                    STATUS_STYLES[status] ?? "bg-muted text-muted-foreground"
+                }`}
+            >
+                {status}
+            </span>
+        );
+    },
+};
+
+// ponytail: replaced DropdownMenu with 1 item → direct Button
 function AgentKnowledgeRowActions({ agentId }: { agentId: string }) {
     const [accessOpen, setAccessOpen] = useState(false);
 
     return (
         <>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        className="text-muted-foreground hover:text-foreground"
-                        aria-label="Open menu"
-                    >
-                        <MoreHorizontal className="size-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => setAccessOpen(true)}>
-                        Access
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setAccessOpen(true)}
+            >
+                Access
+            </Button>
 
             <AgentKnowledgeAccessDialog
                 agentId={agentId}
@@ -49,9 +61,15 @@ function AgentKnowledgeRowActions({ agentId }: { agentId: string }) {
 
 export function Knowledges({ agentId }: { agentId: string }) {
     const [page, setPage] = useState(1);
-    const columns = createKnowledgeColumns({
+    const baseColumns = createKnowledgeColumns({
         renderActions: () => <AgentKnowledgeRowActions agentId={agentId} />,
-    });
+    }) as ColumnDef<AgentKnowledge>[];
+    // insert Status before the trailing actions column
+    const columns = [
+        ...baseColumns.slice(0, -1),
+        statusColumn,
+        baseColumns[baseColumns.length - 1],
+    ];
 
     const { data, isPending, isError, isFetching } = useQuery({
         queryKey: ["agents", agentId, "knowledges", page],

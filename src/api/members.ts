@@ -19,35 +19,31 @@ export interface UpdateMemberStatusRequest {
 
 // ---------- API functions ----------
 
-type ResponseGetMembers = ResponseTemplate<Member[]>;
-export async function getMembers(): Promise<ResponseGetMembers> {
-    const { data } = await client.get<ResponseGetMembers>("/members");
+export async function getMembers(): Promise<ResponseTemplate<Member[]>> {
+    const { data } = await client.get<ResponseTemplate<Member[]>>("/members");
     return data;
 }
 
-type ResponseAcceptMember = ResponseTemplate<Member>;
-export async function acceptMember(id: string): Promise<ResponseAcceptMember> {
-    const { data } = await client.patch<ResponseAcceptMember>(
+export async function acceptMember(id: string): Promise<ResponseTemplate<Member>> {
+    const { data } = await client.patch<ResponseTemplate<Member>>(
         `/members/${id}/accept`,
     );
     return data;
 }
 
-type ResponseUpdateMemberStatus = ResponseTemplate<Member>;
 export async function updateMemberStatus(
     id: string,
     payload: UpdateMemberStatusRequest,
-): Promise<ResponseUpdateMemberStatus> {
-    const { data } = await client.patch<ResponseUpdateMemberStatus>(
+): Promise<ResponseTemplate<Member>> {
+    const { data } = await client.patch<ResponseTemplate<Member>>(
         `/members/${id}/status`,
         payload,
     );
     return data;
 }
 
-type ResponseDeleteMember = ResponseTemplate<null>;
-export async function deleteMember(id: string): Promise<ResponseDeleteMember> {
-    const { data } = await client.delete<ResponseDeleteMember>(
+export async function deleteMember(id: string): Promise<ResponseTemplate<null>> {
+    const { data } = await client.delete<ResponseTemplate<null>>(
         `/members/${id}`,
     );
     return data;

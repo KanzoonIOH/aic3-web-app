@@ -427,29 +427,6 @@ export function createSelectionColumn<TData>(): ColumnDef<TData, unknown> {
     };
 }
 
-/**
- * URL/server-state wiring example:
- *
- * const [search, setSearch] = useSearch({ from: "/users" })
- * <TanStackTable
- *   data={users.data}
- *   columns={columns}
- *   manualPagination
- *   manualSorting
- *   rowCount={users.pagination.total_row}
- *   state={{
- *     pagination: { pageIndex: search.page - 1, pageSize: search.limit },
- *     sorting: search.sort ? [{ id: search.sort, desc: search.dir === "desc" }] : [],
- *   }}
- *   onPaginationChange={(updater) => {
- *     const next = typeof updater === "function"
- *       ? updater({ pageIndex: search.page - 1, pageSize: search.limit })
- *       : updater
- *     setSearch({ page: next.pageIndex + 1, limit: next.pageSize })
- *   }}
- * />
- */
-
 // ---------- Styled wrapper (product-facing) ----------
 //
 // `TanStackDataTable` is the styled, product-facing wrapper used across the

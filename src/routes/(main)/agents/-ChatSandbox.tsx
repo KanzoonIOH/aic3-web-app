@@ -57,94 +57,8 @@ const initialSuggestions = [
                 product_code: "ACCOUNT",
                 product_name: "Rekening",
             },
-            // {
-            //   "label": "Cek status kartu",
-            //   "target_id": 2208,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_CARD_STATUS",
-            //   "subtype": "card_status",
-            //   "product_code": "CARD",
-            //   "product_name": "Kartu"
-            // },
-            // {
-            //   "label": "Status saldo minimum rekening",
-            //   "target_id": 2203,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_MIN_BALANCE_STATUS",
-            //   "subtype": "minimum_balance_status",
-            //   "product_code": "ACCOUNT",
-            //   "product_name": "Rekening"
-            // },
-            // {
-            //   "label": "Outstanding balance kartu kredit",
-            //   "target_id": 2204,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_CC_OUTSTANDING_BALANCE",
-            //   "subtype": "outstanding_balance",
-            //   "product_code": "CC_ALL",
-            //   "product_name": "Kartu Kredit"
-            // },
-            // {
-            //   "label": "Due date dan minimum payment kartu kredit",
-            //   "target_id": 2206,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_CC_DUE_DATE",
-            //   "subtype": "payment_due_date",
-            //   "product_code": "CC_ALL",
-            //   "product_name": "Kartu Kredit"
-            // },
-            // {
-            //   "label": "Cek transaksi pending",
-            //   "target_id": 2211,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_PENDING_TRANSACTIONS",
-            //   "subtype": "pending_transactions",
-            //   "product_code": "ACCOUNT",
-            //   "product_name": "Rekening"
-            // },
-            // {
-            //   "label": "Cek poin reward kartu kredit",
-            //   "target_id": 2207,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_CC_REWARD_POINTS",
-            //   "subtype": "reward_points",
-            //   "product_code": "CC_ALL",
-            //   "product_name": "Kartu Kredit"
-            // },
-            // {
-            //   "label": "Cek transaksi berdasarkan rentang tanggal",
-            //   "target_id": 2210,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_TXN_BY_DATE_RANGE",
-            //   "subtype": "transaction_by_date_range",
-            //   "product_code": "ACCOUNT",
-            //   "product_name": "Rekening"
-            // },
-            // {
-            //   "label": "Cek transaksi terakhir",
-            //   "target_id": 2209,
-            //   "target_intent": "ACCOUNT_INQUIRY",
-            //   "faq_code": "AQ_LAST_N_TRANSACTIONS",
-            //   "subtype": "transaction_history",
-            //   "product_code": "ACCOUNT",
-            //   "product_name": "Rekening"
-            // }
         ],
     },
-    // {
-    //   "service_category": "Account Management",
-    //   "list": [
-    //     {
-    //       "label": "Cara tutup rekening",
-    //       "target_id": 2133,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_ACCOUNT_CLOSURE",
-    //       "subtype": "general_info",
-    //       "product_code": "ACCOUNT",
-    //       "product_name": "Rekening"
-    //     }
-    //   ]
-    // },
     {
         service_category: "Action",
         list: [
@@ -175,135 +89,8 @@ const initialSuggestions = [
                 product_code: "KTA",
                 product_name: "KTA",
             },
-            // {
-            //   "label": "Mulai pengajuan KPR",
-            //   "target_id": 2408,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_APPLY_KPR",
-            //   "subtype": "apply_product",
-            //   "product_code": "KPR",
-            //   "product_name": "KPR"
-            // },
-            // {
-            //   "label": "Pembayaran tagihan",
-            //   "target_id": 2411,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_BILL_PAYMENT",
-            //   "subtype": "bill_payment",
-            //   "product_code": "PAYMENT",
-            //   "product_name": "Pembayaran"
-            // },
-            // {
-            //   "label": "Blokir kartu sekarang",
-            //   "target_id": 2401,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_BLOCK_CARD",
-            //   "subtype": "block_card",
-            //   "product_code": "CARD",
-            //   "product_name": "Kartu"
-            // },
-            // {
-            //   "label": "Pembayaran tagihan kartu kredit",
-            //   "target_id": 2412,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_CC_PAYMENT",
-            //   "subtype": "credit_card_payment",
-            //   "product_code": "CC_ALL",
-            //   "product_name": "Kartu Kredit"
-            // },
-            // {
-            //   "label": "Top up e-wallet",
-            //   "target_id": 2413,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_EWALLET_TOPUP",
-            //   "subtype": "ewallet_topup",
-            //   "product_code": "EWALLET",
-            //   "product_name": "E-Wallet"
-            // },
-            // {
-            //   "label": "Transfer antarbank",
-            //   "target_id": 2409,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_INTERBANK_TRANSFER",
-            //   "subtype": "interbank_transfer",
-            //   "product_code": "TRANSFER",
-            //   "product_name": "Transfer"
-            // },
-            // {
-            //   "label": "Transfer internal",
-            //   "target_id": 2410,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_INTRABANK_TRANSFER",
-            //   "subtype": "intrabank_transfer",
-            //   "product_code": "TRANSFER",
-            //   "product_name": "Transfer"
-            // },
-            // {
-            //   "label": "Buka sub-account tabungan",
-            //   "target_id": 2414,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_OPEN_SUB_ACCOUNT",
-            //   "subtype": "open_sub_account",
-            //   "product_code": "SAV_REG",
-            //   "product_name": "Tabungan"
-            // },
-            // {
-            //   "label": "Reset atau ganti PIN kartu",
-            //   "target_id": 2403,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_PIN_RESET",
-            //   "subtype": "pin_reset",
-            //   "product_code": "CARD",
-            //   "product_name": "Kartu"
-            // },
-            // {
-            //   "label": "Kirim e-statement",
-            //   "target_id": 2404,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_REQUEST_ESTATEMENT",
-            //   "subtype": "request_estatement",
-            //   "product_code": "ACCOUNT",
-            //   "product_name": "Rekening"
-            // },
-            // {
-            //   "label": "Buka blokir kartu",
-            //   "target_id": 2402,
-            //   "target_intent": "ACTION",
-            //   "faq_code": "AC_UNBLOCK_CARD",
-            //   "subtype": "unblock_card",
-            //   "product_code": "CARD",
-            //   "product_name": "Kartu"
-            // }
         ],
     },
-    // {
-    //   "service_category": "Branch & ATM",
-    //   "list": [
-    //     {
-    //       "label": "Informasi cabang dan ATM",
-    //       "target_id": 2122,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_BRANCH_ATM_INFO",
-    //       "subtype": "branch_hours",
-    //       "product_code": "BRANCH_ATM",
-    //       "product_name": "Cabang & ATM"
-    //     }
-    //   ]
-    // },
-    // {
-    //   "service_category": "Cards",
-    //   "list": [
-    //     {
-    //       "label": "Cara aktivasi kartu baru",
-    //       "target_id": 2130,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_CARD_ACTIVATION",
-    //       "subtype": "general_info",
-    //       "product_code": "CARD",
-    //       "product_name": "Kartu"
-    //     }
-    //   ]
-    // },
     {
         service_category: "Complaint",
         list: [
@@ -334,78 +121,6 @@ const initialSuggestions = [
                 product_code: "CARD",
                 product_name: "Kartu",
             },
-            // {
-            //   "label": "Transaksi terdebet dua kali",
-            //   "target_id": 2303,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_DOUBLE_CHARGE",
-            //   "subtype": "double_charge",
-            //   "product_code": "CARD",
-            //   "product_name": "Kartu"
-            // },
-            // {
-            //   "label": "Transfer gagal tetapi saldo terdebet",
-            //   "target_id": 2302,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_FAILED_TRANSFER_DEBITED",
-            //   "subtype": "failed_transfer_debited",
-            //   "product_code": "TRANSFER",
-            //   "product_name": "Transfer"
-            // },
-            // {
-            //   "label": "Kartu hilang atau dicuri",
-            //   "target_id": 2307,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_LOST_CARD",
-            //   "subtype": "lost_card",
-            //   "product_code": "CARD",
-            //   "product_name": "Kartu"
-            // },
-            // {
-            //   "label": "Pembayaran berhasil tetapi merchant/biller belum menerima",
-            //   "target_id": 2304,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_PAYMENT_NOT_RECEIVED",
-            //   "subtype": "payment_not_received",
-            //   "product_code": "PAYMENT",
-            //   "product_name": "Pembayaran"
-            // },
-            // {
-            //   "label": "OTP masuk padahal tidak ada transaksi atau ada indikasi phishing",
-            //   "target_id": 2309,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_PHISHING_OTP",
-            //   "subtype": "phishing_scam",
-            //   "product_code": "SECURITY",
-            //   "product_name": "Fraud"
-            // },
-            // {
-            //   "label": "Keluhan keterlambatan proses atau layanan",
-            //   "target_id": 2311,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_SERVICE_DELAY",
-            //   "subtype": "service_quality",
-            //   "product_code": "SERVICE",
-            //   "product_name": "Layanan"
-            // },
-            // {
-            //   "label": "Laporan sengketa transaksi",
-            //   "target_id": 2301,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_TRANSACTION_DISPUTE",
-            //   "subtype": "transaction_dispute",
-            //   "product_code": "TRANSACTION",
-            //   "product_name": "Transaksi"
-            // },
-            // {
-            //   "label": "Transaksi tidak dikenal / tidak diotorisasi",
-            //   "target_id": 2308,
-            //   "target_intent": "COMPLAINT",
-            //   "faq_code": "CP_UNAUTHORIZED_TRANSACTION",
-            //   "subtype": "unauthorized_transaction",
-            //   "product_code": "SECURITY",
-            //   "product_name": "Fraud"
-            // }
         ],
     },
     {
@@ -438,81 +153,8 @@ const initialSuggestions = [
                 product_code: "CC_ALL",
                 product_name: "Kartu Kredit",
             },
-            // {
-            //   "label": "Informasi Kartu Kredit Classic",
-            //   "target_id": 2107,
-            //   "target_intent": "FAQ",
-            //   "faq_code": "FAQ_CC_CLASSIC_INFO",
-            //   "subtype": "product_info",
-            //   "product_code": "CC_CLASSIC",
-            //   "product_name": "Kartu Kredit Classic"
-            // },
-            // {
-            //   "label": "Informasi Kartu Kredit Gold",
-            //   "target_id": 2108,
-            //   "target_intent": "FAQ",
-            //   "faq_code": "FAQ_CC_GOLD_INFO",
-            //   "subtype": "product_info",
-            //   "product_code": "CC_GOLD",
-            //   "product_name": "Kartu Kredit Gold"
-            // },
-            // {
-            //   "label": "Informasi Kartu Kredit Platinum",
-            //   "target_id": 2109,
-            //   "target_intent": "FAQ",
-            //   "faq_code": "FAQ_CC_PLATINUM_INFO",
-            //   "subtype": "product_info",
-            //   "product_code": "CC_PLAT",
-            //   "product_name": "Kartu Kredit Platinum"
-            // },
-            // {
-            //   "label": "Biaya dan tagihan kartu kredit",
-            //   "target_id": 2112,
-            //   "target_intent": "FAQ",
-            //   "faq_code": "FAQ_CC_FEES",
-            //   "subtype": "rates_fees",
-            //   "product_code": "CC_ALL",
-            //   "product_name": "Kartu Kredit"
-            // }
         ],
     },
-    // {
-    //   "service_category": "Deposits",
-    //   "list": [
-    //     {
-    //       "label": "Informasi Deposito Berjangka",
-    //       "target_id": 2105,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_DEPOSIT_INFO",
-    //       "subtype": "product_info",
-    //       "product_code": "DEP_TIME",
-    //       "product_name": "Deposito Berjangka"
-    //     },
-    //     {
-    //       "label": "Bunga Deposito Berjangka",
-    //       "target_id": 2106,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_DEPOSIT_RATE",
-    //       "subtype": "rates_fees",
-    //       "product_code": "DEP_TIME",
-    //       "product_name": "Deposito Berjangka"
-    //     }
-    //   ]
-    // },
-    // {
-    //   "service_category": "Digital Banking",
-    //   "list": [
-    //     {
-    //       "label": "Cara daftar dan aktivasi m-Banking",
-    //       "target_id": 2120,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_MBANKING_SETUP",
-    //       "subtype": "digital_banking_info",
-    //       "product_code": "MBANK",
-    //       "product_name": "m-Banking"
-    //     }
-    //   ]
-    // },
     {
         service_category: "General Support",
         list: [
@@ -543,24 +185,6 @@ const initialSuggestions = [
                 product_code: "GENERIC",
                 product_name: "General",
             },
-            // {
-            //   "label": "Permintaan tugas non-perbankan",
-            //   "target_id": 2005,
-            //   "target_intent": "OUT_OF_SCOPE",
-            //   "faq_code": "OOS_NON_BANKING_TASK",
-            //   "subtype": "non_banking_task",
-            //   "product_code": "GENERIC",
-            //   "product_name": "General"
-            // },
-            // {
-            //   "label": "Topik pribadi, medis, atau hukum",
-            //   "target_id": 2004,
-            //   "target_intent": "OUT_OF_SCOPE",
-            //   "faq_code": "OOS_PERSONAL_LEGAL_MEDICAL",
-            //   "subtype": "personal_legal_medical",
-            //   "product_code": "GENERIC",
-            //   "product_name": "General"
-            // }
         ],
     },
     {
@@ -627,43 +251,6 @@ const initialSuggestions = [
             },
         ],
     },
-    // {
-    //   "service_category": "Payments & Transfers",
-    //   "list": [
-    //     {
-    //       "label": "Limit transfer harian",
-    //       "target_id": 2129,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_TRANSFER_LIMIT_INFO",
-    //       "subtype": "general_info",
-    //       "product_code": "TRANSFER",
-    //       "product_name": "Transfer"
-    //     },
-    //     {
-    //       "label": "Informasi transfer BI-FAST",
-    //       "target_id": 2132,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_BIFAST_INFO",
-    //       "subtype": "general_info",
-    //       "product_code": "TRANSFER",
-    //       "product_name": "BI-FAST"
-    //     }
-    //   ]
-    // },
-    // {
-    //   "service_category": "Profile Management",
-    //   "list": [
-    //     {
-    //       "label": "Ubah nomor ponsel atau email terdaftar",
-    //       "target_id": 2134,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_CONTACT_UPDATE",
-    //       "subtype": "general_info",
-    //       "product_code": "PROFILE",
-    //       "product_name": "Data Kontak"
-    //     }
-    //   ]
-    // },
     {
         service_category: "Promotions",
         list: [
@@ -694,15 +281,6 @@ const initialSuggestions = [
                 product_code: "CC_ALL",
                 product_name: "Kartu Kredit",
             },
-            // {
-            //   "label": "Promo pembukaan rekening digital",
-            //   "target_id": 2127,
-            //   "target_intent": "FAQ",
-            //   "faq_code": "FAQ_PROMO_DIGITAL_ONBOARDING",
-            //   "subtype": "promotion_info",
-            //   "product_code": "SAV_REG",
-            //   "product_name": "Tabungan Reguler"
-            // }
         ],
     },
     {
@@ -735,68 +313,8 @@ const initialSuggestions = [
                 product_code: "SAV_REG",
                 product_name: "Tabungan Reguler",
             },
-            // {
-            //   "label": "Informasi Tabungan Premium",
-            //   "target_id": 2104,
-            //   "target_intent": "FAQ",
-            //   "faq_code": "FAQ_SAVINGS_PREMIUM_INFO",
-            //   "subtype": "product_info",
-            //   "product_code": "SAV_PREM",
-            //   "product_name": "Tabungan Premium"
-            // }
         ],
     },
-    // {
-    //   "service_category": "Security",
-    //   "list": [
-    //     {
-    //       "label": "Panduan keamanan OTP dan phishing",
-    //       "target_id": 2121,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_MBANKING_SECURITY",
-    //       "subtype": "security_info",
-    //       "product_code": "SECURITY",
-    //       "product_name": "Keamanan Digital"
-    //     },
-    //     {
-    //       "label": "Apa yang harus dilakukan jika kartu hilang",
-    //       "target_id": 2128,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_LOST_CARD_GUIDANCE",
-    //       "subtype": "security_info",
-    //       "product_code": "CARD",
-    //       "product_name": "Kartu"
-    //     }
-    //   ]
-    // },
-    // {
-    //   "service_category": "Statements",
-    //   "list": [
-    //     {
-    //       "label": "Akses e-statement rekening dan kartu kredit",
-    //       "target_id": 2131,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_ESTATEMENT_INFO",
-    //       "subtype": "general_info",
-    //       "product_code": "ESTMT",
-    //       "product_name": "e-Statement"
-    //     }
-    //   ]
-    // },
-    // {
-    //   "service_category": "Transactions",
-    //   "list": [
-    //     {
-    //       "label": "Biaya transfer dan transaksi",
-    //       "target_id": 2123,
-    //       "target_intent": "FAQ",
-    //       "faq_code": "FAQ_TRANSFER_FEES",
-    //       "subtype": "rates_fees",
-    //       "product_code": "TRANSFER",
-    //       "product_name": "Transfer"
-    //     }
-    //   ]
-    // }
 ];
 
 const CC_TITLE: Record<CcProduct["card_type"], string> = {

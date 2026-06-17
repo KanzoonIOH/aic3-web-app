@@ -1,4 +1,5 @@
 import { client } from "./client";
+import type { PaginationType, ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
@@ -9,14 +10,6 @@ export interface LogMessage {
     response_time_ms: number;
     is_success: boolean;
     occurred_at: string;
-}
-
-export interface LogPagination {
-    limit: number;
-    page: number;
-    rows: number;
-    total_page: number;
-    total_row: number;
 }
 
 export interface LogTimeseriesPoint {
@@ -35,17 +28,12 @@ export interface LogSummary {
     uniq_conversations: number;
 }
 
+// ponytail: replaced LogPagination (duplicate of PaginationType) and hand-rolled response
+// wrappers with ResponseTemplate<T>; LogMessagesResponse preserved as named type for
+// the pagination field which this endpoint always returns non-null
 export interface LogMessagesResponse {
     data: LogMessage[];
-    pagination: LogPagination;
-}
-
-export interface LogTimeseriesResponse {
-    data: LogTimeseriesPoint[];
-}
-
-export interface LogSummaryResponse {
-    data: LogSummary;
+    pagination: PaginationType;
 }
 
 // ---------- Params ----------
@@ -68,9 +56,9 @@ export async function getLogMessages(
 
 export async function getLogTimeseries(
     agentId?: string,
-): Promise<LogTimeseriesResponse> {
+): Promise<ResponseTemplate<LogTimeseriesPoint[]>> {
     const params = agentId ? { agent_id: agentId } : undefined;
-    const { data } = await client.get<LogTimeseriesResponse>(
+    const { data } = await client.get<ResponseTemplate<LogTimeseriesPoint[]>>(
         "/logs/timeseries",
         { params },
     );
@@ -79,9 +67,9 @@ export async function getLogTimeseries(
 
 export async function getLogSummary(
     agentId?: string,
-): Promise<LogSummaryResponse> {
+): Promise<ResponseTemplate<LogSummary>> {
     const params = agentId ? { agent_id: agentId } : undefined;
-    const { data } = await client.get<LogSummaryResponse>("/logs/summary", {
+    const { data } = await client.get<ResponseTemplate<LogSummary>>("/logs/summary", {
         params,
     });
     return data;

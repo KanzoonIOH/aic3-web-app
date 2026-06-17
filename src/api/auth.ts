@@ -31,15 +31,14 @@ export interface ApiError {
 
 // ---------- API functions ----------
 
-type ResponseType = ResponseTemplate<AuthResponse>;
-export async function login(payload: LoginPayload): Promise<ResponseType> {
-    const { data } = await client.post<ResponseType>("/auth/login", payload);
+export async function login(payload: LoginPayload): Promise<ResponseTemplate<AuthResponse>> {
+    const { data } = await client.post<ResponseTemplate<AuthResponse>>("/auth/login", payload);
     return data;
 }
 
 export async function register(
     payload: RegisterPayload,
-): Promise<ResponseType> {
-    const { data } = await client.post<ResponseType>("/auth/register", payload);
+): Promise<ResponseTemplate<AuthResponse>> {
+    const { data } = await client.post<ResponseTemplate<AuthResponse>>("/auth/register", payload);
     return data;
 }

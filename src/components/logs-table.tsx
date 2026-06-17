@@ -8,24 +8,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, ScrollText } from "lucide-react";
 import { useState } from "react";
 
 const LIMIT = 10;
-
-function formatDateTime(iso: string) {
-    const d = new Date(iso);
-    return d.toLocaleString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    });
-}
 
 function StatusBadge({ message }: { message: LogMessage }) {
     return (

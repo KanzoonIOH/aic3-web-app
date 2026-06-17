@@ -16,3 +16,9 @@ export async function connectAgentKnowledge(
     );
     return data;
 }
+
+export async function disconnectAgentKnowledge(
+    payload: ConnectAgentKnowledgeRequest,
+): Promise<void> {
+    await client.delete("/connect/agent-knowledge", { data: payload });
+}

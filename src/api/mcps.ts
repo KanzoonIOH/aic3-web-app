@@ -46,30 +46,26 @@ export interface McpTool {
 
 // ---------- API functions ----------
 
-type ResponseGetMcps = ResponseTemplate<Mcp[]>;
-export async function getMcps(): Promise<ResponseGetMcps> {
-    const { data } = await client.get<ResponseGetMcps>("/mcps");
+export async function getMcps(): Promise<ResponseTemplate<Mcp[]>> {
+    const { data } = await client.get<ResponseTemplate<Mcp[]>>("/mcps");
     return data;
 }
 
-type ResponseGetMcp = ResponseTemplate<Mcp>;
-export async function getMcp(id: string): Promise<ResponseGetMcp> {
-    const { data } = await client.get<ResponseGetMcp>(`/mcps/${id}`);
+export async function getMcp(id: string): Promise<ResponseTemplate<Mcp>> {
+    const { data } = await client.get<ResponseTemplate<Mcp>>(`/mcps/${id}`);
     return data;
 }
 
-type ResponseGetMcpTools = ResponseTemplate<McpTool[]>;
-export async function getMcpTools(id: string): Promise<ResponseGetMcpTools> {
-    const { data } = await client.get<ResponseGetMcpTools>(`/mcps/${id}/tools`);
+export async function getMcpTools(id: string): Promise<ResponseTemplate<McpTool[]>> {
+    const { data } = await client.get<ResponseTemplate<McpTool[]>>(`/mcps/${id}/tools`);
     return data;
 }
 
-type ResponseUpdateMcp = ResponseTemplate<Mcp>;
 export async function updateMcp(
     id: string,
     payload: UpdateMcpRequest,
-): Promise<ResponseUpdateMcp> {
-    const { data } = await client.patch<ResponseUpdateMcp>(
+): Promise<ResponseTemplate<Mcp>> {
+    const { data } = await client.patch<ResponseTemplate<Mcp>>(
         `/mcps/${id}`,
         payload,
     );

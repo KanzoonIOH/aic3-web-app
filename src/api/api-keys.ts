@@ -16,26 +16,23 @@ export interface CreateApiKeyRequest {
 
 // ---------- API functions ----------
 
-type ResponseGetApiKeys = ResponseTemplate<ApiKey[]>;
-export async function getApiKeys(): Promise<ResponseGetApiKeys> {
-    const { data } = await client.get<ResponseGetApiKeys>("/api-keys");
+export async function getApiKeys(): Promise<ResponseTemplate<ApiKey[]>> {
+    const { data } = await client.get<ResponseTemplate<ApiKey[]>>("/api-keys");
     return data;
 }
 
-type ResponseCreateApiKey = ResponseTemplate<ApiKey>;
 export async function createApiKey(
     payload: CreateApiKeyRequest,
-): Promise<ResponseCreateApiKey> {
-    const { data } = await client.post<ResponseCreateApiKey>(
+): Promise<ResponseTemplate<ApiKey>> {
+    const { data } = await client.post<ResponseTemplate<ApiKey>>(
         "/api-keys",
         payload,
     );
     return data;
 }
 
-type ResponseRevokeApiKey = ResponseTemplate<null>;
-export async function revokeApiKey(id: string): Promise<ResponseRevokeApiKey> {
-    const { data } = await client.delete<ResponseRevokeApiKey>(
+export async function revokeApiKey(id: string): Promise<ResponseTemplate<null>> {
+    const { data } = await client.delete<ResponseTemplate<null>>(
         `/api-keys/${id}`,
     );
     return data;

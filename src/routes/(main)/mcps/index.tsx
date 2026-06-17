@@ -22,76 +22,18 @@ import {
 } from "@/components/ui/tanstack-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { resolveServerMessage, textareaClass } from "@/lib/utils";
+import { CopyableUri } from "@/components/copy-button";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import axios from "axios";
-import { Check, Copy, MoreHorizontal, Plug, Plus } from "lucide-react";
+import { MoreHorizontal, Plug, Plus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/(main)/mcps/")({
     component: RouteComponent,
 });
-
-// ---------- Helpers ----------
-
-type ApiError = { message?: string };
-
-function resolveServerMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError | undefined;
-        return data?.message ?? error.message;
-    }
-    return "An unexpected error occurred.";
-}
-
-const textareaClass = cn(
-    "min-h-20 w-full rounded-md border border-input bg-transparent px-2.5 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground",
-    "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-    "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
-    "md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
-);
-
-function CopyableUri({ uri }: { uri: string }) {
-    const [copied, setCopied] = useState(false);
-
-    function handleCopy() {
-        navigator.clipboard.writeText(uri).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-        });
-    }
-
-    const MAX = 32;
-    const clipped = uri.length > MAX ? uri.slice(0, MAX) + "…" : uri;
-
-    return (
-        <div className="flex items-center gap-1.5 min-w-0">
-            <span
-                className="truncate font-mono text-xs text-muted-foreground"
-                title={uri}
-            >
-                {clipped}
-            </span>
-            <Button
-                variant="ghost"
-                size="icon-xs"
-                className="shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={handleCopy}
-                aria-label="Copy URI"
-            >
-                {copied ? (
-                    <Check className="size-3 text-green-500" />
-                ) : (
-                    <Copy className="size-3" />
-                )}
-            </Button>
-        </div>
-    );
-}
 
 // ---------- Schema ----------
 
@@ -334,15 +276,6 @@ function EditMcpDialog({
 function McpRowActions({ mcp }: { mcp: Mcp }) {
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
-    // const queryClient = useQueryClient();
-
-    // const { mutate: remove, isPending: isDeleting } = useMutation({
-    //     mutationFn: () => deleteMcp(mcp.id),
-    //     onSuccess: () => {
-    //         queryClient.invalidateQueries({ queryKey: ["mcps"] });
-    //         setDeleteOpen(false);
-    //     },
-    // });
 
     return (
         <>
@@ -402,32 +335,6 @@ function McpRowActions({ mcp }: { mcp: Mcp }) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            {/*<AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete MCP?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            <span className="font-medium text-foreground">
-                                {mcp.name}
-                            </span>{" "}
-                            will be permanently deleted. This action cannot be
-                            undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel variant="ghost">
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            disabled={isDeleting}
-                            onClick={() => remove()}
-                        >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>*/}
         </>
     );
 }
@@ -466,39 +373,6 @@ export const mcpColumns: ColumnDef<Mcp>[] = [
     },
     {
         id: "actions",
-        meta: { cellClassName: "text-right" },
-        cell: ({ row }) => <McpRowActions mcp={row.original} />,
-    },
-    {
-        id: "description",
-        accessorKey: "description",
-        header: "Description",
-        meta: { className: "text-muted-foreground text-sm max-w-64" },
-        cell: ({ row }) =>
-            row.original.description ?? (
-                <span className="italic text-muted-foreground/50">—</span>
-            ),
-    },
-    {
-        id: "tools",
-        accessorKey: "tools_count",
-        header: "Tools",
-        meta: { className: "font-medium" },
-        cell: ({ row }) => row.original.tools_count,
-    },
-    {
-        id: "uri",
-        header: "URI",
-        enableSorting: false,
-        meta: {
-            className:
-                "font-mono text-xs text-muted-foreground max-w-56 truncate",
-        },
-        cell: ({ row }) => <CopyableUri uri={row.original.uri} />,
-    },
-    {
-        id: "actions",
-        enableSorting: false,
         meta: { cellClassName: "text-right" },
         cell: ({ row }) => <McpRowActions mcp={row.original} />,
     },

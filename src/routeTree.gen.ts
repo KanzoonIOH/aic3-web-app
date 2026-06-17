@@ -15,16 +15,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as mainMembersRouteImport } from './routes/(main)/members'
 import { Route as mainLogsRouteImport } from './routes/(main)/logs'
 import { Route as mainDashboard2RouteImport } from './routes/(main)/dashboard2'
-import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
-import { Route as mainAnalyticsRouteImport } from './routes/(main)/analytics'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
 import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
 import { Route as mainMcpsIdRouteImport } from './routes/(main)/mcps/$id'
-import { Route as mainKnowledgesIdRouteImport } from './routes/(main)/knowledges/$id'
 import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
 
 const mainRouteRoute = mainRouteRouteImport.update({
@@ -55,19 +52,9 @@ const mainDashboard2Route = mainDashboard2RouteImport.update({
   path: '/dashboard2',
   getParentRoute: () => mainRouteRoute,
 } as any)
-const mainDashboardRoute = mainDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => mainRouteRoute,
-} as any)
 const mainApiKeysRoute = mainApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
-  getParentRoute: () => mainRouteRoute,
-} as any)
-const mainAnalyticsRoute = mainAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const authSignupRoute = authSignupRouteImport.update({
@@ -100,11 +87,6 @@ const mainMcpsIdRoute = mainMcpsIdRouteImport.update({
   path: '/mcps/$id',
   getParentRoute: () => mainRouteRoute,
 } as any)
-const mainKnowledgesIdRoute = mainKnowledgesIdRouteImport.update({
-  id: '/knowledges/$id',
-  path: '/knowledges/$id',
-  getParentRoute: () => mainRouteRoute,
-} as any)
 const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
   id: '/agents/$id',
   path: '/agents/$id',
@@ -115,14 +97,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
-  '/analytics': typeof mainAnalyticsRoute
   '/api-keys': typeof mainApiKeysRoute
-  '/dashboard': typeof mainDashboardRoute
   '/dashboard2': typeof mainDashboard2Route
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
-  '/knowledges/$id': typeof mainKnowledgesIdRoute
   '/mcps/$id': typeof mainMcpsIdRoute
   '/agents/': typeof mainAgentsIndexRoute
   '/knowledges/': typeof mainKnowledgesIndexRoute
@@ -132,14 +111,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
-  '/analytics': typeof mainAnalyticsRoute
   '/api-keys': typeof mainApiKeysRoute
-  '/dashboard': typeof mainDashboardRoute
   '/dashboard2': typeof mainDashboard2Route
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
-  '/knowledges/$id': typeof mainKnowledgesIdRoute
   '/mcps/$id': typeof mainMcpsIdRoute
   '/agents': typeof mainAgentsIndexRoute
   '/knowledges': typeof mainKnowledgesIndexRoute
@@ -152,14 +128,11 @@ export interface FileRoutesById {
   '/(main)': typeof mainRouteRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
-  '/(main)/analytics': typeof mainAnalyticsRoute
   '/(main)/api-keys': typeof mainApiKeysRoute
-  '/(main)/dashboard': typeof mainDashboardRoute
   '/(main)/dashboard2': typeof mainDashboard2Route
   '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
-  '/(main)/knowledges/$id': typeof mainKnowledgesIdRoute
   '/(main)/mcps/$id': typeof mainMcpsIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
   '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
@@ -171,14 +144,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/analytics'
     | '/api-keys'
-    | '/dashboard'
     | '/dashboard2'
     | '/logs'
     | '/members'
     | '/agents/$id'
-    | '/knowledges/$id'
     | '/mcps/$id'
     | '/agents/'
     | '/knowledges/'
@@ -188,14 +158,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
-    | '/analytics'
     | '/api-keys'
-    | '/dashboard'
     | '/dashboard2'
     | '/logs'
     | '/members'
     | '/agents/$id'
-    | '/knowledges/$id'
     | '/mcps/$id'
     | '/agents'
     | '/knowledges'
@@ -207,14 +174,11 @@ export interface FileRouteTypes {
     | '/(main)'
     | '/(auth)/login'
     | '/(auth)/signup'
-    | '/(main)/analytics'
     | '/(main)/api-keys'
-    | '/(main)/dashboard'
     | '/(main)/dashboard2'
     | '/(main)/logs'
     | '/(main)/members'
     | '/(main)/agents/$id'
-    | '/(main)/knowledges/$id'
     | '/(main)/mcps/$id'
     | '/(main)/agents/'
     | '/(main)/knowledges/'
@@ -271,25 +235,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainDashboard2RouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/dashboard': {
-      id: '/(main)/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof mainDashboardRouteImport
-      parentRoute: typeof mainRouteRoute
-    }
     '/(main)/api-keys': {
       id: '/(main)/api-keys'
       path: '/api-keys'
       fullPath: '/api-keys'
       preLoaderRoute: typeof mainApiKeysRouteImport
-      parentRoute: typeof mainRouteRoute
-    }
-    '/(main)/analytics': {
-      id: '/(main)/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof mainAnalyticsRouteImport
       parentRoute: typeof mainRouteRoute
     }
     '/(auth)/signup': {
@@ -334,13 +284,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainMcpsIdRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/knowledges/$id': {
-      id: '/(main)/knowledges/$id'
-      path: '/knowledges/$id'
-      fullPath: '/knowledges/$id'
-      preLoaderRoute: typeof mainKnowledgesIdRouteImport
-      parentRoute: typeof mainRouteRoute
-    }
     '/(main)/agents/$id': {
       id: '/(main)/agents/$id'
       path: '/agents/$id'
@@ -366,14 +309,11 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 )
 
 interface mainRouteRouteChildren {
-  mainAnalyticsRoute: typeof mainAnalyticsRoute
   mainApiKeysRoute: typeof mainApiKeysRoute
-  mainDashboardRoute: typeof mainDashboardRoute
   mainDashboard2Route: typeof mainDashboard2Route
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
-  mainKnowledgesIdRoute: typeof mainKnowledgesIdRoute
   mainMcpsIdRoute: typeof mainMcpsIdRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
@@ -381,14 +321,11 @@ interface mainRouteRouteChildren {
 }
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
-  mainAnalyticsRoute: mainAnalyticsRoute,
   mainApiKeysRoute: mainApiKeysRoute,
-  mainDashboardRoute: mainDashboardRoute,
   mainDashboard2Route: mainDashboard2Route,
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
-  mainKnowledgesIdRoute: mainKnowledgesIdRoute,
   mainMcpsIdRoute: mainMcpsIdRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,

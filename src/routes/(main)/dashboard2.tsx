@@ -15,7 +15,7 @@ import {
     TanStackDataTable,
     type ColumnDef,
 } from "@/components/ui/tanstack-table";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -59,18 +59,6 @@ function formatBucket(iso: string) {
 }
 
 const LOGS_LIMIT = 10;
-
-function formatDateTime(iso: string) {
-    const d = new Date(iso);
-    return d.toLocaleString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    });
-}
 
 function LogStatusBadge({ message }: { message: LogMessage }) {
     return (

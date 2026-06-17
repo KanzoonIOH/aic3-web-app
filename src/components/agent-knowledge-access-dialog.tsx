@@ -1,6 +1,10 @@
-import { getAgents, type Agent } from "@/api/agents";
-import { connectAgentKnowledge } from "@/api/connect";
-import { getKnowledges, type Knowledge } from "@/api/knowledges";
+import {
+    connectAgentKnowledge,
+    disconnectAgentKnowledge,
+} from "@/api/connect";
+import { getAgentKnowledgesAll } from "@/api/agents";
+import { getKnowledgeAgents } from "@/api/knowledges";
+import type { Knowledge } from "@/api/knowledges";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -11,21 +15,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { resolveServerMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import { BookOpen, Bot } from "lucide-react";
+import { BookOpen, Bot, ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-
-type ApiError = { message?: string };
-
-function resolveServerMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError | undefined;
-        return data?.message ?? error.message;
-    }
-    return "An unexpected error occurred.";
-}
 
 function EmptyPickerState({
     icon,
@@ -42,68 +36,8 @@ function EmptyPickerState({
     );
 }
 
-function AgentPickerRow({
-    agent,
-    isDisabled,
-    isPending,
-    onConnect,
-}: {
-    agent: Agent;
-    isDisabled: boolean;
-    isPending: boolean;
-    onConnect: () => void;
-}) {
-    return (
-        <div className="flex items-center gap-3 px-3 py-2.5">
-            <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{agent.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                    {agent.description || "No description"}
-                </p>
-            </div>
-            <Button
-                size="sm"
-                variant="outline"
-                disabled={isDisabled}
-                onClick={onConnect}
-            >
-                {isPending ? "Connecting..." : "Connect"}
-            </Button>
-        </div>
-    );
-}
-
-function KnowledgePickerRow({
-    knowledge,
-    isDisabled,
-    isPending,
-    onConnect,
-}: {
-    knowledge: Knowledge;
-    isDisabled: boolean;
-    isPending: boolean;
-    onConnect: () => void;
-}) {
-    return (
-        <div className="flex items-center gap-3 px-3 py-2.5">
-            <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{knowledge.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                    {knowledge.description || "No description"}
-                </p>
-            </div>
-            <Button
-                size="sm"
-                variant="outline"
-                disabled={isDisabled}
-                onClick={onConnect}
-            >
-                {isPending ? "Connecting..." : "Connect"}
-            </Button>
-        </div>
-    );
-}
-
+// Lists ALL agents (paginated) with their connection status to this knowledge,
+// allowing connect/remove per row.
 export function KnowledgeAgentAccessDialog({
     knowledge,
     open,
@@ -113,46 +47,48 @@ export function KnowledgeAgentAccessDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const [pendingAgentId, setPendingAgentId] = useState<string | null>(null);
+    const [page, setPage] = useState(1); // 1-based
+    const [pendingId, setPendingId] = useState<string | null>(null);
     const queryClient = useQueryClient();
+    const limit = 5;
 
     const agents = useQuery({
-        queryKey: ["agents"],
-        queryFn: getAgents,
+        queryKey: ["knowledges", knowledge.id, "agents", page],
+        queryFn: () =>
+            getKnowledgeAgents(knowledge.id, { offset: page - 1, limit }),
         enabled: open,
     });
 
+    function invalidate(agentId: string) {
+        queryClient.invalidateQueries({ queryKey: ["agents"] });
+        queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
+        queryClient.invalidateQueries({ queryKey: ["knowledges"] });
+        queryClient.invalidateQueries({ queryKey: ["knowledges", knowledge.id] });
+    }
+
     const mutation = useMutation({
-        mutationFn: (agentId: string) =>
-            connectAgentKnowledge({
-                agent_id: agentId,
-                knowledge_id: knowledge.id,
-            }),
-        onSuccess: (_response, agentId) => {
-            queryClient.invalidateQueries({ queryKey: ["agents"] });
-            queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
-            queryClient.invalidateQueries({
-                queryKey: ["agents", agentId, "knowledges"],
-            });
-            queryClient.invalidateQueries({ queryKey: ["knowledges"] });
-            queryClient.invalidateQueries({ queryKey: ["knowledges", knowledge.id] });
+        mutationFn: async ({ agentId, connected }: { agentId: string; connected: boolean }) => {
+            const payload = { agent_id: agentId, knowledge_id: knowledge.id };
+            if (connected) await disconnectAgentKnowledge(payload);
+            else await connectAgentKnowledge(payload);
         },
-        onSettled: () => setPendingAgentId(null),
+        onSuccess: (_response, { agentId }) => invalidate(agentId),
+        onSettled: () => setPendingId(null),
     });
 
     function handleOpenChange(nextOpen: boolean) {
         onOpenChange(nextOpen);
-        if (!nextOpen) {
-            mutation.reset();
-            setPendingAgentId(null);
-        }
+        if (!nextOpen) { mutation.reset(); setPendingId(null); setPage(1); }
     }
 
-    function handleConnect(agentId: string) {
+    function handleToggle(agentId: string, connected: boolean) {
         mutation.reset();
-        setPendingAgentId(agentId);
-        mutation.mutate(agentId);
+        setPendingId(agentId);
+        mutation.mutate({ agentId, connected });
     }
+
+    const icon = <Bot className="size-8 text-muted-foreground/40" />;
+    const totalPage = agents.data?.pagination?.total_page ?? 1;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -160,7 +96,7 @@ export function KnowledgeAgentAccessDialog({
                 <DialogHeader>
                     <DialogTitle>Access</DialogTitle>
                     <DialogDescription>
-                        Connect {knowledge.name} to an agent.
+                        Connect {knowledge.name} to agents.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -169,46 +105,85 @@ export function KnowledgeAgentAccessDialog({
                         {resolveServerMessage(mutation.error)}
                     </p>
                 )}
-                {mutation.isSuccess && (
-                    <p className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
-                        Access connected.
-                    </p>
-                )}
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border divide-y">
                     {agents.isPending ? (
-                        <EmptyPickerState
-                            icon={<Bot className="size-8 text-muted-foreground/40" />}
-                            message="Loading agents..."
-                        />
+                        <EmptyPickerState icon={icon} message="Loading agents..." />
                     ) : agents.isError ? (
-                        <EmptyPickerState
-                            icon={<Bot className="size-8 text-muted-foreground/40" />}
-                            message="Failed to load agents"
-                        />
+                        <EmptyPickerState icon={icon} message="Failed to load agents" />
                     ) : agents.data.data.length === 0 ? (
-                        <EmptyPickerState
-                            icon={<Bot className="size-8 text-muted-foreground/40" />}
-                            message="No agents found"
-                        />
+                        <EmptyPickerState icon={icon} message="No agents found" />
                     ) : (
                         agents.data.data.map((agent) => (
-                            <AgentPickerRow
+                            <div
                                 key={agent.id}
-                                agent={agent}
-                                isDisabled={mutation.isPending}
-                                isPending={pendingAgentId === agent.id}
-                                onConnect={() => handleConnect(agent.id)}
-                            />
+                                className="flex items-center gap-3 px-3 py-2.5"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="truncate text-sm font-medium">
+                                            {agent.name}
+                                        </p>
+                                        {agent.connected && (
+                                            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                                Connected
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="truncate text-xs text-muted-foreground">
+                                        {agent.description || "No description"}
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant={agent.connected ? "destructive" : "outline"}
+                                    disabled={mutation.isPending}
+                                    onClick={() => handleToggle(agent.id, agent.connected)}
+                                >
+                                    {pendingId === agent.id
+                                        ? agent.connected
+                                            ? "Removing..."
+                                            : "Connecting..."
+                                        : agent.connected
+                                          ? "Remove"
+                                          : "Connect"}
+                                </Button>
+                            </div>
                         ))
                     )}
                 </div>
 
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                        {agents.data?.data.length
+                            ? `Page ${page} of ${totalPage}`
+                            : ""}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page <= 1 || agents.isFetching}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        >
+                            <ChevronLeft className="size-3.5" />
+                            Prev
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page >= totalPage || agents.isFetching}
+                            onClick={() => setPage((p) => p + 1)}
+                        >
+                            Next
+                            <ChevronRight className="size-3.5" />
+                        </Button>
+                    </div>
+                </div>
+
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button type="button" variant="outline">
-                            Close
-                        </Button>
+                        <Button type="button" variant="outline">Close</Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
@@ -216,6 +191,8 @@ export function KnowledgeAgentAccessDialog({
     );
 }
 
+// Lists ALL knowledges (paginated) with their connection status to this agent,
+// allowing connect/remove per row.
 export function AgentKnowledgeAccessDialog({
     agentId,
     open,
@@ -225,48 +202,47 @@ export function AgentKnowledgeAccessDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const [pendingKnowledgeId, setPendingKnowledgeId] = useState<
-        string | null
-    >(null);
+    const [page, setPage] = useState(1); // 1-based
+    const [pendingId, setPendingId] = useState<string | null>(null);
     const queryClient = useQueryClient();
+    const limit = 5;
 
     const knowledges = useQuery({
-        queryKey: ["knowledges"],
-        queryFn: getKnowledges,
+        queryKey: ["agents", agentId, "knowledges", "all", page],
+        queryFn: () => getAgentKnowledgesAll(agentId, { offset: page - 1, limit }),
         enabled: open,
     });
 
+    function invalidate(knowledgeId: string) {
+        queryClient.invalidateQueries({ queryKey: ["agents"] });
+        queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
+        queryClient.invalidateQueries({ queryKey: ["knowledges"] });
+        queryClient.invalidateQueries({ queryKey: ["knowledges", knowledgeId] });
+    }
+
     const mutation = useMutation({
-        mutationFn: (knowledgeId: string) =>
-            connectAgentKnowledge({
-                agent_id: agentId,
-                knowledge_id: knowledgeId,
-            }),
-        onSuccess: (_response, knowledgeId) => {
-            queryClient.invalidateQueries({ queryKey: ["agents"] });
-            queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
-            queryClient.invalidateQueries({
-                queryKey: ["agents", agentId, "knowledges"],
-            });
-            queryClient.invalidateQueries({ queryKey: ["knowledges"] });
-            queryClient.invalidateQueries({ queryKey: ["knowledges", knowledgeId] });
+        mutationFn: async ({ knowledgeId, connected }: { knowledgeId: string; connected: boolean }) => {
+            const payload = { agent_id: agentId, knowledge_id: knowledgeId };
+            if (connected) await disconnectAgentKnowledge(payload);
+            else await connectAgentKnowledge(payload);
         },
-        onSettled: () => setPendingKnowledgeId(null),
+        onSuccess: (_response, { knowledgeId }) => invalidate(knowledgeId),
+        onSettled: () => setPendingId(null),
     });
 
     function handleOpenChange(nextOpen: boolean) {
         onOpenChange(nextOpen);
-        if (!nextOpen) {
-            mutation.reset();
-            setPendingKnowledgeId(null);
-        }
+        if (!nextOpen) { mutation.reset(); setPendingId(null); setPage(1); }
     }
 
-    function handleConnect(knowledgeId: string) {
+    function handleToggle(knowledgeId: string, connected: boolean) {
         mutation.reset();
-        setPendingKnowledgeId(knowledgeId);
-        mutation.mutate(knowledgeId);
+        setPendingId(knowledgeId);
+        mutation.mutate({ knowledgeId, connected });
     }
+
+    const icon = <BookOpen className="size-8 text-muted-foreground/40" />;
+    const totalPage = knowledges.data?.pagination?.total_page ?? 1;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -274,7 +250,7 @@ export function AgentKnowledgeAccessDialog({
                 <DialogHeader>
                     <DialogTitle>Access</DialogTitle>
                     <DialogDescription>
-                        Connect this agent to a knowledge source.
+                        Connect this agent to knowledge sources.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -283,46 +259,85 @@ export function AgentKnowledgeAccessDialog({
                         {resolveServerMessage(mutation.error)}
                     </p>
                 )}
-                {mutation.isSuccess && (
-                    <p className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
-                        Access connected.
-                    </p>
-                )}
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border divide-y">
                     {knowledges.isPending ? (
-                        <EmptyPickerState
-                            icon={<BookOpen className="size-8 text-muted-foreground/40" />}
-                            message="Loading knowledges..."
-                        />
+                        <EmptyPickerState icon={icon} message="Loading knowledges..." />
                     ) : knowledges.isError ? (
-                        <EmptyPickerState
-                            icon={<BookOpen className="size-8 text-muted-foreground/40" />}
-                            message="Failed to load knowledges"
-                        />
+                        <EmptyPickerState icon={icon} message="Failed to load knowledges" />
                     ) : knowledges.data.data.length === 0 ? (
-                        <EmptyPickerState
-                            icon={<BookOpen className="size-8 text-muted-foreground/40" />}
-                            message="No knowledges found"
-                        />
+                        <EmptyPickerState icon={icon} message="No knowledges found" />
                     ) : (
                         knowledges.data.data.map((knowledge) => (
-                            <KnowledgePickerRow
+                            <div
                                 key={knowledge.id}
-                                knowledge={knowledge}
-                                isDisabled={mutation.isPending}
-                                isPending={pendingKnowledgeId === knowledge.id}
-                                onConnect={() => handleConnect(knowledge.id)}
-                            />
+                                className="flex items-center gap-3 px-3 py-2.5"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="truncate text-sm font-medium">
+                                            {knowledge.name}
+                                        </p>
+                                        {knowledge.connected && (
+                                            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                                Connected
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="truncate text-xs text-muted-foreground">
+                                        {knowledge.description || "No description"}
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant={knowledge.connected ? "destructive" : "outline"}
+                                    disabled={mutation.isPending}
+                                    onClick={() => handleToggle(knowledge.id, knowledge.connected)}
+                                >
+                                    {pendingId === knowledge.id
+                                        ? knowledge.connected
+                                            ? "Removing..."
+                                            : "Connecting..."
+                                        : knowledge.connected
+                                          ? "Remove"
+                                          : "Connect"}
+                                </Button>
+                            </div>
                         ))
                     )}
                 </div>
 
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                        {knowledges.data?.data.length
+                            ? `Page ${page} of ${totalPage}`
+                            : ""}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page <= 1 || knowledges.isFetching}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        >
+                            <ChevronLeft className="size-3.5" />
+                            Prev
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page >= totalPage || knowledges.isFetching}
+                            onClick={() => setPage((p) => p + 1)}
+                        >
+                            Next
+                            <ChevronRight className="size-3.5" />
+                        </Button>
+                    </div>
+                </div>
+
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button type="button" variant="outline">
-                            Close
-                        </Button>
+                        <Button type="button" variant="outline">Close</Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>

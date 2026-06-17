@@ -1,42 +1,12 @@
 import { getMcp, getMcpTools, type McpTool } from "@/api/mcps";
-import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/copy-button";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, Wrench } from "lucide-react";
-import { useState } from "react";
+import { Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/(main)/mcps/$id")({
     component: RouteComponent,
 });
-
-// ---------- Helpers ----------
-
-function CopyButton({ value }: { value: string }) {
-    const [copied, setCopied] = useState(false);
-
-    function handleCopy() {
-        navigator.clipboard.writeText(value).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-        });
-    }
-
-    return (
-        <Button
-            variant="ghost"
-            size="icon-xs"
-            className="shrink-0 text-muted-foreground hover:text-foreground"
-            onClick={handleCopy}
-            aria-label="Copy"
-        >
-            {copied ? (
-                <Check className="size-3 text-green-500" />
-            ) : (
-                <Copy className="size-3" />
-            )}
-        </Button>
-    );
-}
 
 // ---------- Tool card ----------
 

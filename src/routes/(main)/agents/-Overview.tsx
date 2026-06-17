@@ -1,10 +1,6 @@
 import { UnderConstruction } from "@/components/under-construction";
 
-export function Overview({ agentId }: { agentId: string }) {
-    return (
-        <>
-            <UnderConstruction />
-            <div hidden>{agentId}</div>
-        </>
-    );
+// ponytail: agentId unused until overview is built; prefixed to satisfy TS
+export function Overview({ agentId: _agentId }: { agentId: string }) {
+    return <UnderConstruction />;
 }

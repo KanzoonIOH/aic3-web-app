@@ -290,7 +290,6 @@ export function Persona({ agentId }: { agentId: string }) {
                     columns="sm:grid-cols-2"
                 />
 
-                <div hidden>{agentId}</div>
             </div>
 
             {/* Floating save bar — centered within the scroll container, not the viewport */}

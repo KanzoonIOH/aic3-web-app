@@ -28,10 +28,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { resolveServerMessage } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import axios from "axios";
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
@@ -45,18 +45,6 @@ const createApiKeySchema = z.object({
 });
 
 type CreateApiKeyValues = z.infer<typeof createApiKeySchema>;
-
-type ApiError = {
-    message?: string;
-};
-
-function resolveServerMessage(error: unknown): string {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiError | undefined;
-        return data?.message ?? error.message;
-    }
-    return "An unexpected error occurred.";
-}
 
 function CreateApiKeyDialog() {
     const [open, setOpen] = useState(false);

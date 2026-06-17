@@ -29,31 +29,28 @@ export interface UpdateKnowledgeRequest {
 
 // ---------- API functions ----------
 
-type ResponseGetKnowledges = ResponseTemplate<Knowledge[]>;
-export async function getKnowledges(): Promise<ResponseGetKnowledges> {
-    const { data } = await client.get<ResponseGetKnowledges>("/knowledges");
+export async function getKnowledges(): Promise<ResponseTemplate<Knowledge[]>> {
+    const { data } = await client.get<ResponseTemplate<Knowledge[]>>("/knowledges");
     return data;
 }
 
-type ResponseGetKnowledge = ResponseTemplate<Knowledge>;
-export async function getKnowledge(id: string): Promise<ResponseGetKnowledge> {
-    const { data } = await client.get<ResponseGetKnowledge>(
+export async function getKnowledge(id: string): Promise<ResponseTemplate<Knowledge>> {
+    const { data } = await client.get<ResponseTemplate<Knowledge>>(
         `/knowledges/${id}`,
     );
     return data;
 }
 
-type ResponseCreateKnowledge = ResponseTemplate<Knowledge>;
 export async function createKnowledge(
     payload: CreateKnowledgeRequest,
-): Promise<ResponseCreateKnowledge> {
+): Promise<ResponseTemplate<Knowledge>> {
     const form = new FormData();
     form.append("name", payload.name);
     form.append("description", payload.description);
     form.append("source_type", payload.source_type);
     form.append("file", payload.file);
 
-    const { data } = await client.post<ResponseCreateKnowledge>(
+    const { data } = await client.post<ResponseTemplate<Knowledge>>(
         "/knowledges",
         form,
         { headers: { "Content-Type": "multipart/form-data" } },
@@ -61,12 +58,11 @@ export async function createKnowledge(
     return data;
 }
 
-type ResponseUpdateKnowledge = ResponseTemplate<Knowledge>;
 export async function updateKnowledge(
     id: string,
     payload: UpdateKnowledgeRequest,
-): Promise<ResponseUpdateKnowledge> {
-    const { data } = await client.patch<ResponseUpdateKnowledge>(
+): Promise<ResponseTemplate<Knowledge>> {
+    const { data } = await client.patch<ResponseTemplate<Knowledge>>(
         `/knowledges/${id}`,
         payload,
     );
@@ -75,4 +71,22 @@ export async function updateKnowledge(
 
 export async function deleteKnowledge(id: string): Promise<void> {
     await client.delete(`/knowledges/${id}`);
+}
+
+export interface KnowledgeAgent {
+    id: string;
+    name: string;
+    description: string | null;
+    connected: boolean;
+}
+
+export async function getKnowledgeAgents(
+    id: string,
+    params: { offset?: number; limit?: number } = {},
+): Promise<ResponseTemplate<KnowledgeAgent[]>> {
+    const { data } = await client.get<ResponseTemplate<KnowledgeAgent[]>>(
+        `/knowledges/${id}/agents`,
+        { params },
+    );
+    return data;
 }
