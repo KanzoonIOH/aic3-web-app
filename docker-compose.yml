@@ -1,9 +1,14 @@
 services:
-  web:
-    build:
-      context: .
-      args:
-        VITE_API_URL: ${VITE_API_URL}
-    ports:
-      - "${WEB_PORT:-8080}:80"
-    restart: unless-stopped
+    web:
+        build:
+            context: .
+            args:
+                VITE_API_URL: ${VITE_API_URL}
+        ports:
+            - "${WEB_PORT:-8080}:80"
+        restart: unless-stopped
+        networks:
+            - dokploy-network
+networks:
+    dokploy-network:
+        external: true
