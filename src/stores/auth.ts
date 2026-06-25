@@ -26,7 +26,7 @@ export const useAuthStore = create<AuthState>()(
             clearAuth: () => set({ token: null, user: null }),
         }),
         {
-            name: "aiac-auth",
+            name: "aic3-auth",
         },
     ),
 );

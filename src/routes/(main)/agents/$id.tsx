@@ -80,7 +80,12 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     });
 
     const form = useForm({
-        defaultValues: { name: agent.name, description: agent.description, is_active: agent.is_active, webhook_uri: agent.webhook_uri },
+        defaultValues: {
+            name: agent.name,
+            description: agent.description,
+            is_active: agent.is_active,
+            webhook_uri: agent.webhook_uri,
+        },
         onSubmit: async ({ value }) => {
             const result = updateAgentSchema.safeParse(value);
             if (!result.success) return;
@@ -92,7 +97,12 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     function handleOpenChange(nextOpen: boolean) {
         setOpen(nextOpen);
         mutation.reset();
-        form.reset({ name: agent.name, description: agent.description, is_active: agent.is_active, webhook_uri: agent.webhook_uri });
+        form.reset({
+            name: agent.name,
+            description: agent.description,
+            is_active: agent.is_active,
+            webhook_uri: agent.webhook_uri,
+        });
     }
 
     return (
@@ -209,7 +219,7 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
                                         field.handleChange(e.target.value);
                                         mutation.reset();
                                     }}
-                                     className={textareaClass}
+                                    className={textareaClass}
                                     aria-invalid={
                                         field.state.meta.errors.length > 0
                                     }
@@ -364,23 +374,23 @@ function buildWidgetSnippet(endpointUrl: string) {
   var open = false;
 
   var css = "" +
-    ":root{--aiac-bg:" + THEME.background + ";--aiac-fg:" + THEME.foreground +
-      ";--aiac-primary:" + THEME.primary + ";--aiac-primary-fg:" + THEME.primaryForeground +
-      ";--aiac-muted:" + THEME.muted + ";--aiac-muted-fg:" + THEME.mutedForeground +
-      ";--aiac-border:" + THEME.border + ";--aiac-radius:" + THEME.radius + "}" +
-    ".aiac-btn{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:var(--aiac-primary);color:var(--aiac-primary-fg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:2147483000}" +
-    ".aiac-panel{position:fixed;right:20px;bottom:88px;width:340px;max-width:calc(100vw - 40px);height:460px;max-height:calc(100vh - 120px);display:none;flex-direction:column;background:var(--aiac-bg);color:var(--aiac-fg);border:1px solid var(--aiac-border);border-radius:var(--aiac-radius);overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:2147483000;font-family:system-ui,sans-serif}" +
-    ".aiac-panel.open{display:flex}" +
-    ".aiac-head{padding:12px 14px;background:var(--aiac-primary);color:var(--aiac-primary-fg);font-weight:600;font-size:14px}" +
-    ".aiac-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--aiac-bg)}" +
-    ".aiac-m{max-width:85%;padding:8px 10px;border-radius:10px;font-size:13px;line-height:1.45;word-break:break-word}" +
-    ".aiac-m p{margin:0 0 6px}.aiac-m p:last-child{margin:0}.aiac-m ul,.aiac-m ol{margin:4px 0;padding-left:18px}.aiac-m code{background:rgba(0,0,0,.08);padding:1px 4px;border-radius:4px;font-size:.92em}.aiac-m a{color:inherit;text-decoration:underline}.aiac-m h1,.aiac-m h2,.aiac-m h3{margin:6px 0 4px;font-size:1em;font-weight:600}" +
-    ".aiac-u{align-self:flex-end;background:var(--aiac-primary);color:var(--aiac-primary-fg)}" +
-    ".aiac-a{align-self:flex-start;background:var(--aiac-muted);color:var(--aiac-fg)}" +
-    ".aiac-form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--aiac-border);background:var(--aiac-bg)}" +
-    ".aiac-in{flex:1;border:1px solid var(--aiac-border);border-radius:8px;padding:8px;font-size:13px;outline:none;background:var(--aiac-bg);color:var(--aiac-fg)}" +
-    ".aiac-send{border:none;background:var(--aiac-primary);color:var(--aiac-primary-fg);border-radius:8px;padding:0 14px;cursor:pointer;font-size:13px}" +
-    ".aiac-send:disabled{opacity:.5;cursor:default}";
+    ":root{--aic3-bg:" + THEME.background + ";--aic3-fg:" + THEME.foreground +
+      ";--aic3-primary:" + THEME.primary + ";--aic3-primary-fg:" + THEME.primaryForeground +
+      ";--aic3-muted:" + THEME.muted + ";--aic3-muted-fg:" + THEME.mutedForeground +
+      ";--aic3-border:" + THEME.border + ";--aic3-radius:" + THEME.radius + "}" +
+    ".aic3-btn{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:var(--aic3-primary);color:var(--aic3-primary-fg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:2147483000}" +
+    ".aic3-panel{position:fixed;right:20px;bottom:88px;width:340px;max-width:calc(100vw - 40px);height:460px;max-height:calc(100vh - 120px);display:none;flex-direction:column;background:var(--aic3-bg);color:var(--aic3-fg);border:1px solid var(--aic3-border);border-radius:var(--aic3-radius);overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:2147483000;font-family:system-ui,sans-serif}" +
+    ".aic3-panel.open{display:flex}" +
+    ".aic3-head{padding:12px 14px;background:var(--aic3-primary);color:var(--aic3-primary-fg);font-weight:600;font-size:14px}" +
+    ".aic3-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--aic3-bg)}" +
+    ".aic3-m{max-width:85%;padding:8px 10px;border-radius:10px;font-size:13px;line-height:1.45;word-break:break-word}" +
+    ".aic3-m p{margin:0 0 6px}.aic3-m p:last-child{margin:0}.aic3-m ul,.aic3-m ol{margin:4px 0;padding-left:18px}.aic3-m code{background:rgba(0,0,0,.08);padding:1px 4px;border-radius:4px;font-size:.92em}.aic3-m a{color:inherit;text-decoration:underline}.aic3-m h1,.aic3-m h2,.aic3-m h3{margin:6px 0 4px;font-size:1em;font-weight:600}" +
+    ".aic3-u{align-self:flex-end;background:var(--aic3-primary);color:var(--aic3-primary-fg)}" +
+    ".aic3-a{align-self:flex-start;background:var(--aic3-muted);color:var(--aic3-fg)}" +
+    ".aic3-form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--aic3-border);background:var(--aic3-bg)}" +
+    ".aic3-in{flex:1;border:1px solid var(--aic3-border);border-radius:8px;padding:8px;font-size:13px;outline:none;background:var(--aic3-bg);color:var(--aic3-fg)}" +
+    ".aic3-send{border:none;background:var(--aic3-primary);color:var(--aic3-primary-fg);border-radius:8px;padding:0 14px;cursor:pointer;font-size:13px}" +
+    ".aic3-send:disabled{opacity:.5;cursor:default}";
 
   var style = document.createElement("style");
   style.textContent = css;
@@ -420,31 +430,31 @@ function buildWidgetSnippet(endpointUrl: string) {
   }
 
   var btn = document.createElement("button");
-  btn.className = "aiac-btn";
+  btn.className = "aic3-btn";
   btn.setAttribute("aria-label", "Open chat");
   btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
 
   var panel = document.createElement("div");
-  panel.className = "aiac-panel";
+  panel.className = "aic3-panel";
   panel.innerHTML =
-    '<div class="aiac-head">Chat</div>' +
-    '<div class="aiac-msgs"></div>' +
-    '<form class="aiac-form">' +
-    '<input class="aiac-in" placeholder="Type a message..." autocomplete="off" />' +
-    '<button class="aiac-send" type="submit">Send</button>' +
+    '<div class="aic3-head">Chat</div>' +
+    '<div class="aic3-msgs"></div>' +
+    '<form class="aic3-form">' +
+    '<input class="aic3-in" placeholder="Type a message..." autocomplete="off" />' +
+    '<button class="aic3-send" type="submit">Send</button>' +
     "</form>";
 
   document.body.appendChild(btn);
   document.body.appendChild(panel);
 
-  var msgs = panel.querySelector(".aiac-msgs");
-  var form = panel.querySelector(".aiac-form");
-  var input = panel.querySelector(".aiac-in");
-  var send = panel.querySelector(".aiac-send");
+  var msgs = panel.querySelector(".aic3-msgs");
+  var form = panel.querySelector(".aic3-form");
+  var input = panel.querySelector(".aic3-in");
+  var send = panel.querySelector(".aic3-send");
 
   function addMsg(text, who) {
     var el = document.createElement("div");
-    el.className = "aiac-m " + (who === "user" ? "aiac-u" : "aiac-a");
+    el.className = "aic3-m " + (who === "user" ? "aic3-u" : "aic3-a");
     if (who === "assistant") el.innerHTML = mdToHtml(text);
     else el.textContent = text;
     msgs.appendChild(el);
