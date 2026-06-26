@@ -28,9 +28,11 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy built output from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# nginx config for SPA — route all requests to index.html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx config for SPA — entrypoint runs envsubst on templates → conf.d
+ENV WEB_PORT=6700
+ENV NGINX_ENVSUBST_FILTER=WEB_PORT
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-EXPOSE 80
+EXPOSE 6700
 
 CMD ["nginx", "-g", "daemon off;"]
