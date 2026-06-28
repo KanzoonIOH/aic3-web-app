@@ -20,6 +20,7 @@ import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
 import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
+import { Route as mainChatIndexRouteImport } from './routes/(main)/chat/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
 import { Route as mainMcpsIdRouteImport } from './routes/(main)/mcps/$id'
 import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
@@ -77,6 +78,11 @@ const mainKnowledgesIndexRoute = mainKnowledgesIndexRouteImport.update({
   path: '/knowledges/',
   getParentRoute: () => mainRouteRoute,
 } as any)
+const mainChatIndexRoute = mainChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 const mainAgentsIndexRoute = mainAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/agents/$id': typeof mainAgentsIdRoute
   '/mcps/$id': typeof mainMcpsIdRoute
   '/agents/': typeof mainAgentsIndexRoute
+  '/chat/': typeof mainChatIndexRoute
   '/knowledges/': typeof mainKnowledgesIndexRoute
   '/mcps/': typeof mainMcpsIndexRoute
 }
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/agents/$id': typeof mainAgentsIdRoute
   '/mcps/$id': typeof mainMcpsIdRoute
   '/agents': typeof mainAgentsIndexRoute
+  '/chat': typeof mainChatIndexRoute
   '/knowledges': typeof mainKnowledgesIndexRoute
   '/mcps': typeof mainMcpsIndexRoute
 }
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/(main)/agents/$id': typeof mainAgentsIdRoute
   '/(main)/mcps/$id': typeof mainMcpsIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
+  '/(main)/chat/': typeof mainChatIndexRoute
   '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
   '/(main)/mcps/': typeof mainMcpsIndexRoute
 }
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/agents/$id'
     | '/mcps/$id'
     | '/agents/'
+    | '/chat/'
     | '/knowledges/'
     | '/mcps/'
   fileRoutesByTo: FileRoutesByTo
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/agents/$id'
     | '/mcps/$id'
     | '/agents'
+    | '/chat'
     | '/knowledges'
     | '/mcps'
   id:
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/(main)/agents/$id'
     | '/(main)/mcps/$id'
     | '/(main)/agents/'
+    | '/(main)/chat/'
     | '/(main)/knowledges/'
     | '/(main)/mcps/'
   fileRoutesById: FileRoutesById
@@ -270,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainKnowledgesIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
+    '/(main)/chat/': {
+      id: '/(main)/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof mainChatIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
     '/(main)/agents/': {
       id: '/(main)/agents/'
       path: '/agents'
@@ -316,6 +335,7 @@ interface mainRouteRouteChildren {
   mainAgentsIdRoute: typeof mainAgentsIdRoute
   mainMcpsIdRoute: typeof mainMcpsIdRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
+  mainChatIndexRoute: typeof mainChatIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
   mainMcpsIndexRoute: typeof mainMcpsIndexRoute
 }
@@ -328,6 +348,7 @@ const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainAgentsIdRoute: mainAgentsIdRoute,
   mainMcpsIdRoute: mainMcpsIdRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
+  mainChatIndexRoute: mainChatIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,
   mainMcpsIndexRoute: mainMcpsIndexRoute,
 }
