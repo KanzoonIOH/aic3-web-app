@@ -1,4 +1,15 @@
-import { getMcps, updateMcp, type Mcp } from "@/api/mcps";
+import { createMcp, deleteMcp, getMcps, updateMcp, type Mcp } from "@/api/mcps";
+import { McpAgentAccessDialog } from "@/components/agent-mcp-access-dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -44,13 +55,59 @@ const editMcpSchema = z.object({
 
 type EditMcpValues = z.infer<typeof editMcpSchema>;
 
-// ---------- Add MCP — request notice dialog ----------
+const createMcpSchema = z.object({
+    name: z.string().trim().min(1, "Name is required"),
+    description: z.string().trim(),
+    uri: z.string().trim().url("Must be a valid URL"),
+});
+
+type CreateMcpValues = z.infer<typeof createMcpSchema>;
+
+// ---------- Add MCP — create form ----------
 
 function AddMcpDialog() {
     const [open, setOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: createMcp,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            setOpen(false);
+            form.reset();
+        },
+    });
+
+    const form = useForm({
+        defaultValues: {
+            name: "",
+            description: "",
+            uri: "",
+        } satisfies CreateMcpValues,
+        onSubmit: async ({ value }) => {
+            const result = createMcpSchema.safeParse(value);
+            if (!result.success) return;
+            await mutation.mutateAsync(result.data);
+        },
+    });
+
+    function handleOpenChange(nextOpen: boolean) {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+            mutation.reset();
+            form.reset();
+        }
+    }
+
+    const fieldValidator =
+        (key: keyof CreateMcpValues) =>
+        ({ value }: { value: string }) => {
+            const r = createMcpSchema.shape[key].safeParse(value);
+            return r.success ? undefined : r.error.issues[0]?.message;
+        };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button size="sm">
                     <Plus className="size-3.5" />
@@ -61,20 +118,132 @@ function AddMcpDialog() {
                 <DialogHeader>
                     <DialogTitle>Add MCP</DialogTitle>
                     <DialogDescription>
-                        Adding a new MCP requires an official request.
+                        Connect a new MCP server. Tools are discovered
+                        automatically.
                     </DialogDescription>
                 </DialogHeader>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                    MCP integrations are provisioned through a formal request
-                    process. Please contact your administrator or submit a
-                    request through the official channel to have a new MCP
-                    added.
-                </p>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Close</Button>
-                    </DialogClose>
-                </DialogFooter>
+
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    {mutation.isError && (
+                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {resolveServerMessage(mutation.error)}
+                        </p>
+                    )}
+
+                    <form.Field
+                        name="name"
+                        validators={{
+                            onChange: fieldValidator("name"),
+                            onSubmit: fieldValidator("name"),
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="My MCP server"
+                                    aria-invalid={field.state.meta.errors.length > 0}
+                                    autoFocus
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <form.Field name="description">
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Description</Label>
+                                <textarea
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="Optional description"
+                                    className={textareaClass}
+                                />
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <form.Field
+                        name="uri"
+                        validators={{
+                            onChange: fieldValidator("uri"),
+                            onSubmit: fieldValidator("uri"),
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Server URL</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="https://mcp.example.com/mcp"
+                                    aria-invalid={field.state.meta.errors.length > 0}
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <form.Subscribe
+                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                        >
+                            {([canSubmit, isSubmitting]) => (
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending
+                                    }
+                                >
+                                    {mutation.isPending ? "Creating..." : "Create"}
+                                </Button>
+                            )}
+                        </form.Subscribe>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );
@@ -274,8 +443,18 @@ function EditMcpDialog({
 // ---------- Row actions ----------
 
 function McpRowActions({ mcp }: { mcp: Mcp }) {
+    const [accessOpen, setAccessOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const { mutate: remove, isPending: isDeleting } = useMutation({
+        mutationFn: () => deleteMcp(mcp.id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            setDeleteOpen(false);
+        },
+    });
 
     return (
         <>
@@ -296,6 +475,9 @@ function McpRowActions({ mcp }: { mcp: Mcp }) {
                             Details
                         </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setAccessOpen(true)}>
+                        Give Access
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setEditOpen(true)}>
                         Edit
                     </DropdownMenuItem>
@@ -308,33 +490,44 @@ function McpRowActions({ mcp }: { mcp: Mcp }) {
                 </DropdownMenuContent>
             </DropdownMenu>
 
+            <McpAgentAccessDialog
+                mcp={mcp}
+                open={accessOpen}
+                onOpenChange={setAccessOpen}
+            />
+
             <EditMcpDialog
                 mcp={mcp}
                 open={editOpen}
                 onOpenChange={setEditOpen}
             />
 
-            {/* Delete — request notice */}
-            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Delete MCP</DialogTitle>
-                        <DialogDescription>
-                            Deleting an MCP requires an official request.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                        MCP deletion will effect agents reply success rate.
-                        Please contact your administrator or submit a request
-                        through the official channel to have an MCP removed.
-                    </p>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Close</Button>
-                        </DialogClose>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete MCP?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <span className="font-medium text-foreground">
+                                {mcp.name}
+                            </span>{" "}
+                            will be permanently deleted. This action cannot be
+                            undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel variant="ghost">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            disabled={isDeleting}
+                            onClick={() => remove()}
+                        >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </>
     );
 }

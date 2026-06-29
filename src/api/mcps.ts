@@ -15,9 +15,24 @@ export interface Mcp {
     deleted_at: string | null;
 }
 
+export interface CreateMcpRequest {
+    name: string;
+    description: string;
+    uri: string;
+}
+
 export interface UpdateMcpRequest {
     name: string;
     description: string;
+}
+
+export interface McpOption {
+    id: string;
+    name: string;
+    description: string | null;
+    uri: string;
+    tools_count: number;
+    connected: boolean;
 }
 
 export interface JsonSchema {
@@ -53,6 +68,45 @@ export async function getMcps(): Promise<ResponseTemplate<Mcp[]>> {
 
 export async function getMcp(id: string): Promise<ResponseTemplate<Mcp>> {
     const { data } = await client.get<ResponseTemplate<Mcp>>(`/mcps/${id}`);
+    return data;
+}
+
+export async function createMcp(
+    payload: CreateMcpRequest,
+): Promise<ResponseTemplate<unknown>> {
+    const { data } = await client.post<ResponseTemplate<unknown>>(
+        "/mcps",
+        payload,
+    );
+    return data;
+}
+
+export async function getAgentMcpsAll(
+    agentId: string,
+    params: { offset?: number; limit?: number } = {},
+): Promise<ResponseTemplate<McpOption[]>> {
+    const { data } = await client.get<ResponseTemplate<McpOption[]>>(
+        `/agents/${agentId}/mcps/all`,
+        { params },
+    );
+    return data;
+}
+
+export interface McpAgent {
+    id: string;
+    name: string;
+    description: string | null;
+    connected: boolean;
+}
+
+export async function getMcpAgents(
+    id: string,
+    params: { offset?: number; limit?: number } = {},
+): Promise<ResponseTemplate<McpAgent[]>> {
+    const { data } = await client.get<ResponseTemplate<McpAgent[]>>(
+        `/mcps/${id}/agents`,
+        { params },
+    );
     return data;
 }
 

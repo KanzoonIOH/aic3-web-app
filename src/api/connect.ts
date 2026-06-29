@@ -22,3 +22,20 @@ export async function disconnectAgentKnowledge(
 ): Promise<void> {
     await client.delete("/connect/agent-knowledge", { data: payload });
 }
+
+export interface ConnectAgentMcpRequest {
+    agent_id: string;
+    mcp_id: string;
+}
+
+export async function connectAgentMcp(
+    payload: ConnectAgentMcpRequest,
+): Promise<void> {
+    await client.post("/connect/agent-mcp", payload);
+}
+
+export async function disconnectAgentMcp(
+    payload: ConnectAgentMcpRequest,
+): Promise<void> {
+    await client.delete("/connect/agent-mcp", { data: payload });
+}

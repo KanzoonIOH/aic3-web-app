@@ -64,8 +64,13 @@ export const Route = createFileRoute("/(main)/knowledges/")({
 const createKnowledgeSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim(),
-    source_type: z.string().trim().min(1, "Source type is required"),
 });
+
+// ponytail: source_type is just the file extension. No dropdown, no field.
+function sourceTypeFromFile(file: File): string {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    return ext && ext !== file.name.toLowerCase() ? ext : "file";
+}
 
 const editKnowledgeSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
@@ -97,12 +102,15 @@ function CreateKnowledgeDialog() {
         defaultValues: {
             name: "",
             description: "",
-            source_type: "",
         } satisfies CreateKnowledgeValues,
         onSubmit: async ({ value }) => {
             const result = createKnowledgeSchema.safeParse(value);
             if (!result.success || !file) return;
-            await mutation.mutateAsync({ ...result.data, file });
+            await mutation.mutateAsync({
+                ...result.data,
+                source_type: sourceTypeFromFile(file),
+                file,
+            });
         },
     });
 
@@ -219,45 +227,7 @@ function CreateKnowledgeDialog() {
                         )}
                     </form.Field>
 
-                    {/* Source type */}
-                    <form.Field
-                        name="source_type"
-                        validators={{
-                            onChange: ({ value }) => {
-                                const r = createKnowledgeSchema.shape.source_type.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
-                            },
-                            onSubmit: ({ value }) => {
-                                const r = createKnowledgeSchema.shape.source_type.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
-                            },
-                        }}
-                    >
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Source Type</Label>
-                                <Input
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    placeholder="e.g. web, pdf, database"
-                                    aria-invalid={field.state.meta.errors.length > 0}
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0]}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </form.Field>
-
-                    {/* File upload */}
+                    {/* File upload — source type is auto-derived from the file extension */}
                     <div className="flex flex-col gap-1.5">
                         <Label>Document</Label>
                         <input
@@ -519,7 +489,7 @@ function KnowledgeRowActions({ knowledge }: { knowledge: Knowledge }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setAccessOpen(true)}>
-                        Access
+                        Give Access
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setEditOpen(true)}>
                         Edit

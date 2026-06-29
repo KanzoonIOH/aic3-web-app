@@ -1,10 +1,5 @@
-import {
-    connectAgentKnowledge,
-    disconnectAgentKnowledge,
-} from "@/api/connect";
-import { getAgentKnowledgesAll } from "@/api/agents";
-import { getKnowledgeAgents } from "@/api/knowledges";
-import type { Knowledge } from "@/api/knowledges";
+import { connectAgentMcp, disconnectAgentMcp } from "@/api/connect";
+import { getAgentMcpsAll, getMcpAgents, type Mcp } from "@/api/mcps";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
@@ -27,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { resolveServerMessage } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Bot, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bot, ChevronLeft, ChevronRight, Plug } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
@@ -46,18 +41,18 @@ function EmptyPickerState({
     );
 }
 
-// Lists ALL agents (paginated) with their connection status to this knowledge,
+// Lists ALL agents (paginated) with their connection status to this MCP,
 // allowing connect/remove per row.
-export function KnowledgeAgentAccessDialog({
-    knowledge,
+export function McpAgentAccessDialog({
+    mcp,
     open,
     onOpenChange,
 }: {
-    knowledge: Knowledge;
+    mcp: Mcp;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const [page, setPage] = useState(1); // 1-based
+    const [page, setPage] = useState(1);
     const [pendingId, setPendingId] = useState<string | null>(null);
     const [confirmRemove, setConfirmRemove] = useState<{
         id: string;
@@ -67,36 +62,44 @@ export function KnowledgeAgentAccessDialog({
     const limit = 5;
 
     const agents = useQuery({
-        queryKey: ["knowledges", knowledge.id, "agents", page],
-        queryFn: () =>
-            getKnowledgeAgents(knowledge.id, { offset: page - 1, limit }),
+        queryKey: ["mcps", mcp.id, "agents", page],
+        queryFn: () => getMcpAgents(mcp.id, { offset: page - 1, limit }),
         enabled: open,
     });
 
     function invalidate(agentId: string) {
         queryClient.invalidateQueries({ queryKey: ["agents"] });
         queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
-        queryClient.invalidateQueries({ queryKey: ["knowledges"] });
-        queryClient.invalidateQueries({ queryKey: ["knowledges", knowledge.id] });
+        queryClient.invalidateQueries({ queryKey: ["mcps"] });
+        queryClient.invalidateQueries({ queryKey: ["mcps", mcp.id] });
     }
 
     const mutation = useMutation({
-        mutationFn: async ({ agentId, connected }: { agentId: string; connected: boolean }) => {
-            const payload = { agent_id: agentId, knowledge_id: knowledge.id };
-            if (connected) await disconnectAgentKnowledge(payload);
-            else await connectAgentKnowledge(payload);
+        mutationFn: async ({
+            agentId,
+            connected,
+        }: {
+            agentId: string;
+            connected: boolean;
+        }) => {
+            const payload = { agent_id: agentId, mcp_id: mcp.id };
+            if (connected) await disconnectAgentMcp(payload);
+            else await connectAgentMcp(payload);
         },
-        onSuccess: (_response, { agentId }) => invalidate(agentId),
+        onSuccess: (_r, { agentId }) => invalidate(agentId),
         onSettled: () => setPendingId(null),
     });
 
     function handleOpenChange(nextOpen: boolean) {
         onOpenChange(nextOpen);
-        if (!nextOpen) { mutation.reset(); setPendingId(null); setPage(1); }
+        if (!nextOpen) {
+            mutation.reset();
+            setPendingId(null);
+            setPage(1);
+        }
     }
 
     function handleToggle(agentId: string, connected: boolean, name: string) {
-        // ponytail: confirm only on remove (destructive); connect stays one click.
         if (connected) {
             setConfirmRemove({ id: agentId, name });
             return;
@@ -124,7 +127,7 @@ export function KnowledgeAgentAccessDialog({
                 <DialogHeader>
                     <DialogTitle>Access</DialogTitle>
                     <DialogDescription>
-                        Connect {knowledge.name} to agents.
+                        Connect {mcp.name} to agents.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -166,7 +169,9 @@ export function KnowledgeAgentAccessDialog({
                                     size="sm"
                                     variant={agent.connected ? "destructive" : "outline"}
                                     disabled={mutation.isPending}
-                                    onClick={() => handleToggle(agent.id, agent.connected, agent.name)}
+                                    onClick={() =>
+                                        handleToggle(agent.id, agent.connected, agent.name)
+                                    }
                                 >
                                     {pendingId === agent.id
                                         ? agent.connected
@@ -183,9 +188,7 @@ export function KnowledgeAgentAccessDialog({
 
                 <div className="flex items-center justify-between gap-3">
                     <p className="text-xs text-muted-foreground">
-                        {agents.data?.data.length
-                            ? `Page ${page} of ${totalPage}`
-                            : ""}
+                        {agents.data?.data.length ? `Page ${page} of ${totalPage}` : ""}
                     </p>
                     <div className="flex items-center gap-2">
                         <Button
@@ -211,7 +214,9 @@ export function KnowledgeAgentAccessDialog({
 
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button type="button" variant="outline">Close</Button>
+                        <Button type="button" variant="outline">
+                            Close
+                        </Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
@@ -227,15 +232,12 @@ export function KnowledgeAgentAccessDialog({
                             <span className="font-medium text-foreground">
                                 {confirmRemove?.name}
                             </span>{" "}
-                            will lose access to {knowledge.name}.
+                            will lose access to {mcp.name}.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel variant="ghost">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            onClick={confirmRemoveNow}
-                        >
+                        <AlertDialogAction variant="destructive" onClick={confirmRemoveNow}>
                             Remove
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -245,9 +247,9 @@ export function KnowledgeAgentAccessDialog({
     );
 }
 
-// Lists ALL knowledges (paginated) with their connection status to this agent,
+// Lists ALL MCPs (paginated) with their connection status to this agent,
 // allowing connect/remove per row.
-export function AgentKnowledgeAccessDialog({
+export function AgentMcpAccessDialog({
     agentId,
     open,
     onOpenChange,
@@ -256,7 +258,7 @@ export function AgentKnowledgeAccessDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    const [page, setPage] = useState(1); // 1-based
+    const [page, setPage] = useState(1);
     const [pendingId, setPendingId] = useState<string | null>(null);
     const [confirmRemove, setConfirmRemove] = useState<{
         id: string;
@@ -265,56 +267,65 @@ export function AgentKnowledgeAccessDialog({
     const queryClient = useQueryClient();
     const limit = 5;
 
-    const knowledges = useQuery({
-        queryKey: ["agents", agentId, "knowledges", "all", page],
-        queryFn: () => getAgentKnowledgesAll(agentId, { offset: page - 1, limit }),
+    const mcps = useQuery({
+        queryKey: ["agents", agentId, "mcps", "all", page],
+        queryFn: () => getAgentMcpsAll(agentId, { offset: page - 1, limit }),
         enabled: open,
     });
 
-    function invalidate(knowledgeId: string) {
+    function invalidate(mcpId: string) {
         queryClient.invalidateQueries({ queryKey: ["agents"] });
         queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
-        queryClient.invalidateQueries({ queryKey: ["knowledges"] });
-        queryClient.invalidateQueries({ queryKey: ["knowledges", knowledgeId] });
+        queryClient.invalidateQueries({ queryKey: ["mcps"] });
+        queryClient.invalidateQueries({ queryKey: ["mcps", mcpId] });
     }
 
     const mutation = useMutation({
-        mutationFn: async ({ knowledgeId, connected }: { knowledgeId: string; connected: boolean }) => {
-            const payload = { agent_id: agentId, knowledge_id: knowledgeId };
-            if (connected) await disconnectAgentKnowledge(payload);
-            else await connectAgentKnowledge(payload);
+        mutationFn: async ({
+            mcpId,
+            connected,
+        }: {
+            mcpId: string;
+            connected: boolean;
+        }) => {
+            const payload = { agent_id: agentId, mcp_id: mcpId };
+            if (connected) await disconnectAgentMcp(payload);
+            else await connectAgentMcp(payload);
         },
-        onSuccess: (_response, { knowledgeId }) => invalidate(knowledgeId),
+        onSuccess: (_r, { mcpId }) => invalidate(mcpId),
         onSettled: () => setPendingId(null),
     });
 
     function handleOpenChange(nextOpen: boolean) {
         onOpenChange(nextOpen);
-        if (!nextOpen) { mutation.reset(); setPendingId(null); setPage(1); }
+        if (!nextOpen) {
+            mutation.reset();
+            setPendingId(null);
+            setPage(1);
+        }
     }
 
-    function handleToggle(knowledgeId: string, connected: boolean, name: string) {
-        // ponytail: confirm only on remove (destructive); connect stays one click.
+    function handleToggle(mcpId: string, connected: boolean, name: string) {
         if (connected) {
-            setConfirmRemove({ id: knowledgeId, name });
+            setConfirmRemove({ id: mcpId, name });
             return;
         }
         mutation.reset();
-        setPendingId(knowledgeId);
-        mutation.mutate({ knowledgeId, connected });
+        setPendingId(mcpId);
+        mutation.mutate({ mcpId, connected });
     }
 
     function confirmRemoveNow() {
         if (!confirmRemove) return;
-        const knowledgeId = confirmRemove.id;
+        const mcpId = confirmRemove.id;
         setConfirmRemove(null);
         mutation.reset();
-        setPendingId(knowledgeId);
-        mutation.mutate({ knowledgeId, connected: true });
+        setPendingId(mcpId);
+        mutation.mutate({ mcpId, connected: true });
     }
 
-    const icon = <BookOpen className="size-8 text-muted-foreground/40" />;
-    const totalPage = knowledges.data?.pagination?.total_page ?? 1;
+    const icon = <Plug className="size-8 text-muted-foreground/40" />;
+    const totalPage = mcps.data?.pagination?.total_page ?? 1;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -322,7 +333,7 @@ export function AgentKnowledgeAccessDialog({
                 <DialogHeader>
                     <DialogTitle>Access</DialogTitle>
                     <DialogDescription>
-                        Connect this agent to knowledge sources.
+                        Connect this agent to MCP servers.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -333,44 +344,46 @@ export function AgentKnowledgeAccessDialog({
                 )}
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border divide-y">
-                    {knowledges.isPending ? (
-                        <EmptyPickerState icon={icon} message="Loading knowledges..." />
-                    ) : knowledges.isError ? (
-                        <EmptyPickerState icon={icon} message="Failed to load knowledges" />
-                    ) : knowledges.data.data.length === 0 ? (
-                        <EmptyPickerState icon={icon} message="No knowledges found" />
+                    {mcps.isPending ? (
+                        <EmptyPickerState icon={icon} message="Loading MCPs..." />
+                    ) : mcps.isError ? (
+                        <EmptyPickerState icon={icon} message="Failed to load MCPs" />
+                    ) : mcps.data.data.length === 0 ? (
+                        <EmptyPickerState icon={icon} message="No MCPs found" />
                     ) : (
-                        knowledges.data.data.map((knowledge) => (
+                        mcps.data.data.map((mcp) => (
                             <div
-                                key={knowledge.id}
+                                key={mcp.id}
                                 className="flex items-center gap-3 px-3 py-2.5"
                             >
                                 <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                         <p className="truncate text-sm font-medium">
-                                            {knowledge.name}
+                                            {mcp.name}
                                         </p>
-                                        {knowledge.connected && (
+                                        {mcp.connected && (
                                             <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                                                 Connected
                                             </span>
                                         )}
                                     </div>
                                     <p className="truncate text-xs text-muted-foreground">
-                                        {knowledge.description || "No description"}
+                                        {mcp.description || "No description"}
                                     </p>
                                 </div>
                                 <Button
                                     size="sm"
-                                    variant={knowledge.connected ? "destructive" : "outline"}
+                                    variant={mcp.connected ? "destructive" : "outline"}
                                     disabled={mutation.isPending}
-                                    onClick={() => handleToggle(knowledge.id, knowledge.connected, knowledge.name)}
+                                    onClick={() =>
+                                        handleToggle(mcp.id, mcp.connected, mcp.name)
+                                    }
                                 >
-                                    {pendingId === knowledge.id
-                                        ? knowledge.connected
+                                    {pendingId === mcp.id
+                                        ? mcp.connected
                                             ? "Removing..."
                                             : "Connecting..."
-                                        : knowledge.connected
+                                        : mcp.connected
                                           ? "Remove"
                                           : "Connect"}
                                 </Button>
@@ -381,15 +394,13 @@ export function AgentKnowledgeAccessDialog({
 
                 <div className="flex items-center justify-between gap-3">
                     <p className="text-xs text-muted-foreground">
-                        {knowledges.data?.data.length
-                            ? `Page ${page} of ${totalPage}`
-                            : ""}
+                        {mcps.data?.data.length ? `Page ${page} of ${totalPage}` : ""}
                     </p>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
-                            disabled={page <= 1 || knowledges.isFetching}
+                            disabled={page <= 1 || mcps.isFetching}
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                         >
                             <ChevronLeft className="size-3.5" />
@@ -398,7 +409,7 @@ export function AgentKnowledgeAccessDialog({
                         <Button
                             variant="outline"
                             size="sm"
-                            disabled={page >= totalPage || knowledges.isFetching}
+                            disabled={page >= totalPage || mcps.isFetching}
                             onClick={() => setPage((p) => p + 1)}
                         >
                             Next
@@ -409,7 +420,9 @@ export function AgentKnowledgeAccessDialog({
 
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button type="button" variant="outline">Close</Button>
+                        <Button type="button" variant="outline">
+                            Close
+                        </Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
@@ -431,10 +444,7 @@ export function AgentKnowledgeAccessDialog({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel variant="ghost">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            onClick={confirmRemoveNow}
-                        >
+                        <AlertDialogAction variant="destructive" onClick={confirmRemoveNow}>
                             Remove
                         </AlertDialogAction>
                     </AlertDialogFooter>

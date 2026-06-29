@@ -1,14 +1,122 @@
 import { getAgentMcps } from "@/api/agents";
-import { TanStackDataTable } from "@/components/ui/tanstack-table";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Plug } from "lucide-react";
+import { disconnectAgentMcp } from "@/api/connect";
+import type { Mcp } from "@/api/mcps";
+import { AgentMcpAccessDialog } from "@/components/agent-mcp-access-dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
+import { Plug, Plus } from "lucide-react";
 import { useState } from "react";
 import { mcpColumns } from "../mcps/index";
 
 const LIMIT = 10;
 
+// Removes (disconnects) this MCP from the agent, with confirmation.
+function AgentMcpRowActions({ agentId, mcp }: { agentId: string; mcp: Mcp }) {
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const { mutate: remove, isPending } = useMutation({
+        mutationFn: () =>
+            disconnectAgentMcp({ agent_id: agentId, mcp_id: mcp.id }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["agents"] });
+            queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            setConfirmOpen(false);
+        },
+    });
+
+    return (
+        <>
+            <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setConfirmOpen(true)}
+            >
+                Remove
+            </Button>
+
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remove MCP?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <span className="font-medium text-foreground">
+                                {mcp.name}
+                            </span>{" "}
+                            will be disconnected from this agent.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel variant="ghost">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            variant="destructive"
+                            disabled={isPending}
+                            onClick={() => remove()}
+                        >
+                            {isPending ? "Removing..." : "Remove"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
+    );
+}
+
+// Header button: open the picker to give this agent access to more MCPs.
+function GiveMcpAccessButton({ agentId }: { agentId: string }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <Button size="sm" onClick={() => setOpen(true)}>
+                <Plus className="size-3.5" />
+                Give access
+            </Button>
+            <AgentMcpAccessDialog
+                agentId={agentId}
+                open={open}
+                onOpenChange={setOpen}
+            />
+        </>
+    );
+}
+
 export function Mcps({ agentId }: { agentId: string }) {
     const [page, setPage] = useState(1);
+
+    // Reuse the shared MCP columns but swap the trailing actions column for a
+    // Remove action scoped to this agent.
+    const columns: ColumnDef<Mcp>[] = [
+        ...mcpColumns.slice(0, -1),
+        {
+            id: "actions",
+            meta: { cellClassName: "text-right" },
+            cell: ({ row }) => (
+                <AgentMcpRowActions agentId={agentId} mcp={row.original} />
+            ),
+        },
+    ];
 
     const { data, isPending, isError, isFetching } = useQuery({
         queryKey: ["agents", agentId, "mcps", page],
@@ -20,8 +128,11 @@ export function Mcps({ agentId }: { agentId: string }) {
 
     return (
         <div className="h-full overflow-y-auto p-6">
+            <div className="mb-4 flex justify-end">
+                <GiveMcpAccessButton agentId={agentId} />
+            </div>
             <TanStackDataTable
-                columns={mcpColumns}
+                columns={columns}
                 data={data?.data ?? []}
                 getRowKey={(mcp) => mcp.id}
                 enableSorting={false}
