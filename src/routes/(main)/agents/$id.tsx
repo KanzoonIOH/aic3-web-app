@@ -31,7 +31,7 @@ import {
     SmilePlusIcon,
     TerminalSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { z } from "zod";
 import { ChatSanbox } from "./-ChatSandbox";
 import { ChatWidget } from "./-ChatWidget";
@@ -65,7 +65,13 @@ const updateAgentSchema = z.object({
 
 type UpdateAgentValues = z.infer<typeof updateAgentSchema>;
 
-function EditAgentDialog({ agent }: { agent: Agent }) {
+export function EditAgentDialog({
+    agent,
+    trigger,
+}: {
+    agent: Agent;
+    trigger?: ReactNode;
+}) {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
@@ -108,10 +114,12 @@ function EditAgentDialog({ agent }: { agent: Agent }) {
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                    <Pencil className="size-3.5" />
-                    Edit agent
-                </Button>
+                {trigger ?? (
+                    <Button size="sm" variant="outline">
+                        <Pencil className="size-3.5" />
+                        Edit agent
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>

@@ -23,7 +23,23 @@ export interface UpdateAgentRequest {
     webhook_uri: string;
 }
 
+export interface CreateAgentRequest {
+    name: string;
+    description: string;
+    webhook_uri: string;
+}
+
 // ---------- API functions ----------
+
+export async function createAgent(
+    payload: CreateAgentRequest,
+): Promise<ResponseTemplate<Agent>> {
+    const { data } = await client.post<ResponseTemplate<Agent>>(
+        "/agents",
+        payload,
+    );
+    return data;
+}
 
 export async function getAgents(): Promise<ResponseTemplate<Agent[]>> {
     const { data } = await client.get<ResponseTemplate<Agent[]>>("/agents");

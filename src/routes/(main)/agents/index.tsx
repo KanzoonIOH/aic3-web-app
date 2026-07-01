@@ -1,123 +1,324 @@
-import { getAgents, type Agent } from "@/api/agents";
+import { createAgent, getAgents, type Agent } from "@/api/agents";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-    BookIcon,
-    Bot,
-    ChevronRight,
-    LayoutGrid,
-    List,
-    Plug,
-} from "lucide-react";
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { resolveServerMessage, textareaClass } from "@/lib/utils";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { BookIcon, Bot, Pencil, Plug, Plus } from "lucide-react";
 import { useState } from "react";
+import { z } from "zod";
+import { EditAgentDialog } from "./$id";
 
 export const Route = createFileRoute("/(main)/agents/")({
     component: RouteComponent,
 });
 
-function AgentInitialsAvatar({
-    name,
-    className,
-}: {
-    name: string;
-    className?: string;
-}) {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    const initial = (parts[0][0] + parts[1][0]).toUpperCase();
+// ---------- Schema ----------
+
+const createAgentSchema = z.object({
+    name: z.string().trim().min(1, "Name is required"),
+    description: z.string().trim(),
+    webhook_uri: z.string().trim().url("Webhook URI must be a valid URL"),
+});
+
+type CreateAgentValues = z.infer<typeof createAgentSchema>;
+
+// ---------- Create Agent dialog ----------
+
+function CreateAgentDialog() {
+    const [open, setOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: createAgent,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["agents"] });
+            setOpen(false);
+            form.reset();
+        },
+    });
+
+    const form = useForm({
+        defaultValues: {
+            name: "",
+            description: "",
+            webhook_uri: "",
+        } satisfies CreateAgentValues,
+        onSubmit: async ({ value }) => {
+            const result = createAgentSchema.safeParse(value);
+            if (!result.success) return;
+            await mutation.mutateAsync(result.data);
+        },
+    });
+
+    function handleOpenChange(nextOpen: boolean) {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+            mutation.reset();
+            form.reset();
+        }
+    }
+
+    const fieldValidator =
+        (key: keyof CreateAgentValues) =>
+        ({ value }: { value: string }) => {
+            const r = createAgentSchema.shape[key].safeParse(value);
+            return r.success ? undefined : r.error.issues[0]?.message;
+        };
+
     return (
-        <div
-            className={cn(
-                "flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary border",
-                className,
-            )}
-        >
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+                <Button size="sm">
+                    <Plus className="size-3.5" />
+                    Create Agent
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create Agent</DialogTitle>
+                    <DialogDescription>
+                        Add a new agent to your workspace.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    {mutation.isError && (
+                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {resolveServerMessage(mutation.error)}
+                        </p>
+                    )}
+
+                    <form.Field
+                        name="name"
+                        validators={{
+                            onChange: fieldValidator("name"),
+                            onSubmit: fieldValidator("name"),
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="My Agent"
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                    autoFocus
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <form.Field name="description">
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Description</Label>
+                                <textarea
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="Optional description"
+                                    className={textareaClass}
+                                />
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <form.Field
+                        name="webhook_uri"
+                        validators={{
+                            onChange: fieldValidator("webhook_uri"),
+                            onSubmit: fieldValidator("webhook_uri"),
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Webhook URI</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="https://example.com/webhook"
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <form.Subscribe
+                            selector={(state) => [
+                                state.canSubmit,
+                                state.isSubmitting,
+                            ]}
+                        >
+                            {([canSubmit, isSubmitting]) => (
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending
+                                    }
+                                >
+                                    {mutation.isPending
+                                        ? "Creating..."
+                                        : "Create"}
+                                </Button>
+                            )}
+                        </form.Subscribe>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function AgentInitialsAvatar({ name }: { name: string }) {
+    const parts = name.trim().split(/\s+/);
+    const initial =
+        parts.length === 1
+            ? parts[0][0].toUpperCase()
+            : (parts[0][0] + parts[1][0]).toUpperCase();
+    return (
+        <div className="flex aspect-square size-14 items-center justify-center rounded-xl border bg-primary/10 text-xl font-semibold text-primary mb-auto">
             {initial}
         </div>
     );
 }
 
 function AgentCard({ agent }: { agent: Agent }) {
+    const navigate = useNavigate();
     return (
-        <Card className="rounded-lg bg-inherit flex flex-col gap-1 overflow-hidden p-2 pl-4">
-            <div className="flex items-center gap-3 pt-2">
-                <AgentInitialsAvatar name={agent.name} />
-                <div className="flex flex-col min-w-0">
-                    <span className="text-foreground/70 text-xs">
+        <Card
+            role="button"
+            tabIndex={0}
+            onClick={() =>
+                navigate({ to: "/agents/$id", params: { id: agent.id } })
+            }
+            onKeyDown={(e) => {
+                // ponytail: only the focused card handles keys; ignore keys bubbling from children (dialog inputs)
+                if (e.target !== e.currentTarget) return;
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate({ to: "/agents/$id", params: { id: agent.id } });
+                }
+            }}
+            className="flex cursor-pointer flex-col gap-3 rounded-xl bg-inherit p-4 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+            <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                    <AgentInitialsAvatar name={agent.name} />
+                    <Badge
+                        variant={agent.is_active ? "outline" : "secondary"}
+                        className="w-fit mb-auto"
+                    >
+                        {agent.is_active && (
+                            <span className="relative flex size-2">
+                                <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-500 opacity-75" />
+                                <span className="relative inline-flex size-2 rounded-full bg-green-500" />
+                            </span>
+                        )}
                         {agent.is_active ? "Active" : "Inactive"}
-                    </span>
-                    <span className="truncate font-medium text-lg">
-                        {agent.name}
-                    </span>
+                    </Badge>
+                </div>
+                <div onClick={(e) => e.stopPropagation()}>
+                    <EditAgentDialog
+                        agent={agent}
+                        trigger={
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground"
+                            >
+                                <Pencil className="size-3.5" />
+                                Edit
+                            </Button>
+                        }
+                    />
                 </div>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+
+            <span className="line-clamp-2 text-xl font-semibold">
+                {agent.name}
+            </span>
+
+            <p className="max-h-[4.5rem] overflow-y-auto text-sm leading-relaxed text-muted-foreground">
                 {agent.description}
             </p>
-            <div className="flex justify-between items-center pt-1 mt-auto">
-                <div className="flex gap-4">
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <BookIcon className="size-3" />
-                        {agent.knowledges_count}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Plug className="size-3" />
-                        {agent.mcps_count}
-                    </span>
-                </div>
-                <Button size={"sm"} className="text-xs" asChild>
-                    <Link to="/agents/$id" params={{ id: agent.id }}>
-                        Details
-                        <ChevronRight className="size-3 hover:translate-x-2" />
-                    </Link>
-                </Button>
+
+            <div className="flex gap-4 pt-1 mt-auto">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <BookIcon className="size-3.5" />
+                    {agent.knowledges_count}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Plug className="size-3.5" />
+                    {agent.mcps_count}
+                </span>
             </div>
         </Card>
     );
 }
 
-function AgentListRow({ agent }: { agent: Agent }) {
-    return (
-        <div className="border rounded-lg flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors">
-            <AgentInitialsAvatar name={agent.name} className="size-8 text-xs" />
-            <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{agent.name}</span>
-                </div>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {agent.description}
-                </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                    <BookIcon className="size-3" />
-                    {agent.knowledges_count}
-                </span>
-                <span className="flex items-center gap-1">
-                    <Plug className="size-3" />
-                    {agent.mcps_count}
-                </span>
-            </div>
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                className="shrink-0 text-muted-foreground"
-                asChild
-            >
-                <Link to="/agents/$id" params={{ id: agent.id }}>
-                    <ChevronRight className="size-4" />
-                </Link>
-            </Button>
-        </div>
-    );
-}
-
 function RouteComponent() {
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
     const {
         data: agents,
         isPending,
@@ -139,30 +340,7 @@ function RouteComponent() {
                     </div>
 
                     <div className="ml-auto flex items-center gap-2">
-                        <div className="flex items-center gap-0.5 rounded-lg border bg-muted/40 p-0.5">
-                            <button
-                                onClick={() => setViewMode("grid")}
-                                className={cn(
-                                    "rounded-md p-1.5 transition-colors",
-                                    viewMode === "grid"
-                                        ? "bg-background text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <LayoutGrid className="size-3.5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode("list")}
-                                className={cn(
-                                    "rounded-md p-1.5 transition-colors",
-                                    viewMode === "list"
-                                        ? "bg-background text-foreground shadow-sm"
-                                        : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <List className="size-3.5" />
-                            </button>
-                        </div>
+                        <CreateAgentDialog />
                     </div>
                 </div>
 
@@ -187,17 +365,10 @@ function RouteComponent() {
                                 No agents found
                             </p>
                         </div>
-                    ) : viewMode === "grid" ? (
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    ) : (
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {agents.data.map((agent) => (
                                 <AgentCard key={agent.id} agent={agent} />
-                            ))}
-                        </div>
-                    ) : (
-                        // <div className="flex flex-col divide-y rounded-lg border">
-                        <div className="flex flex-col gap-2">
-                            {agents.data.map((agent) => (
-                                <AgentListRow key={agent.id} agent={agent} />
                             ))}
                         </div>
                     )}
