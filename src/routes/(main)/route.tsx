@@ -45,7 +45,7 @@ export const Route = createFileRoute("/(main)")({
 });
 
 const navItems = [
-    { to: "/dashboard2", label: "Dashboard", icon: LayoutDashboardIcon },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
     // { to: "/analytics", label: "Analytics", icon: BarChart3 },
     { to: "/agents", label: "Agents", icon: Bot },
     { to: "/chat", label: "Chat", icon: MessagesSquare },
@@ -180,7 +180,7 @@ function RouteComponent() {
                 <div className="flex justify-center items-center p-3">
                     <SidebarLogo />
                 </div>
-                <Separator />
+                {/*<Separator />*/}
                 <nav className="flex flex-col flex-1 gap-0.5 p-2 overflow-y-auto">
                     {navItems.map(({ to, label, icon: Icon }) => (
                         <Link

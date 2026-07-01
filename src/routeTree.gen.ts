@@ -14,7 +14,7 @@ import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as mainMembersRouteImport } from './routes/(main)/members'
 import { Route as mainLogsRouteImport } from './routes/(main)/logs'
-import { Route as mainDashboard2RouteImport } from './routes/(main)/dashboard2'
+import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
@@ -48,9 +48,9 @@ const mainLogsRoute = mainLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => mainRouteRoute,
 } as any)
-const mainDashboard2Route = mainDashboard2RouteImport.update({
-  id: '/dashboard2',
-  path: '/dashboard2',
+const mainDashboardRoute = mainDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainApiKeysRoute = mainApiKeysRouteImport.update({
@@ -104,7 +104,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
-  '/dashboard2': typeof mainDashboard2Route
+  '/dashboard': typeof mainDashboardRoute
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
@@ -119,7 +119,7 @@ export interface FileRoutesByTo {
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
-  '/dashboard2': typeof mainDashboard2Route
+  '/dashboard': typeof mainDashboardRoute
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
@@ -137,7 +137,7 @@ export interface FileRoutesById {
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(main)/api-keys': typeof mainApiKeysRoute
-  '/(main)/dashboard2': typeof mainDashboard2Route
+  '/(main)/dashboard': typeof mainDashboardRoute
   '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
@@ -154,7 +154,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/api-keys'
-    | '/dashboard2'
+    | '/dashboard'
     | '/logs'
     | '/members'
     | '/agents/$id'
@@ -169,7 +169,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/api-keys'
-    | '/dashboard2'
+    | '/dashboard'
     | '/logs'
     | '/members'
     | '/agents/$id'
@@ -186,7 +186,7 @@ export interface FileRouteTypes {
     | '/(auth)/login'
     | '/(auth)/signup'
     | '/(main)/api-keys'
-    | '/(main)/dashboard2'
+    | '/(main)/dashboard'
     | '/(main)/logs'
     | '/(main)/members'
     | '/(main)/agents/$id'
@@ -240,11 +240,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainLogsRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/dashboard2': {
-      id: '/(main)/dashboard2'
-      path: '/dashboard2'
-      fullPath: '/dashboard2'
-      preLoaderRoute: typeof mainDashboard2RouteImport
+    '/(main)/dashboard': {
+      id: '/(main)/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof mainDashboardRouteImport
       parentRoute: typeof mainRouteRoute
     }
     '/(main)/api-keys': {
@@ -329,7 +329,7 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 
 interface mainRouteRouteChildren {
   mainApiKeysRoute: typeof mainApiKeysRoute
-  mainDashboard2Route: typeof mainDashboard2Route
+  mainDashboardRoute: typeof mainDashboardRoute
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
@@ -342,7 +342,7 @@ interface mainRouteRouteChildren {
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainApiKeysRoute: mainApiKeysRoute,
-  mainDashboard2Route: mainDashboard2Route,
+  mainDashboardRoute: mainDashboardRoute,
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
