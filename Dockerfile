@@ -29,10 +29,10 @@ RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # nginx config for SPA — entrypoint runs envsubst on templates → conf.d
-ENV WEB_PORT=6700
+ENV WEB_PORT=6900
 ENV NGINX_ENVSUBST_FILTER=WEB_PORT
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-EXPOSE 6700
+EXPOSE 6900
 
 CMD ["nginx", "-g", "daemon off;"]
