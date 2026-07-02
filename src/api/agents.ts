@@ -158,6 +158,7 @@ export interface ChatResponse {
     reply: string;
     next_step?: NextStep[] | null;
     product?: CcProduct[] | null;
+    sessionId?: string;
 }
 
 export interface PersonaRequest {
@@ -180,26 +181,35 @@ export async function saveAgentPersona(
 export async function chatWithAgent(
     id: string,
     chatInput: string,
-    sessionId: string,
+    sessionId?: string,
     suggestion?: SuggestionItem,
     dynamicFields?: Record<string, string>,
     dynamicHeaders?: Record<string, string>,
     outputField = "reply",
 ): Promise<ChatResponse> {
-    const { data } = await client.post<Record<string, unknown>>(`/chat/${id}`, {
-        chatInput,
-        sessionId,
-        ...dynamicFields,
-        ...(dynamicHeaders &&
-            Object.keys(dynamicHeaders).length > 0 && {
-                headers: dynamicHeaders,
+    const response = await client.post<Record<string, unknown>>(
+        `/chat/${id}`,
+        {
+            chatInput,
+            ...dynamicFields,
+            ...(dynamicHeaders &&
+                Object.keys(dynamicHeaders).length > 0 && {
+                    headers: dynamicHeaders,
+                }),
+            ...(suggestion && { milvus: true, ...suggestion }),
+        },
+        {
+            ...(sessionId && {
+                headers: { "x-session-id": sessionId },
             }),
-        ...(suggestion && { milvus: true, ...suggestion }),
-    });
+        },
+    );
+    const data = response.data;
     const reply = data[outputField];
     return {
         reply: typeof reply === "string" ? reply : "",
         next_step: data.next_step as NextStep[] | null | undefined,
         product: data.product as CcProduct[] | null | undefined,
+        sessionId: response.headers["x-session-id"] || undefined,
     };
 }

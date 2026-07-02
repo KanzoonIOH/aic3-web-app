@@ -231,7 +231,7 @@ export function ChatSandboxWhatsApp({
     const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const sessionId = useRef(new Date().toLocaleTimeString()).current;
+    const sessionIdRef = useRef<string | undefined>(undefined);
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
@@ -248,13 +248,14 @@ export function ChatSandboxWhatsApp({
             chatWithAgent(
                 agentId,
                 text,
-                sessionId,
+                sessionIdRef.current,
                 undefined,
                 undefined,
                 undefined,
                 outputField,
             ),
         onSuccess: (res) => {
+            if (res.sessionId) sessionIdRef.current = res.sessionId;
             setMessages((p) => [
                 ...p,
                 { role: "assistant", text: res.reply, time: getTime() },

@@ -489,7 +489,7 @@ function buildWidgetSnippet(endpointUrl: string, outputField: string) {
     radius: "12px",
   };
 
-  var sessionId = "web-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  var sessionId = null;
   var open = false;
 
   var css = "" +
@@ -598,14 +598,19 @@ function buildWidgetSnippet(endpointUrl: string, outputField: string) {
 
     fetch(API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + API_KEY,
-      },
-      body: JSON.stringify({ chatInput: text, sessionId: sessionId }),
+      headers: Object.assign(
+        {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + API_KEY,
+        },
+        sessionId ? { "X-Session-Id": sessionId } : {}
+      ),
+      body: JSON.stringify({ chatInput: text }),
     })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
+        var newSid = r.headers.get("x-session-id");
+        if (newSid) sessionId = newSid;
         return r.json();
       })
       .then(function (data) {

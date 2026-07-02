@@ -31,24 +31,26 @@ export function ChatWidget({
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const bottomRef = useRef<HTMLDivElement>(null);
-    const sessionId = useRef(`widget-${Date.now()}`).current;
+    const sessionIdRef = useRef<string | undefined>(undefined);
 
     const mutation = useMutation({
         mutationFn: (text: string) =>
             chatWithAgent(
                 agentId,
                 text,
-                sessionId,
+                sessionIdRef.current,
                 undefined,
                 undefined,
                 undefined,
                 outputField,
             ),
-        onSuccess: (response) =>
+        onSuccess: (response) => {
+            if (response.sessionId) sessionIdRef.current = response.sessionId;
             setMessages((prev) => [
                 ...prev,
                 { role: "assistant", text: response.reply },
-            ]),
+            ]);
+        },
         onError: () =>
             setMessages((prev) => [
                 ...prev,

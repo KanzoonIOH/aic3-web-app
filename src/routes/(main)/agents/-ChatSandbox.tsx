@@ -569,14 +569,20 @@ function ChatDefault({
     dynamicKeys,
     dynamicHeaderKeys,
     outputField,
+    initialSessionId,
+    initialMessages,
 }: {
     agentId: string;
     agentName: string;
     dynamicKeys: string[];
     dynamicHeaderKeys: string[];
     outputField: string;
+    initialSessionId?: string;
+    initialMessages?: Message[];
 }) {
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<Message[]>(
+        initialMessages ?? [],
+    );
     const [input, setInput] = useState("");
     const [dynamicValues, setDynamicValues] = useState<Record<string, string>>(
         {},
@@ -585,13 +591,14 @@ function ChatDefault({
         {},
     );
     const [showInitialSuggestions, setShowInitialSuggestions] = useState(
-        agentName.toLowerCase().includes("customer care"),
+        !initialMessages?.length &&
+            agentName.toLowerCase().includes("customer care"),
     );
     const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
     const [ccProducts, setCcProducts] = useState<CcProduct[] | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const sessionId = useRef(new Date().toLocaleTimeString()).current;
+    const sessionIdRef = useRef<string | undefined>(initialSessionId);
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
@@ -614,13 +621,14 @@ function ChatDefault({
             chatWithAgent(
                 agentId,
                 text,
-                sessionId,
+                sessionIdRef.current,
                 suggestion,
                 dynamicValues,
                 headerValues,
                 outputField,
             ),
         onSuccess: (response) => {
+            if (response.sessionId) sessionIdRef.current = response.sessionId;
             setMessages((prev) => [
                 ...prev,
                 { role: "assistant", text: response.reply },
@@ -828,12 +836,16 @@ export function ChatSanbox({
     dynamicKeys = [],
     dynamicHeaderKeys = [],
     outputField = "reply",
+    initialSessionId,
+    initialMessages,
 }: {
     agentId: string;
     agentName: string;
     dynamicKeys?: string[];
     dynamicHeaderKeys?: string[];
     outputField?: string;
+    initialSessionId?: string;
+    initialMessages?: Message[];
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
@@ -876,6 +888,8 @@ export function ChatSanbox({
                         dynamicKeys={dynamicKeys}
                         dynamicHeaderKeys={dynamicHeaderKeys}
                         outputField={outputField}
+                        initialSessionId={initialSessionId}
+                        initialMessages={initialMessages}
                     />
                 ) : (
                     <ChatSandboxWhatsApp

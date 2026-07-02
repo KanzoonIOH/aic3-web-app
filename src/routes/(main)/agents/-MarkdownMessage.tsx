@@ -1,14 +1,30 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+// Collapse the model's inline provenance tags
+//   [source_file: Foo.xlsx • row=1996 • Title: Bar]
+// into a compact, readable citation: (source: Foo.xlsx, row 1996).
+// The raw tag is unreadable when repeated after every list item.
+function normalizeCitations(text: string) {
+    return text.replace(
+        /\[source_file:\s*([^•\]]+?)\s*•\s*row=([^•\]]+?)\s*(?:•[^\]]*)?\]/gi,
+        (_m, file: string, row: string) =>
+            ` _(source: ${file.trim()}, row ${row.trim()})_`,
+    );
+}
+
 function normalizeMarkdown(text: string) {
-    return text
+    // NOTE: do NOT inject newlines before `* ` or `- ` — those match the second
+    // `*` in `**bold:** text`, splitting bold markers and mangling the message.
+    // The model already emits proper `\n\n` breaks; we only widen single `\n`
+    // into paragraph breaks and space out headings/ordered lists/quotes.
+    return normalizeCitations(text)
         .replace(/---(?=#{1,6}\s)/g, "---\n\n")
         .replace(/([^\n])(?=#{1,6}\s)/g, "$1\n\n")
         .replace(/([^\n])(?=\d+\. )/g, "$1\n\n")
-        .replace(/([^\n])(?=-\s)/g, "$1\n")
-        .replace(/([^\n])(?=\*\s)/g, "$1\n")
-        .replace(/([^\n])(?=>\s)/g, "$1\n\n");
+        .replace(/([^\n])(?=>\s)/g, "$1\n\n")
+        .replace(/\n/g, "\n\n")
+        .replace(/\n{3,}/g, "\n\n");
 }
 
 export function MarkdownMessage({
