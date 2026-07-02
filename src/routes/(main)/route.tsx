@@ -22,6 +22,7 @@ import {
     BookOpen,
     Bot,
     ChevronsUpDownIcon,
+    Clock,
     KeyRound,
     LayoutDashboardIcon,
     LogOut,
@@ -173,7 +174,50 @@ function SidebarLogo() {
     );
 }
 
+// Signed-up-but-unapproved users see this instead of the app. Access is
+// granted once an admin promotes them out of the PENDING role.
+function PendingGate() {
+    const user = useAuthStore((s) => s.user);
+    const clearAuth = useAuthStore((s) => s.clearAuth);
+    const router = useRouter();
+
+    function handleLogout() {
+        clearAuth();
+        router.navigate({ to: "/login" });
+    }
+
+    return (
+        <div className="flex h-dvh w-full items-center justify-center p-6">
+            <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+                <div className="flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+                    <Clock className="size-7" />
+                </div>
+                <div className="space-y-1.5">
+                    <h1 className="font-heading text-xl font-semibold">
+                        Awaiting approval
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Your account
+                        {user?.email ? ` (${user.email})` : ""} is pending
+                        review. An administrator needs to grant you access
+                        before you can use the console.
+                    </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                    <LogOut className="size-4" />
+                    Log out
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 function RouteComponent() {
+    const role = useAuthStore((s) => s.user?.role);
+    if (role === "PENDING") {
+        return <PendingGate />;
+    }
+
     return (
         <div className="h-dvh w-full grid grid-cols-[200px_1fr]">
             <aside className="flex flex-col border-r bg-sidebar">

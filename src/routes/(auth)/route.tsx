@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { getToken } from "@/stores/auth";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
@@ -13,15 +14,12 @@ export const Route = createFileRoute("/(auth)")({
 
 function RouteComponent() {
     return (
-        <div className="grid grid-cols-2 h-dvh w-screen">
-            <div className="bg-primary" />
-            <div className="flex flex-1 items-center justify-center">
-                <div className="w-full max-w-xs">
-                    <div className="flex flex-col gap-6">
-                        <Outlet />
-                    </div>
+        <div className="flex min-h-dvh w-full items-center justify-center bg-muted/30 p-6">
+            <Card className="w-full max-w-sm p-8">
+                <div className="flex flex-col gap-6">
+                    <Outlet />
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }

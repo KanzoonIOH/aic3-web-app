@@ -5,12 +5,26 @@ import type { ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
+// A field injected into the outbound webhook JSON body.
+// "static": value sent as-is. "dynamic": value supplied per request (e.g. in
+// the chat sandbox), enforced by the backend.
+export interface BodyField {
+    key: string;
+    type: "static" | "dynamic";
+    value: string;
+}
+
 export interface Agent {
     id: string;
     name: string;
     description: string;
     is_active: boolean;
     webhook_uri: string;
+    milvus_collection: string;
+    webhook_input_field: string;
+    webhook_output_field: string;
+    webhook_body_fields: BodyField[] | null;
+    webhook_header_fields: BodyField[] | null;
     knowledges_count: number;
     mcps_count: number;
     pinned: boolean;
@@ -21,12 +35,22 @@ export interface UpdateAgentRequest {
     description: string;
     is_active: boolean;
     webhook_uri: string;
+    webhook_input_field: string;
+    webhook_output_field: string;
+    webhook_body_fields: BodyField[];
+    webhook_header_fields: BodyField[];
+    // milvus_collection is immutable after create — not sent on update.
 }
 
 export interface CreateAgentRequest {
     name: string;
     description: string;
     webhook_uri: string;
+    milvus_collection: string;
+    webhook_input_field: string;
+    webhook_output_field: string;
+    webhook_body_fields: BodyField[];
+    webhook_header_fields: BodyField[];
 }
 
 // ---------- API functions ----------
@@ -149,16 +173,33 @@ export async function saveAgentPersona(
     await client.patch(`/agents/${id}/persona`, payload);
 }
 
+// The upstream webhook returns the reply under whatever key the agent is
+// configured with (agent.webhook_output_field, e.g. "reply", "output", "data").
+// outputField tells us which key to read; defaults to "reply" for agents
+// created before this was configurable.
 export async function chatWithAgent(
     id: string,
     chatInput: string,
     sessionId: string,
     suggestion?: SuggestionItem,
+    dynamicFields?: Record<string, string>,
+    dynamicHeaders?: Record<string, string>,
+    outputField = "reply",
 ): Promise<ChatResponse> {
-    const { data } = await client.post<ChatResponse>(`/chat/${id}`, {
+    const { data } = await client.post<Record<string, unknown>>(`/chat/${id}`, {
         chatInput,
         sessionId,
+        ...dynamicFields,
+        ...(dynamicHeaders &&
+            Object.keys(dynamicHeaders).length > 0 && {
+                headers: dynamicHeaders,
+            }),
         ...(suggestion && { milvus: true, ...suggestion }),
     });
-    return data;
+    const reply = data[outputField];
+    return {
+        reply: typeof reply === "string" ? reply : "",
+        next_step: data.next_step as NextStep[] | null | undefined,
+        product: data.product as CcProduct[] | null | undefined,
+    };
 }

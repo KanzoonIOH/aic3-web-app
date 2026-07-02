@@ -595,7 +595,7 @@ export function createKnowledgeColumns({
             header: "Used By",
             meta: { className: "text-sm text-muted-foreground" },
             cell: ({ row }) => {
-                const agentsCount = row.original.agents_count ?? 3;
+                const agentsCount = row.original.agents_count ?? 0;
                 return `${agentsCount} ${agentsCount === 1 ? "agent" : "agents"}`;
             },
         },

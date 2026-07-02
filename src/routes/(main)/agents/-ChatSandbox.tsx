@@ -5,6 +5,7 @@ import {
     type SuggestionItem,
 } from "@/api/agents";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -565,12 +566,24 @@ function CcProductCards({
 function ChatDefault({
     agentId,
     agentName,
+    dynamicKeys,
+    dynamicHeaderKeys,
+    outputField,
 }: {
     agentId: string;
     agentName: string;
+    dynamicKeys: string[];
+    dynamicHeaderKeys: string[];
+    outputField: string;
 }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
+    const [dynamicValues, setDynamicValues] = useState<Record<string, string>>(
+        {},
+    );
+    const [headerValues, setHeaderValues] = useState<Record<string, string>>(
+        {},
+    );
     const [showInitialSuggestions, setShowInitialSuggestions] = useState(
         agentName.toLowerCase().includes("customer care"),
     );
@@ -597,7 +610,16 @@ function ChatDefault({
         }: {
             text: string;
             suggestion?: SuggestionItem;
-        }) => chatWithAgent(agentId, text, sessionId, suggestion),
+        }) =>
+            chatWithAgent(
+                agentId,
+                text,
+                sessionId,
+                suggestion,
+                dynamicValues,
+                headerValues,
+                outputField,
+            ),
         onSuccess: (response) => {
             setMessages((prev) => [
                 ...prev,
@@ -615,8 +637,12 @@ function ChatDefault({
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, nextSteps, ccProducts]);
 
+    const dynamicReady =
+        dynamicKeys.every((k) => (dynamicValues[k] ?? "").trim()) &&
+        dynamicHeaderKeys.every((k) => (headerValues[k] ?? "").trim());
+
     function sendText(text: string, suggestion?: SuggestionItem) {
-        if (!text.trim() || mutation.isPending) return;
+        if (!text.trim() || mutation.isPending || !dynamicReady) return;
         setShowInitialSuggestions(false);
         setNextSteps(null);
         setCcProducts(null);
@@ -718,6 +744,54 @@ function ChatDefault({
                 />
             )}
 
+            {(dynamicKeys.length > 0 || dynamicHeaderKeys.length > 0) && (
+                <div className="shrink-0 border-t bg-background px-5 pt-3">
+                    <div className="mx-auto flex w-full max-w-3xl flex-wrap gap-2">
+                        {dynamicKeys.map((k) => (
+                            <div key={`b-${k}`} className="flex flex-col gap-1">
+                                <label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                    {k}
+                                </label>
+                                <Input
+                                    value={dynamicValues[k] ?? ""}
+                                    onChange={(e) =>
+                                        setDynamicValues((prev) => ({
+                                            ...prev,
+                                            [k]: e.target.value,
+                                        }))
+                                    }
+                                    placeholder={k}
+                                    className="h-8 w-40"
+                                />
+                            </div>
+                        ))}
+                        {dynamicHeaderKeys.map((k) => (
+                            <div key={`h-${k}`} className="flex flex-col gap-1">
+                                <label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                    {k} (header)
+                                </label>
+                                <Input
+                                    value={headerValues[k] ?? ""}
+                                    onChange={(e) =>
+                                        setHeaderValues((prev) => ({
+                                            ...prev,
+                                            [k]: e.target.value,
+                                        }))
+                                    }
+                                    placeholder={k}
+                                    className="h-8 w-40"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    {!dynamicReady && (
+                        <p className="mx-auto mt-1.5 w-full max-w-3xl text-xs text-muted-foreground">
+                            Fill all required fields to send a message.
+                        </p>
+                    )}
+                </div>
+            )}
+
             <div className="shrink-0 pt-3 pb-8 mx-5">
                 <div className="flex items-end gap-2 w-full max-w-3xl mx-auto">
                     <textarea
@@ -731,7 +805,7 @@ function ChatDefault({
                             resizeTextarea();
                         }}
                         onKeyDown={handleKeyDown}
-                        disabled={mutation.isPending}
+                        disabled={mutation.isPending || !dynamicReady}
                     />
                     <Button
                         hidden
@@ -751,9 +825,15 @@ type ViewMode = "chatbot" | "whatsapp";
 export function ChatSanbox({
     agentId,
     agentName,
+    dynamicKeys = [],
+    dynamicHeaderKeys = [],
+    outputField = "reply",
 }: {
     agentId: string;
     agentName: string;
+    dynamicKeys?: string[];
+    dynamicHeaderKeys?: string[];
+    outputField?: string;
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
@@ -790,9 +870,18 @@ export function ChatSanbox({
             {/* View content */}
             <div className="flex-1 overflow-hidden">
                 {view === "chatbot" ? (
-                    <ChatDefault agentId={agentId} agentName={agentName} />
+                    <ChatDefault
+                        agentId={agentId}
+                        agentName={agentName}
+                        dynamicKeys={dynamicKeys}
+                        dynamicHeaderKeys={dynamicHeaderKeys}
+                        outputField={outputField}
+                    />
                 ) : (
-                    <ChatSandboxWhatsApp agentId={agentId} />
+                    <ChatSandboxWhatsApp
+                        agentId={agentId}
+                        outputField={outputField}
+                    />
                 )}
             </div>
         </div>

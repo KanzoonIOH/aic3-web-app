@@ -21,9 +21,11 @@ interface Message {
 export function ChatWidget({
     agentId,
     agentName,
+    outputField = "reply",
 }: {
     agentId: string;
     agentName: string;
+    outputField?: string;
 }) {
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -32,7 +34,16 @@ export function ChatWidget({
     const sessionId = useRef(`widget-${Date.now()}`).current;
 
     const mutation = useMutation({
-        mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
+        mutationFn: (text: string) =>
+            chatWithAgent(
+                agentId,
+                text,
+                sessionId,
+                undefined,
+                undefined,
+                undefined,
+                outputField,
+            ),
         onSuccess: (response) =>
             setMessages((prev) => [
                 ...prev,

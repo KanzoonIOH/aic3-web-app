@@ -219,7 +219,13 @@ function TypingBubble() {
     );
 }
 
-export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
+export function ChatSandboxWhatsApp({
+    agentId,
+    outputField = "reply",
+}: {
+    agentId: string;
+    outputField?: string;
+}) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
@@ -238,7 +244,16 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
     }, []);
 
     const mutation = useMutation({
-        mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
+        mutationFn: (text: string) =>
+            chatWithAgent(
+                agentId,
+                text,
+                sessionId,
+                undefined,
+                undefined,
+                undefined,
+                outputField,
+            ),
         onSuccess: (res) => {
             setMessages((p) => [
                 ...p,
