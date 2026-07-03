@@ -52,3 +52,7 @@ export async function getConversation(id: string) {
     );
     return res.data.data;
 }
+
+export async function deleteConversation(id: string) {
+    await client.delete(`/conversations/${id}`);
+}

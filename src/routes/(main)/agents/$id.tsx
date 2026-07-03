@@ -320,16 +320,6 @@ export function EditAgentDialog({
                             )}
                         </form.Field>
 
-                        <div className="flex flex-col gap-1.5">
-                            <Label>Milvus collection</Label>
-                            <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 font-mono text-sm text-muted-foreground">
-                                {agent.milvus_collection || "—"}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Set at creation and cannot be changed.
-                            </p>
-                        </div>
-
                         <div className="grid grid-cols-2 gap-3">
                             <form.Field name="webhook_input_field">
                                 {(field) => (
@@ -905,6 +895,7 @@ function RouteComponent() {
                             .filter((f) => f.type === "dynamic")
                             .map((f) => f.key)}
                         outputField={agent.data.webhook_output_field || "reply"}
+                        showWhatsApp
                     />
                 </TabsContent>
                 <TabsContent value="logs" className="overflow-y-auto">

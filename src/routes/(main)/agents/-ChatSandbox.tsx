@@ -838,6 +838,7 @@ export function ChatSanbox({
     outputField = "reply",
     initialSessionId,
     initialMessages,
+    showWhatsApp = false,
 }: {
     agentId: string;
     agentName: string;
@@ -846,12 +847,14 @@ export function ChatSanbox({
     outputField?: string;
     initialSessionId?: string;
     initialMessages?: Message[];
+    showWhatsApp?: boolean;
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
             {/* Toggle bar */}
+            {showWhatsApp && (
             <div className="shrink-0 flex items-center justify-center gap-1.5 border-b px-4 py-2 bg-background">
                 <button
                     type="button"
@@ -878,10 +881,11 @@ export function ChatSanbox({
                     WhatsApp
                 </button>
             </div>
+            )}
 
             {/* View content */}
             <div className="flex-1 overflow-hidden">
-                {view === "chatbot" ? (
+                {view === "chatbot" || !showWhatsApp ? (
                     <ChatDefault
                         agentId={agentId}
                         agentName={agentName}

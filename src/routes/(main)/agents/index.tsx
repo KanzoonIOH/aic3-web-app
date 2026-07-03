@@ -35,15 +35,21 @@ const createAgentSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim(),
     webhook_uri: z.string().trim().url("Webhook URI must be a valid URL"),
-    milvus_collection: z
-        .string()
-        .trim()
-        .min(1, "Milvus collection is required"),
     webhook_input_field: z.string().trim(),
     webhook_output_field: z.string().trim(),
 });
 
 type CreateAgentValues = z.infer<typeof createAgentSchema>;
+
+// ponytail: derive collection name from agent name; backend appends a unique
+// suffix so slug collisions are fine.
+function autoMilvusCollection(name: string): string {
+    const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    return `agent_${slug || "kb"}`;
+}
 
 // ---------- Create Agent dialog ----------
 
@@ -70,7 +76,6 @@ function CreateAgentDialog() {
             name: "",
             description: "",
             webhook_uri: "",
-            milvus_collection: "",
             webhook_input_field: "",
             webhook_output_field: "",
         } satisfies CreateAgentValues,
@@ -79,6 +84,7 @@ function CreateAgentDialog() {
             if (!result.success) return;
             await mutation.mutateAsync({
                 ...result.data,
+                milvus_collection: autoMilvusCollection(result.data.name),
                 webhook_body_fields: cleanBodyFields(bodyFields),
                 webhook_header_fields: cleanBodyFields(headerFields),
             });
@@ -211,45 +217,6 @@ function CreateAgentDialog() {
                                             field.state.meta.errors.length > 0
                                         }
                                     />
-                                    {field.state.meta.errors.length > 0 && (
-                                        <p className="text-xs text-destructive">
-                                            {field.state.meta.errors[0]}
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </form.Field>
-
-                        <form.Field
-                            name="milvus_collection"
-                            validators={{
-                                onChange: fieldValidator("milvus_collection"),
-                                onSubmit: fieldValidator("milvus_collection"),
-                            }}
-                        >
-                            {(field) => (
-                                <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor={field.name}>
-                                        Milvus collection
-                                    </Label>
-                                    <Input
-                                        id={field.name}
-                                        name={field.name}
-                                        value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => {
-                                            field.handleChange(e.target.value);
-                                            mutation.reset();
-                                        }}
-                                        placeholder="e.g. agent_knowledge_base"
-                                        aria-invalid={
-                                            field.state.meta.errors.length > 0
-                                        }
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        A unique suffix is appended automatically.
-                                        This cannot be changed later.
-                                    </p>
                                     {field.state.meta.errors.length > 0 && (
                                         <p className="text-xs text-destructive">
                                             {field.state.meta.errors[0]}
