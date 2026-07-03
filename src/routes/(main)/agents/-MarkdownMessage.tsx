@@ -17,13 +17,27 @@ function normalizeMarkdown(text: string) {
     // NOTE: do NOT inject newlines before `* ` or `- ` — those match the second
     // `*` in `**bold:** text`, splitting bold markers and mangling the message.
     // The model already emits proper `\n\n` breaks; we only widen single `\n`
-    // into paragraph breaks and space out headings/ordered lists/quotes.
+    // into paragraph breaks and space out headings/quotes.
+    //
+    // We deliberately DON'T force blank lines between ordered-list items:
+    // a blank line makes CommonMark treat each `1.`/`2.`/`3.` as its own
+    // single-item list, so every item restarts at 1. (the "all shows as 1" bug).
     return normalizeCitations(text)
         .replace(/---(?=#{1,6}\s)/g, "---\n\n")
         .replace(/([^\n])(?=#{1,6}\s)/g, "$1\n\n")
-        .replace(/([^\n])(?=\d+\. )/g, "$1\n\n")
         .replace(/([^\n])(?=>\s)/g, "$1\n\n")
-        .replace(/\n/g, "\n\n")
+        // Widen single newlines into paragraph breaks, but leave block
+        // structures whose lines MUST stay contiguous untouched:
+        //  - ordered lists `1. ` / bullets `- `,`* ` (blank lines reset
+        //    numbering to 1 and loosen the list — the "all shows as 1" bug)
+        //  - GFM table rows `| ... |` and divider rows `|---|` (a blank line
+        //    between rows breaks the table into plain paragraphs)
+        // Skip if EITHER the line ending here or the next line is such a line.
+        .replace(
+            /^(.*[^\n])\n(?!\n|\d+\. |[-*] |\|)/gm,
+            (m, line: string) =>
+                /^(\s*(\d+\.|[-*])\s|\s*\|)/.test(line) ? m : `${line}\n\n`,
+        )
         .replace(/\n{3,}/g, "\n\n");
 }
 
@@ -82,6 +96,28 @@ export function MarkdownMessage({
                         <pre className="mb-2 overflow-x-auto rounded-md bg-muted p-3 text-xs last:mb-0">
                             {children}
                         </pre>
+                    ),
+                    table: ({ children }) => (
+                        <div className="mb-2 overflow-x-auto last:mb-0">
+                            <table className="w-full border-collapse text-sm">
+                                {children}
+                            </table>
+                        </div>
+                    ),
+                    thead: ({ children }) => (
+                        <thead className="border-b border-border">
+                            {children}
+                        </thead>
+                    ),
+                    th: ({ children }) => (
+                        <th className="border border-border px-2 py-1 text-left font-semibold">
+                            {children}
+                        </th>
+                    ),
+                    td: ({ children }) => (
+                        <td className="border border-border px-2 py-1 align-top">
+                            {children}
+                        </td>
                     ),
                 }}
             >

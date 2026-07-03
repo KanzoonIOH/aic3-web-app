@@ -33,6 +33,7 @@ import {
 } from "recharts";
 // ponytail: employeeDummy still imported for the commented-out EmployeeTab.
 import { trafficDummy, type BarItem } from "./-hrDummy";
+import { getAgents } from "@/api/agents";
 
 export const Route = createFileRoute("/(main)/hr-dashboard")({
     component: RouteComponent,
@@ -326,6 +327,15 @@ function TrafficTab({ range }: { range: LogRange }) {
         queryFn: () => getLogTimeseries(range),
         placeholderData: keepPreviousData,
     });
+    const agentsQuery = useQuery({ queryKey: ["agents"], queryFn: getAgents });
+
+    // Real agent names; metric columns stay dummy (cycled) until a per-agent
+    // metrics endpoint exists.
+    const agentRows = (agentsQuery.data?.data ?? []).map((agent, i) => ({
+        ...trafficDummy.agents[i % trafficDummy.agents.length],
+        id: agent.id,
+        name: agent.name,
+    }));
 
     const summary = summaryQuery.data?.data;
     const series = (timeseriesQuery.data?.data ?? []).map((p) => ({
@@ -439,8 +449,8 @@ function TrafficTab({ range }: { range: LogRange }) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {trafficDummy.agents.map((a) => (
-                            <TableRow key={a.name}>
+                        {agentRows.map((a) => (
+                            <TableRow key={a.id}>
                                 <TableCell className="font-medium">
                                     {a.name}
                                 </TableCell>

@@ -895,7 +895,6 @@ function RouteComponent() {
                             .filter((f) => f.type === "dynamic")
                             .map((f) => f.key)}
                         outputField={agent.data.webhook_output_field || "reply"}
-                        showWhatsApp
                     />
                 </TabsContent>
                 <TabsContent value="logs" className="overflow-y-auto">
