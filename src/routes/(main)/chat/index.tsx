@@ -86,9 +86,20 @@ function RouteComponent() {
         <div className="flex h-full flex-col overflow-hidden">
             <div className="shrink-0 flex items-center gap-4 border-b bg-background px-6 py-4">
                 <div className="min-w-0 flex-1">
-                    <h1 className="font-heading text-2xl font-semibold">Chat</h1>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                        Chat with any of your agents.
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="font-heading text-2xl font-semibold">
+                            Chat
+                        </h1>
+                        {selected && (
+                            <span className="min-w-0 truncate text-lg font-medium text-muted-foreground">
+                                · {selected.name}
+                            </span>
+                        )}
+                    </div>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                        {selected?.description?.trim()
+                            ? selected.description
+                            : "Chat with any of your agents."}
                     </p>
                 </div>
                 {agents?.data?.length ? (
@@ -126,6 +137,15 @@ function RouteComponent() {
                         key={selected.id}
                         agentId={selected.id}
                         agentName={selected.name}
+                        dynamicKeys={(selected.webhook_body_fields ?? [])
+                            .filter((f) => f.type === "dynamic")
+                            .map((f) => f.key)}
+                        dynamicHeaderKeys={(
+                            selected.webhook_header_fields ?? []
+                        )
+                            .filter((f) => f.type === "dynamic")
+                            .map((f) => f.key)}
+                        outputField={selected.webhook_output_field || "reply"}
                     />
                 )}
             </div>

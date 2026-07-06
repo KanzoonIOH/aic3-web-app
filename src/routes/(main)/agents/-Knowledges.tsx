@@ -122,7 +122,7 @@ function GiveKnowledgeAccessButton({ agentId }: { agentId: string }) {
         <>
             <Button size="sm" onClick={() => setOpen(true)}>
                 <Plus className="size-3.5" />
-                Give access
+                Get Access
             </Button>
             <AgentKnowledgeAccessDialog
                 agentId={agentId}

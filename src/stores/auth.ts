@@ -1,11 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { AuthResponse } from "@/api/auth";
+import type { AuthResponse, UserRole } from "@/api/auth";
 
 interface User {
     id: string;
     username: string;
     email: string;
+    role: UserRole;
 }
 
 interface AuthState {
@@ -33,3 +34,7 @@ export const useAuthStore = create<AuthState>()(
 
 // Selector helpers — call outside React for non-hook contexts (axios and tanstack router beforeLoad)
 export const getToken = () => useAuthStore.getState().token;
+
+// PENDING users are signed up but not yet approved: no app access.
+export const isPending = () =>
+    useAuthStore.getState().user?.role === "PENDING";

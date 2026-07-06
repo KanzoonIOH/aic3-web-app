@@ -219,13 +219,19 @@ function TypingBubble() {
     );
 }
 
-export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
+export function ChatSandboxWhatsApp({
+    agentId,
+    outputField = "reply",
+}: {
+    agentId: string;
+    outputField?: string;
+}) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const sessionId = useRef(new Date().toLocaleTimeString()).current;
+    const sessionIdRef = useRef<string | undefined>(undefined);
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
@@ -238,8 +244,18 @@ export function ChatSandboxWhatsApp({ agentId }: { agentId: string }) {
     }, []);
 
     const mutation = useMutation({
-        mutationFn: (text: string) => chatWithAgent(agentId, text, sessionId),
+        mutationFn: (text: string) =>
+            chatWithAgent(
+                agentId,
+                text,
+                sessionIdRef.current,
+                undefined,
+                undefined,
+                undefined,
+                outputField,
+            ),
         onSuccess: (res) => {
+            if (res.sessionId) sessionIdRef.current = res.sessionId;
             setMessages((p) => [
                 ...p,
                 { role: "assistant", text: res.reply, time: getTime() },

@@ -1,17 +1,19 @@
-import { createAgent, getAgents, type Agent } from "@/api/agents";
+import { createAgent, getAgents, type Agent, type BodyField } from "@/api/agents";
+import { BodyFieldsEditor, cleanBodyFields } from "@/components/body-fields-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger,
+    useResponsiveDrawerDirection,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resolveServerMessage, textareaClass } from "@/lib/utils";
@@ -33,14 +35,29 @@ const createAgentSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim(),
     webhook_uri: z.string().trim().url("Webhook URI must be a valid URL"),
+    webhook_input_field: z.string().trim(),
+    webhook_output_field: z.string().trim(),
 });
 
 type CreateAgentValues = z.infer<typeof createAgentSchema>;
+
+// ponytail: derive collection name from agent name; backend appends a unique
+// suffix so slug collisions are fine.
+function autoMilvusCollection(name: string): string {
+    const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    return `agent_${slug || "kb"}`;
+}
 
 // ---------- Create Agent dialog ----------
 
 function CreateAgentDialog() {
     const [open, setOpen] = useState(false);
+    const direction = useResponsiveDrawerDirection();
+    const [bodyFields, setBodyFields] = useState<BodyField[]>([]);
+    const [headerFields, setHeaderFields] = useState<BodyField[]>([]);
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -49,6 +66,8 @@ function CreateAgentDialog() {
             queryClient.invalidateQueries({ queryKey: ["agents"] });
             setOpen(false);
             form.reset();
+            setBodyFields([]);
+            setHeaderFields([]);
         },
     });
 
@@ -57,11 +76,18 @@ function CreateAgentDialog() {
             name: "",
             description: "",
             webhook_uri: "",
+            webhook_input_field: "",
+            webhook_output_field: "",
         } satisfies CreateAgentValues,
         onSubmit: async ({ value }) => {
             const result = createAgentSchema.safeParse(value);
             if (!result.success) return;
-            await mutation.mutateAsync(result.data);
+            await mutation.mutateAsync({
+                ...result.data,
+                milvus_collection: autoMilvusCollection(result.data.name),
+                webhook_body_fields: cleanBodyFields(bodyFields),
+                webhook_header_fields: cleanBodyFields(headerFields),
+            });
         },
     });
 
@@ -70,6 +96,8 @@ function CreateAgentDialog() {
         if (!nextOpen) {
             mutation.reset();
             form.reset();
+            setBodyFields([]);
+            setHeaderFields([]);
         }
     }
 
@@ -81,128 +109,195 @@ function CreateAgentDialog() {
         };
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
+        <Drawer open={open} onOpenChange={handleOpenChange} direction={direction}>
+            <DrawerTrigger asChild>
                 <Button size="sm">
                     <Plus className="size-3.5" />
                     Create Agent
                 </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Create Agent</DialogTitle>
-                    <DialogDescription>
+            </DrawerTrigger>
+            <DrawerContent>
+                <DrawerHeader>
+                    <DrawerTitle>Create Agent</DrawerTitle>
+                    <DrawerDescription>
                         Add a new agent to your workspace.
-                    </DialogDescription>
-                </DialogHeader>
+                    </DrawerDescription>
+                </DrawerHeader>
 
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        form.handleSubmit();
-                    }}
-                    className="flex flex-col gap-4"
-                >
-                    {mutation.isError && (
-                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                            {resolveServerMessage(mutation.error)}
-                        </p>
-                    )}
-
-                    <form.Field
-                        name="name"
-                        validators={{
-                            onChange: fieldValidator("name"),
-                            onSubmit: fieldValidator("name"),
+                <div className="overflow-y-auto px-4">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            form.handleSubmit();
                         }}
+                        className="flex flex-col gap-4 pb-4"
                     >
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Name</Label>
-                                <Input
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    placeholder="My Agent"
-                                    aria-invalid={
-                                        field.state.meta.errors.length > 0
-                                    }
-                                    autoFocus
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0]}
-                                    </p>
+                        {mutation.isError && (
+                            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                {resolveServerMessage(mutation.error)}
+                            </p>
+                        )}
+
+                        <form.Field
+                            name="name"
+                            validators={{
+                                onChange: fieldValidator("name"),
+                                onSubmit: fieldValidator("name"),
+                            }}
+                        >
+                            {(field) => (
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor={field.name}>Name</Label>
+                                    <Input
+                                        id={field.name}
+                                        name={field.name}
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.value);
+                                            mutation.reset();
+                                        }}
+                                        placeholder="My Agent"
+                                        aria-invalid={
+                                            field.state.meta.errors.length > 0
+                                        }
+                                        autoFocus
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                        <p className="text-xs text-destructive">
+                                            {field.state.meta.errors[0]}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
+
+                        <form.Field name="description">
+                            {(field) => (
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor={field.name}>Description</Label>
+                                    <textarea
+                                        id={field.name}
+                                        name={field.name}
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.value);
+                                            mutation.reset();
+                                        }}
+                                        placeholder="Optional description"
+                                        className={textareaClass}
+                                    />
+                                </div>
+                            )}
+                        </form.Field>
+
+                        <form.Field
+                            name="webhook_uri"
+                            validators={{
+                                onChange: fieldValidator("webhook_uri"),
+                                onSubmit: fieldValidator("webhook_uri"),
+                            }}
+                        >
+                            {(field) => (
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor={field.name}>Webhook URI</Label>
+                                    <Input
+                                        id={field.name}
+                                        name={field.name}
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.value);
+                                            mutation.reset();
+                                        }}
+                                        placeholder="https://example.com/webhook"
+                                        aria-invalid={
+                                            field.state.meta.errors.length > 0
+                                        }
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                        <p className="text-xs text-destructive">
+                                            {field.state.meta.errors[0]}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <form.Field name="webhook_input_field">
+                                {(field) => (
+                                    <div className="flex flex-col gap-1.5">
+                                        <Label htmlFor={field.name}>
+                                            Input field
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => {
+                                                field.handleChange(e.target.value);
+                                                mutation.reset();
+                                            }}
+                                            placeholder="chatInput"
+                                        />
+                                    </div>
                                 )}
-                            </div>
-                        )}
-                    </form.Field>
-
-                    <form.Field name="description">
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Description</Label>
-                                <textarea
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    placeholder="Optional description"
-                                    className={textareaClass}
-                                />
-                            </div>
-                        )}
-                    </form.Field>
-
-                    <form.Field
-                        name="webhook_uri"
-                        validators={{
-                            onChange: fieldValidator("webhook_uri"),
-                            onSubmit: fieldValidator("webhook_uri"),
-                        }}
-                    >
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Webhook URI</Label>
-                                <Input
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    placeholder="https://example.com/webhook"
-                                    aria-invalid={
-                                        field.state.meta.errors.length > 0
-                                    }
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0]}
-                                    </p>
+                            </form.Field>
+                            <form.Field name="webhook_output_field">
+                                {(field) => (
+                                    <div className="flex flex-col gap-1.5">
+                                        <Label htmlFor={field.name}>
+                                            Output field
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => {
+                                                field.handleChange(e.target.value);
+                                                mutation.reset();
+                                            }}
+                                            placeholder="output"
+                                        />
+                                    </div>
                                 )}
-                            </div>
-                        )}
-                    </form.Field>
+                            </form.Field>
+                        </div>
 
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="outline">
+                        <BodyFieldsEditor
+                            rows={bodyFields}
+                            onChange={(r) => {
+                                setBodyFields(r);
+                                mutation.reset();
+                            }}
+                        />
+
+                        <BodyFieldsEditor
+                            rows={headerFields}
+                            onChange={(r) => {
+                                setHeaderFields(r);
+                                mutation.reset();
+                            }}
+                            label="Webhook auth / headers"
+                            description="HTTP headers sent to the agent. Static for a fixed value (e.g. Authorization: Bearer xxx); dynamic is provided per request. Leave empty for an open agent."
+                            keyPlaceholder="Header name (e.g. Authorization)"
+                            addLabel="Add header"
+                        />
+                    </form>
+                </div>
+
+                <DrawerFooter>
+                    <div className="flex gap-2">
+                        <DrawerClose asChild>
+                            <Button type="button" variant="outline" className="flex-1">
                                 Cancel
                             </Button>
-                        </DialogClose>
+                        </DrawerClose>
                         <form.Subscribe
                             selector={(state) => [
                                 state.canSubmit,
@@ -212,11 +307,13 @@ function CreateAgentDialog() {
                             {([canSubmit, isSubmitting]) => (
                                 <Button
                                     type="submit"
+                                    className="flex-1"
                                     disabled={
                                         !canSubmit ||
                                         isSubmitting ||
                                         mutation.isPending
                                     }
+                                    onClick={() => form.handleSubmit()}
                                 >
                                     {mutation.isPending
                                         ? "Creating..."
@@ -224,10 +321,10 @@ function CreateAgentDialog() {
                                 </Button>
                             )}
                         </form.Subscribe>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                    </div>
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
     );
 }
 
@@ -238,7 +335,7 @@ function AgentInitialsAvatar({ name }: { name: string }) {
             ? parts[0][0].toUpperCase()
             : (parts[0][0] + parts[1][0]).toUpperCase();
     return (
-        <div className="flex aspect-square size-14 items-center justify-center rounded-xl border bg-primary/10 text-xl font-semibold text-primary mb-auto">
+        <div className="flex aspect-square size-14 items-center justify-center rounded-xl border bg-primary/10 text-xl font-semibold text-primary">
             {initial}
         </div>
     );
@@ -263,12 +360,12 @@ function AgentCard({ agent }: { agent: Agent }) {
             }}
             className="flex cursor-pointer flex-col gap-3 rounded-xl bg-inherit p-4 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <AgentInitialsAvatar name={agent.name} />
                     <Badge
                         variant={agent.is_active ? "outline" : "secondary"}
-                        className="w-fit mb-auto"
+                        className="w-fit"
                     >
                         {agent.is_active && (
                             <span className="relative flex size-2">
@@ -279,7 +376,10 @@ function AgentCard({ agent }: { agent: Agent }) {
                         {agent.is_active ? "Active" : "Inactive"}
                     </Badge>
                 </div>
-                <div onClick={(e) => e.stopPropagation()}>
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="opacity-0 transition-opacity group-hover/card:opacity-100 focus-within:opacity-100"
+                >
                     <EditAgentDialog
                         agent={agent}
                         trigger={

@@ -18,11 +18,13 @@ import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as authInviteRouteImport } from './routes/(auth)/invite'
+import { Route as mainChatRouteRouteImport } from './routes/(main)/chat/route'
 import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
 import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
 import { Route as mainChatIndexRouteImport } from './routes/(main)/chat/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
-import { Route as mainMcpsIdRouteImport } from './routes/(main)/mcps/$id'
+import { Route as mainChatIdRouteImport } from './routes/(main)/chat/$id'
 import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
 
 const mainRouteRoute = mainRouteRouteImport.update({
@@ -68,6 +70,16 @@ const authLoginRoute = authLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => authRouteRoute,
 } as any)
+const authInviteRoute = authInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => authRouteRoute,
+} as any)
+const mainChatRouteRoute = mainChatRouteRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 const mainMcpsIndexRoute = mainMcpsIndexRouteImport.update({
   id: '/mcps/',
   path: '/mcps/',
@@ -79,19 +91,19 @@ const mainKnowledgesIndexRoute = mainKnowledgesIndexRouteImport.update({
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainChatIndexRoute = mainChatIndexRouteImport.update({
-  id: '/chat/',
-  path: '/chat/',
-  getParentRoute: () => mainRouteRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => mainChatRouteRoute,
 } as any)
 const mainAgentsIndexRoute = mainAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
   getParentRoute: () => mainRouteRoute,
 } as any)
-const mainMcpsIdRoute = mainMcpsIdRouteImport.update({
-  id: '/mcps/$id',
-  path: '/mcps/$id',
-  getParentRoute: () => mainRouteRoute,
+const mainChatIdRoute = mainChatIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => mainChatRouteRoute,
 } as any)
 const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
   id: '/agents/$id',
@@ -101,6 +113,8 @@ const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chat': typeof mainChatRouteRouteWithChildren
+  '/invite': typeof authInviteRoute
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
@@ -108,7 +122,7 @@ export interface FileRoutesByFullPath {
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
-  '/mcps/$id': typeof mainMcpsIdRoute
+  '/chat/$id': typeof mainChatIdRoute
   '/agents/': typeof mainAgentsIndexRoute
   '/chat/': typeof mainChatIndexRoute
   '/knowledges/': typeof mainKnowledgesIndexRoute
@@ -116,6 +130,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/invite': typeof authInviteRoute
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
@@ -123,7 +138,7 @@ export interface FileRoutesByTo {
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/agents/$id': typeof mainAgentsIdRoute
-  '/mcps/$id': typeof mainMcpsIdRoute
+  '/chat/$id': typeof mainChatIdRoute
   '/agents': typeof mainAgentsIndexRoute
   '/chat': typeof mainChatIndexRoute
   '/knowledges': typeof mainKnowledgesIndexRoute
@@ -134,6 +149,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/(auth)': typeof authRouteRouteWithChildren
   '/(main)': typeof mainRouteRouteWithChildren
+  '/(main)/chat': typeof mainChatRouteRouteWithChildren
+  '/(auth)/invite': typeof authInviteRoute
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(main)/api-keys': typeof mainApiKeysRoute
@@ -141,7 +158,7 @@ export interface FileRoutesById {
   '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
-  '/(main)/mcps/$id': typeof mainMcpsIdRoute
+  '/(main)/chat/$id': typeof mainChatIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
   '/(main)/chat/': typeof mainChatIndexRoute
   '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
@@ -151,6 +168,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/chat'
+    | '/invite'
     | '/login'
     | '/signup'
     | '/api-keys'
@@ -158,7 +177,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/members'
     | '/agents/$id'
-    | '/mcps/$id'
+    | '/chat/$id'
     | '/agents/'
     | '/chat/'
     | '/knowledges/'
@@ -166,6 +185,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/invite'
     | '/login'
     | '/signup'
     | '/api-keys'
@@ -173,7 +193,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/members'
     | '/agents/$id'
-    | '/mcps/$id'
+    | '/chat/$id'
     | '/agents'
     | '/chat'
     | '/knowledges'
@@ -183,6 +203,8 @@ export interface FileRouteTypes {
     | '/'
     | '/(auth)'
     | '/(main)'
+    | '/(main)/chat'
+    | '/(auth)/invite'
     | '/(auth)/login'
     | '/(auth)/signup'
     | '/(main)/api-keys'
@@ -190,7 +212,7 @@ export interface FileRouteTypes {
     | '/(main)/logs'
     | '/(main)/members'
     | '/(main)/agents/$id'
-    | '/(main)/mcps/$id'
+    | '/(main)/chat/$id'
     | '/(main)/agents/'
     | '/(main)/chat/'
     | '/(main)/knowledges/'
@@ -268,6 +290,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authLoginRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/(auth)/invite': {
+      id: '/(auth)/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof authInviteRouteImport
+      parentRoute: typeof authRouteRoute
+    }
+    '/(main)/chat': {
+      id: '/(main)/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof mainChatRouteRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
     '/(main)/mcps/': {
       id: '/(main)/mcps/'
       path: '/mcps'
@@ -284,10 +320,10 @@ declare module '@tanstack/react-router' {
     }
     '/(main)/chat/': {
       id: '/(main)/chat/'
-      path: '/chat'
+      path: '/'
       fullPath: '/chat/'
       preLoaderRoute: typeof mainChatIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      parentRoute: typeof mainChatRouteRoute
     }
     '/(main)/agents/': {
       id: '/(main)/agents/'
@@ -296,12 +332,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainAgentsIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/mcps/$id': {
-      id: '/(main)/mcps/$id'
-      path: '/mcps/$id'
-      fullPath: '/mcps/$id'
-      preLoaderRoute: typeof mainMcpsIdRouteImport
-      parentRoute: typeof mainRouteRoute
+    '/(main)/chat/$id': {
+      id: '/(main)/chat/$id'
+      path: '/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof mainChatIdRouteImport
+      parentRoute: typeof mainChatRouteRoute
     }
     '/(main)/agents/$id': {
       id: '/(main)/agents/$id'
@@ -314,11 +350,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface authRouteRouteChildren {
+  authInviteRoute: typeof authInviteRoute
   authLoginRoute: typeof authLoginRoute
   authSignupRoute: typeof authSignupRoute
 }
 
 const authRouteRouteChildren: authRouteRouteChildren = {
+  authInviteRoute: authInviteRoute,
   authLoginRoute: authLoginRoute,
   authSignupRoute: authSignupRoute,
 }
@@ -327,28 +365,40 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
+interface mainChatRouteRouteChildren {
+  mainChatIdRoute: typeof mainChatIdRoute
+  mainChatIndexRoute: typeof mainChatIndexRoute
+}
+
+const mainChatRouteRouteChildren: mainChatRouteRouteChildren = {
+  mainChatIdRoute: mainChatIdRoute,
+  mainChatIndexRoute: mainChatIndexRoute,
+}
+
+const mainChatRouteRouteWithChildren = mainChatRouteRoute._addFileChildren(
+  mainChatRouteRouteChildren,
+)
+
 interface mainRouteRouteChildren {
+  mainChatRouteRoute: typeof mainChatRouteRouteWithChildren
   mainApiKeysRoute: typeof mainApiKeysRoute
   mainDashboardRoute: typeof mainDashboardRoute
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
-  mainMcpsIdRoute: typeof mainMcpsIdRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
-  mainChatIndexRoute: typeof mainChatIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
   mainMcpsIndexRoute: typeof mainMcpsIndexRoute
 }
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
+  mainChatRouteRoute: mainChatRouteRouteWithChildren,
   mainApiKeysRoute: mainApiKeysRoute,
   mainDashboardRoute: mainDashboardRoute,
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
-  mainMcpsIdRoute: mainMcpsIdRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
-  mainChatIndexRoute: mainChatIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,
   mainMcpsIndexRoute: mainMcpsIndexRoute,
 }

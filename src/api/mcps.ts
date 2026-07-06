@@ -3,11 +3,14 @@ import type { ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
+export type McpHeaders = Record<string, string>;
+
 export interface Mcp {
     id: string;
     name: string;
     description: string | null;
     uri: string;
+    headers: McpHeaders | null;
     agent_id: string;
     tools_count: number;
     created_at: string;
@@ -19,11 +22,13 @@ export interface CreateMcpRequest {
     name: string;
     description: string;
     uri: string;
+    headers: McpHeaders;
 }
 
 export interface UpdateMcpRequest {
     name: string;
     description: string;
+    headers: McpHeaders;
 }
 
 export interface McpOption {
@@ -128,4 +133,14 @@ export async function updateMcp(
 
 export async function deleteMcp(id: string): Promise<void> {
     await client.delete(`/mcps/${id}`);
+}
+
+// Reconnect to the MCP server and re-sync its tools (uses stored headers).
+export async function refreshMcpTools(
+    id: string,
+): Promise<ResponseTemplate<McpTool[]>> {
+    const { data } = await client.post<ResponseTemplate<McpTool[]>>(
+        `/mcps/${id}/refresh-tools`,
+    );
+    return data;
 }

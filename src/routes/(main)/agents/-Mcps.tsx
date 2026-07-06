@@ -2,6 +2,7 @@ import { getAgentMcps } from "@/api/agents";
 import { disconnectAgentMcp } from "@/api/connect";
 import type { Mcp } from "@/api/mcps";
 import { AgentMcpAccessDialog } from "@/components/agent-mcp-access-dialog";
+import { CopyableUri } from "@/components/copy-button";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -25,7 +26,6 @@ import {
 } from "@tanstack/react-query";
 import { Plug, Plus } from "lucide-react";
 import { useState } from "react";
-import { mcpColumns } from "../mcps/index";
 
 const LIMIT = 10;
 
@@ -105,10 +105,37 @@ function GiveMcpAccessButton({ agentId }: { agentId: string }) {
 export function Mcps({ agentId }: { agentId: string }) {
     const [page, setPage] = useState(1);
 
-    // Reuse the shared MCP columns but swap the trailing actions column for a
-    // Remove action scoped to this agent.
     const columns: ColumnDef<Mcp>[] = [
-        ...mcpColumns.slice(0, -1),
+        {
+            id: "name",
+            header: "Name",
+            meta: { className: "font-medium" },
+            cell: ({ row }) => row.original.name,
+        },
+        {
+            id: "description",
+            header: "Description",
+            meta: { className: "text-muted-foreground text-sm max-w-64" },
+            cell: ({ row }) =>
+                row.original.description ?? (
+                    <span className="italic text-muted-foreground/50">—</span>
+                ),
+        },
+        {
+            id: "tools",
+            header: "Tools",
+            meta: { className: "font-medium" },
+            cell: ({ row }) => row.original.tools_count,
+        },
+        {
+            id: "uri",
+            header: "URI",
+            meta: {
+                className:
+                    "font-mono text-xs text-muted-foreground max-w-56 truncate",
+            },
+            cell: ({ row }) => <CopyableUri uri={row.original.uri} />,
+        },
         {
             id: "actions",
             meta: { cellClassName: "text-right" },

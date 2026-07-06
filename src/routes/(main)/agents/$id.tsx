@@ -1,16 +1,22 @@
-import { getAgent, updateAgent, type Agent } from "@/api/agents";
+import { getAgent, updateAgent, type Agent, type BodyField } from "@/api/agents";
+import {
+    BodyFieldsEditor,
+    bodyFieldsToRows,
+    cleanBodyFields,
+} from "@/components/body-fields-editor";
 import { LogsTable } from "@/components/logs-table";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger,
+    useResponsiveDrawerDirection,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,6 +67,8 @@ const updateAgentSchema = z.object({
                 return false;
             }
         }, "Webhook URI must be a valid URL"),
+    webhook_input_field: z.string().trim(),
+    webhook_output_field: z.string().trim(),
 });
 
 type UpdateAgentValues = z.infer<typeof updateAgentSchema>;
@@ -73,11 +81,22 @@ export function EditAgentDialog({
     trigger?: ReactNode;
 }) {
     const [open, setOpen] = useState(false);
+    const direction = useResponsiveDrawerDirection();
+    const [bodyFields, setBodyFields] = useState<BodyField[]>(
+        bodyFieldsToRows(agent.webhook_body_fields),
+    );
+    const [headerFields, setHeaderFields] = useState<BodyField[]>(
+        bodyFieldsToRows(agent.webhook_header_fields),
+    );
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (payload: UpdateAgentValues) =>
-            updateAgent(agent.id, payload),
+        mutationFn: (
+            payload: UpdateAgentValues & {
+                webhook_body_fields: BodyField[];
+                webhook_header_fields: BodyField[];
+            },
+        ) => updateAgent(agent.id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["agents"] });
             queryClient.invalidateQueries({ queryKey: ["agents", agent.id] });
@@ -91,229 +110,306 @@ export function EditAgentDialog({
             description: agent.description,
             is_active: agent.is_active,
             webhook_uri: agent.webhook_uri,
+            webhook_input_field: agent.webhook_input_field,
+            webhook_output_field: agent.webhook_output_field,
         },
         onSubmit: async ({ value }) => {
             const result = updateAgentSchema.safeParse(value);
             if (!result.success) return;
 
-            await mutation.mutateAsync(result.data);
+            await mutation.mutateAsync({
+                ...result.data,
+                webhook_body_fields: cleanBodyFields(bodyFields),
+                webhook_header_fields: cleanBodyFields(headerFields),
+            });
         },
     });
 
     function handleOpenChange(nextOpen: boolean) {
         setOpen(nextOpen);
         mutation.reset();
+        setBodyFields(bodyFieldsToRows(agent.webhook_body_fields));
+        setHeaderFields(bodyFieldsToRows(agent.webhook_header_fields));
         form.reset({
             name: agent.name,
             description: agent.description,
             is_active: agent.is_active,
             webhook_uri: agent.webhook_uri,
+            webhook_input_field: agent.webhook_input_field,
+            webhook_output_field: agent.webhook_output_field,
         });
     }
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
+        <Drawer open={open} onOpenChange={handleOpenChange} direction={direction}>
+            <DrawerTrigger asChild>
                 {trigger ?? (
                     <Button size="sm" variant="outline">
                         <Pencil className="size-3.5" />
                         Edit agent
                     </Button>
                 )}
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Edit agent</DialogTitle>
-                    <DialogDescription>
+            </DrawerTrigger>
+            <DrawerContent>
+                <DrawerHeader>
+                    <DrawerTitle>Edit agent</DrawerTitle>
+                    <DrawerDescription>
                         Update this agent's public details and webhook target.
-                    </DialogDescription>
-                </DialogHeader>
+                    </DrawerDescription>
+                </DrawerHeader>
 
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        form.handleSubmit();
-                    }}
-                    className="flex flex-col gap-4"
-                >
-                    {mutation.isError && (
-                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                            {resolveServerMessage(mutation.error)}
-                        </p>
-                    )}
-
-                    <form.Field
-                        name="name"
-                        validators={{
-                            onChange: ({ value }) => {
-                                const result =
-                                    updateAgentSchema.shape.name.safeParse(
-                                        value,
-                                    );
-                                return result.success
-                                    ? undefined
-                                    : result.error.issues[0]?.message;
-                            },
-                            onSubmit: ({ value }) => {
-                                const result =
-                                    updateAgentSchema.shape.name.safeParse(
-                                        value,
-                                    );
-                                return result.success
-                                    ? undefined
-                                    : result.error.issues[0]?.message;
-                            },
+                <div className="overflow-y-auto px-4">
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            form.handleSubmit();
                         }}
+                        className="flex flex-col gap-4 pb-4"
                     >
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Name</Label>
-                                <Input
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    aria-invalid={
-                                        field.state.meta.errors.length > 0
-                                    }
-                                    autoFocus
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0]}
-                                    </p>
+                        {mutation.isError && (
+                            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                                {resolveServerMessage(mutation.error)}
+                            </p>
+                        )}
+
+                        <form.Field
+                            name="name"
+                            validators={{
+                                onChange: ({ value }) => {
+                                    const result =
+                                        updateAgentSchema.shape.name.safeParse(
+                                            value,
+                                        );
+                                    return result.success
+                                        ? undefined
+                                        : result.error.issues[0]?.message;
+                                },
+                                onSubmit: ({ value }) => {
+                                    const result =
+                                        updateAgentSchema.shape.name.safeParse(
+                                            value,
+                                        );
+                                    return result.success
+                                        ? undefined
+                                        : result.error.issues[0]?.message;
+                                },
+                            }}
+                        >
+                            {(field) => (
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor={field.name}>Name</Label>
+                                    <Input
+                                        id={field.name}
+                                        name={field.name}
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.value);
+                                            mutation.reset();
+                                        }}
+                                        aria-invalid={
+                                            field.state.meta.errors.length > 0
+                                        }
+                                        autoFocus
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                        <p className="text-xs text-destructive">
+                                            {field.state.meta.errors[0]}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
+
+                        <form.Field
+                            name="description"
+                            validators={{
+                                onChange: ({ value }) => {
+                                    const result =
+                                        updateAgentSchema.shape.description.safeParse(
+                                            value,
+                                        );
+                                    return result.success
+                                        ? undefined
+                                        : result.error.issues[0]?.message;
+                                },
+                                onSubmit: ({ value }) => {
+                                    const result =
+                                        updateAgentSchema.shape.description.safeParse(
+                                            value,
+                                        );
+                                    return result.success
+                                        ? undefined
+                                        : result.error.issues[0]?.message;
+                                },
+                            }}
+                        >
+                            {(field) => (
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor={field.name}>Detail</Label>
+                                    <textarea
+                                        id={field.name}
+                                        name={field.name}
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.value);
+                                            mutation.reset();
+                                        }}
+                                        className={textareaClass}
+                                        aria-invalid={
+                                            field.state.meta.errors.length > 0
+                                        }
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                        <p className="text-xs text-destructive">
+                                            {field.state.meta.errors[0]}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
+
+                        <form.Field
+                            name="webhook_uri"
+                            validators={{
+                                onChange: ({ value }) => {
+                                    const result =
+                                        updateAgentSchema.shape.webhook_uri.safeParse(
+                                            value,
+                                        );
+                                    return result.success
+                                        ? undefined
+                                        : result.error.issues[0]?.message;
+                                },
+                                onSubmit: ({ value }) => {
+                                    const result =
+                                        updateAgentSchema.shape.webhook_uri.safeParse(
+                                            value,
+                                        );
+                                    return result.success
+                                        ? undefined
+                                        : result.error.issues[0]?.message;
+                                },
+                            }}
+                        >
+                            {(field) => (
+                                <div className="flex flex-col gap-1.5">
+                                    <Label htmlFor={field.name}>Webhook URI</Label>
+                                    <Input
+                                        id={field.name}
+                                        name={field.name}
+                                        value={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.value);
+                                            mutation.reset();
+                                        }}
+                                        placeholder="https://example.com/webhook"
+                                        aria-invalid={
+                                            field.state.meta.errors.length > 0
+                                        }
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                        <p className="text-xs text-destructive">
+                                            {field.state.meta.errors[0]}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </form.Field>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <form.Field name="webhook_input_field">
+                                {(field) => (
+                                    <div className="flex flex-col gap-1.5">
+                                        <Label htmlFor={field.name}>
+                                            Input field
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => {
+                                                field.handleChange(e.target.value);
+                                                mutation.reset();
+                                            }}
+                                            placeholder="chatInput"
+                                        />
+                                    </div>
                                 )}
-                            </div>
-                        )}
-                    </form.Field>
-
-                    <form.Field
-                        name="description"
-                        validators={{
-                            onChange: ({ value }) => {
-                                const result =
-                                    updateAgentSchema.shape.description.safeParse(
-                                        value,
-                                    );
-                                return result.success
-                                    ? undefined
-                                    : result.error.issues[0]?.message;
-                            },
-                            onSubmit: ({ value }) => {
-                                const result =
-                                    updateAgentSchema.shape.description.safeParse(
-                                        value,
-                                    );
-                                return result.success
-                                    ? undefined
-                                    : result.error.issues[0]?.message;
-                            },
-                        }}
-                    >
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Detail</Label>
-                                <textarea
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    className={textareaClass}
-                                    aria-invalid={
-                                        field.state.meta.errors.length > 0
-                                    }
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0]}
-                                    </p>
+                            </form.Field>
+                            <form.Field name="webhook_output_field">
+                                {(field) => (
+                                    <div className="flex flex-col gap-1.5">
+                                        <Label htmlFor={field.name}>
+                                            Output field
+                                        </Label>
+                                        <Input
+                                            id={field.name}
+                                            name={field.name}
+                                            value={field.state.value}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => {
+                                                field.handleChange(e.target.value);
+                                                mutation.reset();
+                                            }}
+                                            placeholder="output"
+                                        />
+                                    </div>
                                 )}
-                            </div>
-                        )}
-                    </form.Field>
+                            </form.Field>
+                        </div>
 
-                    <form.Field
-                        name="webhook_uri"
-                        validators={{
-                            onChange: ({ value }) => {
-                                const result =
-                                    updateAgentSchema.shape.webhook_uri.safeParse(
-                                        value,
-                                    );
-                                return result.success
-                                    ? undefined
-                                    : result.error.issues[0]?.message;
-                            },
-                            onSubmit: ({ value }) => {
-                                const result =
-                                    updateAgentSchema.shape.webhook_uri.safeParse(
-                                        value,
-                                    );
-                                return result.success
-                                    ? undefined
-                                    : result.error.issues[0]?.message;
-                            },
-                        }}
-                    >
-                        {(field) => (
-                            <div className="flex flex-col gap-1.5">
-                                <Label htmlFor={field.name}>Webhook URI</Label>
-                                <Input
-                                    id={field.name}
-                                    name={field.name}
-                                    value={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.value);
-                                        mutation.reset();
-                                    }}
-                                    placeholder="https://example.com/webhook"
-                                    aria-invalid={
-                                        field.state.meta.errors.length > 0
-                                    }
-                                />
-                                {field.state.meta.errors.length > 0 && (
-                                    <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0]}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-                    </form.Field>
+                        <BodyFieldsEditor
+                            rows={bodyFields}
+                            onChange={(r) => {
+                                setBodyFields(r);
+                                mutation.reset();
+                            }}
+                        />
 
-                    <form.Field name="is_active">
-                        {(field) => (
-                            <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                                <input
-                                    type="checkbox"
-                                    checked={field.state.value}
-                                    onBlur={field.handleBlur}
-                                    onChange={(e) => {
-                                        field.handleChange(e.target.checked);
-                                        mutation.reset();
-                                    }}
-                                    className="size-4 accent-primary"
-                                />
-                                Agent is active
-                            </label>
-                        )}
-                    </form.Field>
+                        <BodyFieldsEditor
+                            rows={headerFields}
+                            onChange={(r) => {
+                                setHeaderFields(r);
+                                mutation.reset();
+                            }}
+                            label="Webhook auth / headers"
+                            description="HTTP headers sent to the agent. Static for a fixed value (e.g. Authorization: Bearer xxx); dynamic is provided per request. Leave empty for an open agent."
+                            keyPlaceholder="Header name (e.g. Authorization)"
+                            addLabel="Add header"
+                        />
 
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="outline">
+                        <form.Field name="is_active">
+                            {(field) => (
+                                <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={field.state.value}
+                                        onBlur={field.handleBlur}
+                                        onChange={(e) => {
+                                            field.handleChange(e.target.checked);
+                                            mutation.reset();
+                                        }}
+                                        className="size-4 accent-primary"
+                                    />
+                                    Agent is active
+                                </label>
+                            )}
+                        </form.Field>
+                    </form>
+                </div>
+
+                <DrawerFooter>
+                    <div className="flex gap-2">
+                        <DrawerClose asChild>
+                            <Button type="button" variant="outline" className="flex-1">
                                 Cancel
                             </Button>
-                        </DialogClose>
+                        </DrawerClose>
                         <form.Subscribe
                             selector={(state) => [
                                 state.canSubmit,
@@ -323,20 +419,22 @@ export function EditAgentDialog({
                             {([canSubmit, isSubmitting]) => (
                                 <Button
                                     type="submit"
+                                    className="flex-1"
                                     disabled={
                                         !canSubmit ||
                                         isSubmitting ||
                                         mutation.isPending
                                     }
+                                    onClick={() => form.handleSubmit()}
                                 >
                                     {mutation.isPending ? "Saving..." : "Save"}
                                 </Button>
                             )}
                         </form.Subscribe>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                    </div>
+                </DrawerFooter>
+            </DrawerContent>
+        </Drawer>
     );
 }
 
@@ -358,13 +456,16 @@ function useCopyState() {
 // re-theming = edit one place. Markdown is rendered by a tiny built-in parser
 // (escape-first, then bold/italic/code/link/heading/list) — no markdown lib in
 // a paste-in script. Mirrors the real contract: POST /chat/{id} with
-// Authorization: Bearer, body { chatInput, sessionId }, response { reply }.
-function buildWidgetSnippet(endpointUrl: string) {
+// Authorization: Bearer, body { chatInput, sessionId }, response { [outputField]: reply }.
+// The upstream webhook may reply under any key (agent.webhook_output_field) —
+// the endpoint relays it verbatim, so this snippet must know which key to read.
+function buildWidgetSnippet(endpointUrl: string, outputField: string) {
     return `<!-- AIAC chat widget — paste before </body>, then set API_KEY below -->
 <script>
 (function () {
   var API_URL = ${JSON.stringify(endpointUrl)};
   var API_KEY = "PASTE_YOUR_API_KEY_HERE"; // <-- your API key
+  var OUTPUT_FIELD = ${JSON.stringify(outputField)};
 
   // ── THEME — all colors in one place (oklch, from the console palette) ──────
   var THEME = {
@@ -378,7 +479,7 @@ function buildWidgetSnippet(endpointUrl: string) {
     radius: "12px",
   };
 
-  var sessionId = "web-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  var sessionId = null;
   var open = false;
 
   var css = "" +
@@ -487,18 +588,23 @@ function buildWidgetSnippet(endpointUrl: string) {
 
     fetch(API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + API_KEY,
-      },
-      body: JSON.stringify({ chatInput: text, sessionId: sessionId }),
+      headers: Object.assign(
+        {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + API_KEY,
+        },
+        sessionId ? { "X-Session-Id": sessionId } : {}
+      ),
+      body: JSON.stringify({ chatInput: text }),
     })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
+        var newSid = r.headers.get("x-session-id");
+        if (newSid) sessionId = newSid;
         return r.json();
       })
       .then(function (data) {
-        typing.innerHTML = mdToHtml(data.reply || "(no reply)");
+        typing.innerHTML = mdToHtml(data[OUTPUT_FIELD] || "(no reply)");
       })
       .catch(function () {
         typing.textContent = "Something went wrong. Try again.";
@@ -512,20 +618,41 @@ function buildWidgetSnippet(endpointUrl: string) {
 </script>`;
 }
 
-function ApiTab({ agentId }: { agentId: string }) {
-    const endpointUrl = `${API_BASE_URL}/chat/${agentId}`;
+function ApiTab({ agent }: { agent: Agent }) {
+    const endpointUrl = `${API_BASE_URL}/chat/${agent.id}`;
+
+    const dynamicHeaders = (agent.webhook_header_fields ?? []).filter(
+        (f) => f.type === "dynamic",
+    );
+    const dynamicBodyFields = (agent.webhook_body_fields ?? []).filter(
+        (f) => f.type === "dynamic",
+    );
+
+    const extraHeaders = dynamicHeaders
+        .map((f) => `  --header '${f.key}: [${f.key}]' \\`)
+        .join("\n");
+
+    const bodyEntries: string[] = [
+        `  "sessionId": "string"`,
+        `  "chatInput": "apa yg bagus untuk dibeli di tahun 2025"`,
+    ];
+    for (const f of dynamicBodyFields) {
+        bodyEntries.push(`  "${f.key}": "[${f.key}]"`);
+    }
 
     const curlSnippet = `curl --request POST \\
   --url ${endpointUrl} \\
   --header 'authorization: Bearer [your token here]' \\
   --header 'content-type: application/json' \\
   --header 'x-session-id: [existing session id]' \\
-  --data '{
-  "sessionId": "string",
-  "chatInput": "apa yg bagus untuk dibeli di tahun 2025"
+${extraHeaders ? extraHeaders + "\n" : ""}  --data '{
+${bodyEntries.join(",\n")}
 }'`;
 
-    const widgetSnippet = buildWidgetSnippet(endpointUrl);
+    const widgetSnippet = buildWidgetSnippet(
+        endpointUrl,
+        agent.webhook_output_field || "reply",
+    );
 
     const curlCopy = useCopyState();
     const urlCopy = useCopyState();
@@ -758,7 +885,17 @@ function RouteComponent() {
                     <Mcps agentId={id} />
                 </TabsContent>
                 <TabsContent value="chat" className="overflow-hidden">
-                    <ChatSanbox agentId={id} agentName={agent.data.name} />
+                    <ChatSanbox
+                        agentId={id}
+                        agentName={agent.data.name}
+                        dynamicKeys={(agent.data.webhook_body_fields ?? [])
+                            .filter((f) => f.type === "dynamic")
+                            .map((f) => f.key)}
+                        dynamicHeaderKeys={(agent.data.webhook_header_fields ?? [])
+                            .filter((f) => f.type === "dynamic")
+                            .map((f) => f.key)}
+                        outputField={agent.data.webhook_output_field || "reply"}
+                    />
                 </TabsContent>
                 <TabsContent value="logs" className="overflow-y-auto">
                     <div className="p-6">
@@ -766,11 +903,15 @@ function RouteComponent() {
                     </div>
                 </TabsContent>
                 <TabsContent value="api" className="overflow-hidden">
-                    <ApiTab agentId={id} />
+                    <ApiTab agent={agent.data} />
                 </TabsContent>
             </Tabs>
 
-            <ChatWidget agentId={id} agentName={agent.data.name} />
+            <ChatWidget
+                agentId={id}
+                agentName={agent.data.name}
+                outputField={agent.data.webhook_output_field || "reply"}
+            />
         </div>
     );
 }
