@@ -234,7 +234,11 @@ function DonutCard({
 
 const trendConfig: ChartConfig = {
     total: { label: "Requests", color: "var(--chart-1)" },
+};
+
+const latencyConfig: ChartConfig = {
     p50_response_ms: { label: "p50 latency", color: "var(--chart-2)" },
+    p90_response_ms: { label: "p90 latency", color: "#fbbf24" },
 };
 
 function VolumeTrend({
@@ -303,6 +307,94 @@ function VolumeTrend({
                             dataKey="total"
                             stroke="var(--color-total)"
                             fill="url(#volFill)"
+                            strokeWidth={2}
+                        />
+                    </AreaChart>
+                </ChartContainer>
+            )}
+        </SectionCard>
+    );
+}
+
+function LatencyTrend({
+    series,
+    isPending,
+}: {
+    series: {
+        label: string;
+        p50_response_ms: number;
+        p90_response_ms: number;
+    }[];
+    isPending: boolean;
+}) {
+    return (
+        <SectionCard title="Response latency" badge="live">
+            <p className="-mt-2 text-xs text-muted-foreground">
+                p50 / p90 response time (ms) per bucket, oldest → newest
+            </p>
+            {isPending ? (
+                <div className="flex h-44 items-center justify-center text-sm text-muted-foreground">
+                    Loading...
+                </div>
+            ) : series.length === 0 ? (
+                <div className="flex h-44 items-center justify-center text-sm text-muted-foreground">
+                    No data
+                </div>
+            ) : (
+                <ChartContainer config={latencyConfig} className="h-44 w-full">
+                    <AreaChart data={series}>
+                        <defs>
+                            <linearGradient
+                                id="latFill"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                            >
+                                <stop
+                                    offset="0%"
+                                    stopColor="var(--color-p50_response_ms)"
+                                    stopOpacity={0.28}
+                                />
+                                <stop
+                                    offset="100%"
+                                    stopColor="var(--color-p50_response_ms)"
+                                    stopOpacity={0}
+                                />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis
+                            dataKey="label"
+                            tick={{ fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis
+                            tick={{ fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => `${Math.round(v)}`}
+                        />
+                        <ChartTooltip
+                            content={
+                                <ChartTooltipContent
+                                    formatter={(v) => `${Math.round(Number(v))} ms`}
+                                />
+                            }
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="p50_response_ms"
+                            stroke="var(--color-p50_response_ms)"
+                            fill="url(#latFill)"
+                            strokeWidth={2}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="p90_response_ms"
+                            stroke="var(--color-p90_response_ms)"
+                            fill="none"
                             strokeWidth={2}
                         />
                     </AreaChart>
@@ -399,10 +491,16 @@ function TrafficTab({ range }: { range: LogRange }) {
                 />
             </div>
 
-            <VolumeTrend
-                series={series}
-                isPending={timeseriesQuery.isPending}
-            />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <VolumeTrend
+                    series={series}
+                    isPending={timeseriesQuery.isPending}
+                />
+                <LatencyTrend
+                    series={series}
+                    isPending={timeseriesQuery.isPending}
+                />
+            </div>
 
             {/* Analytics grid — dummy HR sections */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

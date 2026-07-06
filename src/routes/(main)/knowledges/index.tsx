@@ -85,6 +85,7 @@ type EditKnowledgeValues = z.infer<typeof editKnowledgeSchema>;
 function CreateKnowledgeDialog() {
     const [open, setOpen] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+    const [dragging, setDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
@@ -135,6 +136,15 @@ function CreateKnowledgeDialog() {
     function handleChangeFile() {
         setFile(null);
         fileInputRef.current?.click();
+    }
+
+    function handleDrop(e: React.DragEvent) {
+        e.preventDefault();
+        setDragging(false);
+        const dropped = e.dataTransfer.files?.[0];
+        if (!dropped) return;
+        setFile(dropped);
+        mutation.reset();
     }
 
     return (
@@ -241,10 +251,22 @@ function CreateKnowledgeDialog() {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex items-center gap-2 rounded-md border border-dashed border-input px-3 py-4 text-sm text-muted-foreground hover:border-ring hover:text-foreground transition-colors w-full justify-center"
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    setDragging(true);
+                                }}
+                                onDragLeave={() => setDragging(false)}
+                                onDrop={handleDrop}
+                                className={`flex items-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm transition-colors w-full justify-center ${
+                                    dragging
+                                        ? "border-ring bg-muted/50 text-foreground"
+                                        : "border-input text-muted-foreground hover:border-ring hover:text-foreground"
+                                }`}
                             >
                                 <FileUp className="size-4" />
-                                Click to upload a document
+                                {dragging
+                                    ? "Drop the document here"
+                                    : "Click or drag & drop a document"}
                             </button>
                         ) : (
                             <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm">
