@@ -32,6 +32,7 @@ import {
   Plug,
   ScrollText,
   Sun,
+  Tag,
   Users,
 } from "lucide-react";
 
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/(main)")({
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
   { to: "/agents", label: "Agents", icon: Bot },
+  { to: "/tags", label: "Tags", icon: Tag },
   { to: "/chat", label: "Chat", icon: MessagesSquare },
   { to: "/knowledges", label: "Knowledges", icon: BookOpen },
   { to: "/mcps", label: "MCPs", icon: Plug },

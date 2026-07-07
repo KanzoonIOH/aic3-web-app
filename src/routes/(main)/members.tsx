@@ -6,17 +6,7 @@ import {
     updateMemberStatus,
     type Member,
 } from "@/api/members";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/copy-button";
 import {
@@ -232,10 +222,13 @@ function MemberActions({ member }: { member: Member }) {
             queryClient.invalidateQueries({ queryKey: ["members"] }),
     });
 
+    const [removeOpen, setRemoveOpen] = useState(false);
     const { mutate: remove, isPending: isRemoving } = useMutation({
         mutationFn: () => deleteMember(member.id),
-        onSuccess: () =>
-            queryClient.invalidateQueries({ queryKey: ["members"] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["members"] });
+            setRemoveOpen(false);
+        },
     });
 
     const isPending = isAccepting || isUpdatingStatus || isRemoving;
@@ -259,69 +252,64 @@ function MemberActions({ member }: { member: Member }) {
                     {isAccepting ? "Accepting..." : "Accept"}
                 </Button>
             )}
-            <AlertDialog>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="text-muted-foreground"
-                            disabled={isPending}
-                        >
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">Open menu</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                        {member.role !== "PENDING" && (
-                            <>
-                                {ASSIGNABLE_ROLES.map((role) => (
-                                    <DropdownMenuItem
-                                        key={role}
-                                        disabled={
-                                            member.role === role || isPending
-                                        }
-                                        onClick={() => setStatus(role)}
-                                    >
-                                        Set as {ROLE_LABELS[role]}
-                                    </DropdownMenuItem>
-                                ))}
-                                <DropdownMenuSeparator />
-                            </>
-                        )}
-                        <AlertDialogTrigger asChild>
-                            <DropdownMenuItem variant="destructive">
-                                <Trash2 className="size-4" />
-                                Remove
-                            </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Remove member?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            <span className="font-medium text-foreground">
-                                {member.name || member.username}
-                            </span>{" "}
-                            will be permanently removed. This action cannot be
-                            undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel variant="ghost">
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            disabled={isRemoving}
-                            onClick={() => remove()}
-                        >
-                            {isRemoving ? "Removing..." : "Remove"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground"
+                        disabled={isPending}
+                    >
+                        <MoreHorizontal className="size-4" />
+                        <span className="sr-only">Open menu</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                    {member.role !== "PENDING" && (
+                        <>
+                            {ASSIGNABLE_ROLES.map((role) => (
+                                <DropdownMenuItem
+                                    key={role}
+                                    disabled={
+                                        member.role === role || isPending
+                                    }
+                                    onClick={() => setStatus(role)}
+                                >
+                                    Set as {ROLE_LABELS[role]}
+                                </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
+                    <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={() => setRemoveOpen(true)}
+                    >
+                        <Trash2 className="size-4" />
+                        Remove
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <ConfirmDeleteDialog
+                open={removeOpen}
+                onOpenChange={setRemoveOpen}
+                onConfirm={() => remove()}
+                isPending={isRemoving}
+                title="Remove member?"
+                name={member.name || member.username}
+                description={
+                    <>
+                        <span className="font-medium text-foreground">
+                            {member.name || member.username}
+                        </span>{" "}
+                        will be permanently removed. This action cannot be
+                        undone.
+                    </>
+                }
+                confirmLabel="Remove"
+                pendingLabel="Removing..."
+            />
         </div>
     );
 }

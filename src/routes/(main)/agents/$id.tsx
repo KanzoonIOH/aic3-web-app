@@ -1,10 +1,16 @@
-import { getAgent, updateAgent, type Agent, type BodyField } from "@/api/agents";
+import {
+    getAgent,
+    updateAgent,
+    type Agent,
+    type BodyField,
+} from "@/api/agents";
 import {
     BodyFieldsEditor,
     bodyFieldsToRows,
     cleanBodyFields,
 } from "@/components/body-fields-editor";
 import { LogsTable } from "@/components/logs-table";
+import { TagsInput } from "@/components/tags-input";
 import { Button } from "@/components/ui/button";
 import {
     Drawer,
@@ -88,6 +94,9 @@ export function EditAgentDialog({
     const [headerFields, setHeaderFields] = useState<BodyField[]>(
         bodyFieldsToRows(agent.webhook_header_fields),
     );
+    const [tags, setTags] = useState<string[]>(
+        (agent.tags ?? []).map((t) => t.name),
+    );
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -95,6 +104,8 @@ export function EditAgentDialog({
             payload: UpdateAgentValues & {
                 webhook_body_fields: BodyField[];
                 webhook_header_fields: BodyField[];
+                guardrail: string;
+                tags: string[];
             },
         ) => updateAgent(agent.id, payload),
         onSuccess: () => {
@@ -121,6 +132,9 @@ export function EditAgentDialog({
                 ...result.data,
                 webhook_body_fields: cleanBodyFields(bodyFields),
                 webhook_header_fields: cleanBodyFields(headerFields),
+                // guardrail is edited on the Persona tab; preserve it here.
+                guardrail: agent.guardrail,
+                tags,
             });
         },
     });
@@ -130,6 +144,7 @@ export function EditAgentDialog({
         mutation.reset();
         setBodyFields(bodyFieldsToRows(agent.webhook_body_fields));
         setHeaderFields(bodyFieldsToRows(agent.webhook_header_fields));
+        setTags((agent.tags ?? []).map((t) => t.name));
         form.reset({
             name: agent.name,
             description: agent.description,
@@ -141,7 +156,11 @@ export function EditAgentDialog({
     }
 
     return (
-        <Drawer open={open} onOpenChange={handleOpenChange} direction={direction}>
+        <Drawer
+            open={open}
+            onOpenChange={handleOpenChange}
+            direction={direction}
+        >
             <DrawerTrigger asChild>
                 {trigger ?? (
                     <Button size="sm" variant="outline">
@@ -296,7 +315,9 @@ export function EditAgentDialog({
                         >
                             {(field) => (
                                 <div className="flex flex-col gap-1.5">
-                                    <Label htmlFor={field.name}>Webhook URI</Label>
+                                    <Label htmlFor={field.name}>
+                                        Webhook URI
+                                    </Label>
                                     <Input
                                         id={field.name}
                                         name={field.name}
@@ -333,7 +354,9 @@ export function EditAgentDialog({
                                             value={field.state.value}
                                             onBlur={field.handleBlur}
                                             onChange={(e) => {
-                                                field.handleChange(e.target.value);
+                                                field.handleChange(
+                                                    e.target.value,
+                                                );
                                                 mutation.reset();
                                             }}
                                             placeholder="chatInput"
@@ -353,7 +376,9 @@ export function EditAgentDialog({
                                             value={field.state.value}
                                             onBlur={field.handleBlur}
                                             onChange={(e) => {
-                                                field.handleChange(e.target.value);
+                                                field.handleChange(
+                                                    e.target.value,
+                                                );
                                                 mutation.reset();
                                             }}
                                             placeholder="output"
@@ -383,6 +408,14 @@ export function EditAgentDialog({
                             addLabel="Add header"
                         />
 
+                        <TagsInput
+                            value={tags}
+                            onChange={(t) => {
+                                setTags(t);
+                                mutation.reset();
+                            }}
+                        />
+
                         <form.Field name="is_active">
                             {(field) => (
                                 <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
@@ -391,7 +424,9 @@ export function EditAgentDialog({
                                         checked={field.state.value}
                                         onBlur={field.handleBlur}
                                         onChange={(e) => {
-                                            field.handleChange(e.target.checked);
+                                            field.handleChange(
+                                                e.target.checked,
+                                            );
                                             mutation.reset();
                                         }}
                                         className="size-4 accent-primary"
@@ -406,7 +441,11 @@ export function EditAgentDialog({
                 <DrawerFooter>
                     <div className="flex gap-2">
                         <DrawerClose asChild>
-                            <Button type="button" variant="outline" className="flex-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="flex-1"
+                            >
                                 Cancel
                             </Button>
                         </DrawerClose>
@@ -836,7 +875,7 @@ function RouteComponent() {
             </div>
 
             <Tabs
-                defaultValue="chat"
+                defaultValue="overview"
                 className="flex-1 grid grid-rows-[auto_1fr] overflow-hidden gap-0"
             >
                 <div className="border-b">
@@ -847,7 +886,7 @@ function RouteComponent() {
                         </TabsTrigger>
                         <TabsTrigger value="persona">
                             <SmilePlusIcon />
-                            Persona
+                            Customization
                         </TabsTrigger>
                         <TabsTrigger value="knowledge">
                             <BookIcon />
@@ -891,7 +930,9 @@ function RouteComponent() {
                         dynamicKeys={(agent.data.webhook_body_fields ?? [])
                             .filter((f) => f.type === "dynamic")
                             .map((f) => f.key)}
-                        dynamicHeaderKeys={(agent.data.webhook_header_fields ?? [])
+                        dynamicHeaderKeys={(
+                            agent.data.webhook_header_fields ?? []
+                        )
                             .filter((f) => f.type === "dynamic")
                             .map((f) => f.key)}
                         outputField={agent.data.webhook_output_field || "reply"}

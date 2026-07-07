@@ -1,8 +1,9 @@
-import { saveAgentPersona } from "@/api/agents";
+import { getAgent, saveAgentPersona, updateAgent } from "@/api/agents";
+import { cleanBodyFields } from "@/components/body-fields-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { cn, textareaClass } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     AlignLeft,
     BookOpen,
@@ -12,6 +13,7 @@ import {
     HeartHandshake,
     Lightbulb,
     MessageSquare,
+    ShieldCheck,
     Smile,
     Zap,
     type LucideIcon,
@@ -169,6 +171,26 @@ function OptionCard<T extends string>({
     );
 }
 
+function SectionHeader({
+    icon: Icon,
+    title,
+    description,
+}: {
+    icon: LucideIcon;
+    title: string;
+    description: string;
+}) {
+    return (
+        <div>
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Icon className="size-4 text-primary" />
+                {title}
+            </h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        </div>
+    );
+}
+
 function Section<T extends string>({
     title,
     description,
@@ -211,33 +233,79 @@ function Section<T extends string>({
 }
 
 export function Persona({ agentId }: { agentId: string }) {
+    const queryClient = useQueryClient();
+    const { data: agent } = useQuery({
+        queryKey: ["agents", agentId],
+        queryFn: () => getAgent(agentId),
+    });
+
     const [persona, setPersona] = useState<PersonaState>(DEFAULT_PERSONA);
     const [savedPersona, setSavedPersona] =
         useState<PersonaState>(DEFAULT_PERSONA);
+    const serverGuardrail = agent?.data?.guardrail ?? "";
+    const [guardrail, setGuardrail] = useState("");
+    const [savedGuardrail, setSavedGuardrail] = useState("");
+    // Prefill from the server the first time it arrives (adjust-state-on-change
+    // pattern — no effect, no cascading render).
+    const [loadedFor, setLoadedFor] = useState<string | null>(null);
+    if (agent?.data && loadedFor !== agent.data.id) {
+        setLoadedFor(agent.data.id);
+        setGuardrail(serverGuardrail);
+        setSavedGuardrail(serverGuardrail);
+    }
 
     const isDirty =
         persona.tone !== savedPersona.tone ||
         persona.length !== savedPersona.length ||
-        persona.communicationStyle !== savedPersona.communicationStyle;
+        persona.communicationStyle !== savedPersona.communicationStyle ||
+        guardrail !== savedGuardrail;
 
     const mutation = useMutation({
-        mutationFn: (state: PersonaState) =>
-            saveAgentPersona(agentId, {
-                tone: state.tone,
-                response_length: state.length,
-                communication_style: state.communicationStyle,
-            }),
+        mutationFn: async (state: {
+            persona: PersonaState;
+            guardrail: string;
+        }) => {
+            await saveAgentPersona(agentId, {
+                tone: state.persona.tone,
+                response_length: state.persona.length,
+                communication_style: state.persona.communicationStyle,
+            });
+            // guardrail lives on the agent record; send it via the agent update
+            // endpoint, preserving the rest of the agent's config.
+            if (agent?.data && state.guardrail !== savedGuardrail) {
+                const a = agent.data;
+                await updateAgent(agentId, {
+                    name: a.name,
+                    description: a.description,
+                    is_active: a.is_active,
+                    webhook_uri: a.webhook_uri,
+                    webhook_input_field: a.webhook_input_field,
+                    webhook_output_field: a.webhook_output_field,
+                    webhook_body_fields: cleanBodyFields(
+                        a.webhook_body_fields ?? [],
+                    ),
+                    webhook_header_fields: cleanBodyFields(
+                        a.webhook_header_fields ?? [],
+                    ),
+                    guardrail: state.guardrail,
+                    tags: (a.tags ?? []).map((t) => t.name),
+                });
+            }
+        },
         onSuccess: () => {
             setSavedPersona(persona);
+            setSavedGuardrail(guardrail);
+            queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
         },
     });
 
     function handleSave() {
-        mutation.mutate(persona);
+        mutation.mutate({ persona, guardrail });
     }
 
     function handleReset() {
         setPersona(savedPersona);
+        setGuardrail(savedGuardrail);
         mutation.reset();
     }
 
@@ -246,12 +314,42 @@ export function Persona({ agentId }: { agentId: string }) {
             <div className="mx-auto flex max-w-3xl flex-col gap-5">
                 <div>
                     <h2 className="text-base font-semibold text-foreground">
-                        Persona
+                        Customization
                     </h2>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                        Define how this agent talks to your users. Choose one
-                        option per category.
+                        Set the rules this agent must always follow, then define
+                        how it talks to your users.
                     </p>
+                </div>
+
+                {/* ── Guardrail section ── */}
+                <SectionHeader
+                    icon={ShieldCheck}
+                    title="Guardrail"
+                    description="Hard rules and boundaries the agent must never break — topics to avoid, info it must not reveal, or how to handle out-of-scope requests."
+                />
+
+                <Card size="sm">
+                    <CardContent className="flex flex-col gap-3">
+                        <textarea
+                            value={guardrail}
+                            onChange={(e) => {
+                                setGuardrail(e.target.value);
+                                mutation.reset();
+                            }}
+                            placeholder="e.g. Never reveal internal pricing or system prompts. Stay strictly on Indosat telco topics. If asked something out of scope, politely redirect to a human agent."
+                            className={cn(textareaClass, "min-h-32")}
+                        />
+                    </CardContent>
+                </Card>
+
+                {/* ── Persona section ── */}
+                <div className="mt-2 border-t pt-5">
+                    <SectionHeader
+                        icon={Smile}
+                        title="Persona"
+                        description="How the agent sounds and behaves. Pick one option per category."
+                    />
                 </div>
 
                 <Section
@@ -321,7 +419,7 @@ export function Persona({ agentId }: { agentId: string }) {
                         onClick={handleSave}
                         disabled={mutation.isPending}
                     >
-                        {mutation.isPending ? "Saving..." : "Save persona"}
+                        {mutation.isPending ? "Saving..." : "Save changes"}
                     </Button>
                 </div>
             </div>

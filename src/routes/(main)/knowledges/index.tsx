@@ -6,17 +6,8 @@ import {
     type Knowledge,
 } from "@/api/knowledges";
 import { KnowledgeAgentAccessDialog } from "@/components/agent-knowledge-access-dialog";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CopyableUri } from "@/components/copy-button";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -537,32 +528,14 @@ function KnowledgeRowActions({ knowledge }: { knowledge: Knowledge }) {
                 onOpenChange={setEditOpen}
             />
 
-            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete knowledge?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            <span className="font-medium text-foreground">
-                                {knowledge.name}
-                            </span>{" "}
-                            will be permanently deleted. This action cannot be
-                            undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel variant="ghost">
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            disabled={isDeleting}
-                            onClick={() => remove()}
-                        >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <ConfirmDeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                onConfirm={() => remove()}
+                isPending={isDeleting}
+                title="Delete knowledge?"
+                name={knowledge.name}
+            />
         </>
     );
 }

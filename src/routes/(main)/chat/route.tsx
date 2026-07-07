@@ -1,4 +1,5 @@
 import { deleteConversation, getConversations } from "@/api/conversations";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,6 +10,7 @@ import {
     useParams,
 } from "@tanstack/react-router";
 import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/(main)/chat")({
     component: ChatLayout,
@@ -35,6 +37,8 @@ function ChatLayout() {
 
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    // id of the conversation pending delete-confirmation (null = closed).
+    const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
     const { data, isPending } = useQuery({
         queryKey: ["conversations"],
@@ -45,6 +49,7 @@ function ChatLayout() {
         mutationFn: deleteConversation,
         onSuccess: (_, id) => {
             queryClient.invalidateQueries({ queryKey: ["conversations"] });
+            setPendingDelete(null);
             // If we deleted the open conversation, go back to the new-chat view.
             if (activeId === id) navigate({ to: "/chat" });
         },
@@ -96,14 +101,7 @@ function ChatLayout() {
                                         type="button"
                                         aria-label="Delete conversation"
                                         disabled={deleteMutation.isPending}
-                                        onClick={() => {
-                                            if (
-                                                confirm(
-                                                    "Delete this conversation?",
-                                                )
-                                            )
-                                                deleteMutation.mutate(c.id);
-                                        }}
+                                        onClick={() => setPendingDelete(c.id)}
                                         className="absolute right-2 top-2 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
                                     >
                                         <Trash2 className="size-4" />
@@ -128,6 +126,17 @@ function ChatLayout() {
             <div className="min-w-0 flex-1 overflow-hidden">
                 <Outlet />
             </div>
+
+            <ConfirmDeleteDialog
+                open={pendingDelete !== null}
+                onOpenChange={(open) => !open && setPendingDelete(null)}
+                onConfirm={() =>
+                    pendingDelete && deleteMutation.mutate(pendingDelete)
+                }
+                isPending={deleteMutation.isPending}
+                title="Delete conversation?"
+                description="This conversation will be permanently deleted. This action cannot be undone."
+            />
         </div>
     );
 }

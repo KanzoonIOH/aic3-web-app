@@ -11,17 +11,8 @@ import {
     type UpdateMcpRequest,
 } from "@/api/mcps";
 import { McpAgentAccessDialog } from "@/components/agent-mcp-access-dialog";
+import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { CopyableUri } from "@/components/copy-button";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -620,32 +611,14 @@ function McpActions({ mcp }: { mcp: Mcp }) {
                 onOpenChange={setEditOpen}
             />
 
-            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete MCP?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            <span className="font-medium text-foreground">
-                                {mcp.name}
-                            </span>{" "}
-                            will be permanently deleted. This action cannot be
-                            undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel variant="ghost">
-                            Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            variant="destructive"
-                            disabled={isDeleting}
-                            onClick={() => remove()}
-                        >
-                            {isDeleting ? "Deleting..." : "Delete"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <ConfirmDeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                onConfirm={() => remove()}
+                isPending={isDeleting}
+                title="Delete MCP?"
+                name={mcp.name}
+            />
         </>
     );
 }

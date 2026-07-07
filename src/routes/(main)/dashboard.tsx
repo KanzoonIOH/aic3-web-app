@@ -15,15 +15,9 @@ import {
 import { cn } from "@/lib/utils";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Download, MessagesSquare } from "lucide-react";
+import { CheckCircle2, Download, MessagesSquare } from "lucide-react";
 import { useState } from "react";
-import {
-    Area,
-    AreaChart,
-    CartesianGrid,
-    XAxis,
-    YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 export const Route = createFileRoute("/(main)/dashboard")({
     component: RouteComponent,
@@ -51,10 +45,10 @@ function formatBucket(iso: string, range: LogRange) {
 // Shared section bits
 // ---------------------------------------------------------------------------
 
-function SoonBadge() {
+function SampleBadge() {
     return (
-        <span className="shrink-0 rounded-md border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-500">
-            Soon
+        <span className="shrink-0 rounded-md border border-purple-400/25 bg-purple-400/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-purple-500">
+            Sample
         </span>
     );
 }
@@ -66,7 +60,7 @@ function SectionHeading({
     muted,
 }: {
     title: string;
-    badge?: "dev" | "tech";
+    badge?: "dev" | "tech" | "sample";
     note?: string;
     muted?: boolean;
 }) {
@@ -80,6 +74,11 @@ function SectionHeading({
             >
                 {title}
             </h2>
+            {badge === "sample" && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-400/30 bg-purple-400/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-500">
+                    Sample
+                </span>
+            )}
             {badge === "dev" && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-500">
                     In development
@@ -135,28 +134,31 @@ function KpiCard({
     );
 }
 
-function SoonKpiCard({
+function SampleKpiCard({
     label,
+    value,
     unit,
     sub,
 }: {
     label: string;
+    value: string;
     unit: string;
     sub: string;
 }) {
     return (
         <Card
             size="sm"
-            className="relative gap-3 border-dashed bg-muted/30 p-5"
+            className="relative gap-3 border-dashed border-purple-400/30 p-5"
         >
             <span className="absolute right-4 top-4">
-                <SoonBadge />
+                <SampleBadge />
             </span>
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {label}
             </span>
-            <div className="font-heading text-3xl font-bold leading-none tracking-tight text-muted-foreground/40">
-                —<span className="text-xl"> {unit}</span>
+            <div className="font-heading text-3xl font-bold leading-none tracking-tight">
+                {value}
+                <span className="text-xl text-muted-foreground"> {unit}</span>
             </div>
             <div className="text-xs text-muted-foreground/60">{sub}</div>
         </Card>
@@ -176,10 +178,26 @@ const PERCENTILE_COLORS = {
 
 function LatencyDistribution({ summary }: { summary?: LogSummary }) {
     const rows = [
-        { label: "p50", ms: summary?.p50_response_ms ?? 0, color: PERCENTILE_COLORS.p50 },
-        { label: "p90", ms: summary?.p90_response_ms ?? 0, color: PERCENTILE_COLORS.p90 },
-        { label: "p95", ms: summary?.p95_response_ms ?? 0, color: PERCENTILE_COLORS.p95 },
-        { label: "p99", ms: summary?.p99_response_ms ?? 0, color: PERCENTILE_COLORS.p99 },
+        {
+            label: "p50",
+            ms: summary?.p50_response_ms ?? 0,
+            color: PERCENTILE_COLORS.p50,
+        },
+        {
+            label: "p90",
+            ms: summary?.p90_response_ms ?? 0,
+            color: PERCENTILE_COLORS.p90,
+        },
+        {
+            label: "p95",
+            ms: summary?.p95_response_ms ?? 0,
+            color: PERCENTILE_COLORS.p95,
+        },
+        {
+            label: "p99",
+            ms: summary?.p99_response_ms ?? 0,
+            color: PERCENTILE_COLORS.p99,
+        },
     ];
     // Axis ceiling: round the worst percentile up to a clean number, min 1s.
     const max = Math.max(1000, ...rows.map((r) => r.ms));
@@ -270,7 +288,10 @@ function Stat({
             </div>
             <div className="mt-1 font-mono text-base font-semibold">
                 {value}
-                <span className="text-[10px] text-muted-foreground"> {unit}</span>
+                <span className="text-[10px] text-muted-foreground">
+                    {" "}
+                    {unit}
+                </span>
             </div>
         </div>
     );
@@ -371,7 +392,13 @@ function ResponseTrend({
 // SOON placeholders for Customer experience & Service/resolution
 // ---------------------------------------------------------------------------
 
-function PlaceholderChartCard({
+// Deterministic pseudo-random so the sample chart is stable across renders.
+function sampleSeed(i: number, salt: number) {
+    const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
+    return x - Math.floor(x); // 0..1
+}
+
+function SampleChartCard({
     title,
     desc,
     legend,
@@ -380,10 +407,19 @@ function PlaceholderChartCard({
     desc: string;
     legend: { label: string; color: string }[];
 }) {
+    // Build 12 buckets of stacked sample values, one series per legend entry.
+    const data = Array.from({ length: 12 }, (_, i) => {
+        const row: Record<string, number | string> = { i };
+        legend.forEach((l, s) => {
+            row[l.label] = Math.round(20 + sampleSeed(i, s) * 60);
+        });
+        return row;
+    });
+
     return (
         <Card
             size="sm"
-            className="relative flex-1 gap-4 border-dashed bg-muted/30 p-6"
+            className="relative flex-1 gap-4 border-dashed border-purple-400/30 p-6"
             style={{ flexBasis: "440px" }}
         >
             <div className="flex items-start justify-between gap-3">
@@ -393,14 +429,27 @@ function PlaceholderChartCard({
                     </h3>
                     <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
                 </div>
-                <SoonBadge />
+                <SampleBadge />
             </div>
-            <div className="relative flex min-h-40 items-center justify-center">
-                <span className="inline-flex items-center gap-2 rounded-full border border-dashed bg-background/60 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-                    <Clock className="size-3 text-amber-500" />
-                    Awaiting live data
-                </span>
-            </div>
+            <ChartContainer config={{}} className="h-40 w-full">
+                <AreaChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="i" hide />
+                    <YAxis hide />
+                    {legend.map((l) => (
+                        <Area
+                            key={l.label}
+                            type="monotone"
+                            dataKey={l.label}
+                            stackId="1"
+                            stroke={l.color}
+                            fill={l.color}
+                            fillOpacity={0.25}
+                            strokeWidth={1.5}
+                        />
+                    ))}
+                </AreaChart>
+            </ChartContainer>
             <div className="flex flex-wrap gap-4 text-[11px] text-muted-foreground">
                 {legend.map((l) => (
                     <span key={l.label} className="flex items-center gap-1.5">
@@ -417,18 +466,18 @@ function PlaceholderChartCard({
 }
 
 function ServiceQualityCard() {
-    const rows = [
-        "Satisfaction (CSAT)",
-        "Avg first response",
-        "Avg resolution time",
-        "Escalation rate",
-        "Messages / conversation",
-        "Unique users",
+    const rows: { label: string; value: string }[] = [
+        { label: "Satisfaction (CSAT)", value: "4.6 / 5" },
+        { label: "Avg first response", value: "1.8 s" },
+        { label: "Avg resolution time", value: "3m 12s" },
+        { label: "Escalation rate", value: "8.3%" },
+        { label: "Messages / conversation", value: "6.4" },
+        { label: "Unique users", value: "1,284" },
     ];
     return (
         <Card
             size="sm"
-            className="relative flex-1 gap-1 border-dashed bg-muted/30 p-6"
+            className="relative flex-1 gap-1 border-dashed border-purple-400/30 p-6"
             style={{ flexBasis: "280px" }}
         >
             <div className="mb-2 flex items-start justify-between gap-3">
@@ -440,21 +489,21 @@ function ServiceQualityCard() {
                         Per-conversation averages
                     </p>
                 </div>
-                <SoonBadge />
+                <SampleBadge />
             </div>
-            {rows.map((label, i) => (
+            {rows.map((row, i) => (
                 <div
-                    key={label}
+                    key={row.label}
                     className={cn(
                         "flex items-center justify-between py-2.5",
                         i < rows.length - 1 && "border-b",
                     )}
                 >
                     <span className="text-xs text-muted-foreground">
-                        {label}
+                        {row.label}
                     </span>
-                    <span className="font-mono text-sm font-semibold text-muted-foreground/40">
-                        —
+                    <span className="font-mono text-sm font-semibold">
+                        {row.value}
                     </span>
                 </div>
             ))}
@@ -565,26 +614,28 @@ function RouteComponent() {
                         )
                     }
                 />
-                <SoonKpiCard
+                <SampleKpiCard
                     label="Customer sentiment"
+                    value="82.4"
                     unit="%"
                     sub="Positive conversation share"
                 />
-                <SoonKpiCard
+                <SampleKpiCard
                     label="Resolution rate"
+                    value="76.1"
                     unit="%"
                     sub="Resolved without a human agent"
                 />
             </div>
 
-            {/* Customer experience (SOON) */}
+            {/* Customer experience (SAMPLE) */}
             <SectionHeading
                 title="Customer experience"
-                badge="dev"
-                note="Sample shapes — populate when conversation ingestion ships."
+                badge="sample"
+                note="Sample data — replaced once conversation ingestion ships."
             />
             <div className="flex flex-wrap gap-4">
-                <PlaceholderChartCard
+                <SampleChartCard
                     title="Sentiment over time"
                     desc="Share of positive / neutral / negative conversations"
                     legend={[
@@ -593,7 +644,7 @@ function RouteComponent() {
                         { label: "Negative", color: "#f87171" },
                     ]}
                 />
-                <PlaceholderChartCard
+                <SampleChartCard
                     title="Sentiment mix"
                     desc="Current snapshot"
                     legend={[
@@ -605,10 +656,10 @@ function RouteComponent() {
                 />
             </div>
 
-            {/* Service & resolution (SOON) */}
-            <SectionHeading title="Service & resolution" badge="dev" />
+            {/* Service & resolution (SAMPLE) */}
+            <SectionHeading title="Service & resolution" badge="sample" />
             <div className="flex flex-wrap gap-4">
-                <PlaceholderChartCard
+                <SampleChartCard
                     title="Conversation outcomes over time"
                     desc="Resolved · escalated · timed-out · intercepted"
                     legend={[

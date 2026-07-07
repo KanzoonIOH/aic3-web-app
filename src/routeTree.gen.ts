@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as mainRouteRouteImport } from './routes/(main)/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as mainTagsRouteImport } from './routes/(main)/tags'
 import { Route as mainMembersRouteImport } from './routes/(main)/members'
 import { Route as mainLogsRouteImport } from './routes/(main)/logs'
 import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const mainTagsRoute = mainTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => mainRouteRoute,
 } as any)
 const mainMembersRoute = mainMembersRouteImport.update({
   id: '/members',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof mainDashboardRoute
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
+  '/tags': typeof mainTagsRoute
   '/agents/$id': typeof mainAgentsIdRoute
   '/chat/$id': typeof mainChatIdRoute
   '/agents/': typeof mainAgentsIndexRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof mainDashboardRoute
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
+  '/tags': typeof mainTagsRoute
   '/agents/$id': typeof mainAgentsIdRoute
   '/chat/$id': typeof mainChatIdRoute
   '/agents': typeof mainAgentsIndexRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/(main)/dashboard': typeof mainDashboardRoute
   '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
+  '/(main)/tags': typeof mainTagsRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
   '/(main)/chat/$id': typeof mainChatIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/logs'
     | '/members'
+    | '/tags'
     | '/agents/$id'
     | '/chat/$id'
     | '/agents/'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/logs'
     | '/members'
+    | '/tags'
     | '/agents/$id'
     | '/chat/$id'
     | '/agents'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/(main)/dashboard'
     | '/(main)/logs'
     | '/(main)/members'
+    | '/(main)/tags'
     | '/(main)/agents/$id'
     | '/(main)/chat/$id'
     | '/(main)/agents/'
@@ -247,6 +259,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/(main)/tags': {
+      id: '/(main)/tags'
+      path: '/tags'
+      fullPath: '/tags'
+      preLoaderRoute: typeof mainTagsRouteImport
+      parentRoute: typeof mainRouteRoute
     }
     '/(main)/members': {
       id: '/(main)/members'
@@ -385,6 +404,7 @@ interface mainRouteRouteChildren {
   mainDashboardRoute: typeof mainDashboardRoute
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
+  mainTagsRoute: typeof mainTagsRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
@@ -397,6 +417,7 @@ const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainDashboardRoute: mainDashboardRoute,
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
+  mainTagsRoute: mainTagsRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,

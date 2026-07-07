@@ -1,6 +1,7 @@
 import { client } from "./client";
 import type { Knowledge } from "./knowledges";
 import type { Mcp } from "./mcps";
+import type { Tag } from "./tags";
 import type { ResponseTemplate } from "./types";
 
 // ---------- Types ----------
@@ -25,6 +26,8 @@ export interface Agent {
     webhook_output_field: string;
     webhook_body_fields: BodyField[] | null;
     webhook_header_fields: BodyField[] | null;
+    guardrail: string;
+    tags: Tag[] | null;
     knowledges_count: number;
     mcps_count: number;
     pinned: boolean;
@@ -39,6 +42,8 @@ export interface UpdateAgentRequest {
     webhook_output_field: string;
     webhook_body_fields: BodyField[];
     webhook_header_fields: BodyField[];
+    guardrail: string;
+    tags: string[];
     // milvus_collection is immutable after create — not sent on update.
 }
 
@@ -51,6 +56,8 @@ export interface CreateAgentRequest {
     webhook_output_field: string;
     webhook_body_fields: BodyField[];
     webhook_header_fields: BodyField[];
+    guardrail: string;
+    tags: string[];
 }
 
 // ---------- API functions ----------
@@ -68,6 +75,10 @@ export async function createAgent(
 export async function getAgents(): Promise<ResponseTemplate<Agent[]>> {
     const { data } = await client.get<ResponseTemplate<Agent[]>>("/agents");
     return data;
+}
+
+export async function deleteAgent(id: string): Promise<void> {
+    await client.delete(`/agents/${id}`);
 }
 
 export async function getAgent(id: string): Promise<ResponseTemplate<Agent>> {
