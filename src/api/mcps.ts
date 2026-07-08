@@ -28,6 +28,7 @@ export interface CreateMcpRequest {
 export interface UpdateMcpRequest {
     name: string;
     description: string;
+    uri: string;
     headers: McpHeaders;
 }
 
@@ -66,8 +67,12 @@ export interface McpTool {
 
 // ---------- API functions ----------
 
-export async function getMcps(): Promise<ResponseTemplate<Mcp[]>> {
-    const { data } = await client.get<ResponseTemplate<Mcp[]>>("/mcps");
+export async function getMcps(
+    params: { offset?: number; limit?: number } = {},
+): Promise<ResponseTemplate<Mcp[]>> {
+    const { data } = await client.get<ResponseTemplate<Mcp[]>>("/mcps", {
+        params,
+    });
     return data;
 }
 

@@ -16,7 +16,8 @@ export const Route = createFileRoute("/(main)/chat/")({
     component: RouteComponent,
 });
 
-function AgentSwitcher({
+// Centered agent picker shown in the welcome hero (before the first message).
+function AgentPicker({
     agents,
     selected,
     onSelect,
@@ -26,37 +27,51 @@ function AgentSwitcher({
     onSelect: (agent: Agent) => void;
 }) {
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors">
-                    <Bot className="size-4 text-muted-foreground" />
-                    <span className="max-w-40 truncate">
-                        {selected?.name ?? "Select agent"}
-                    </span>
-                    <ChevronsUpDown className="size-3.5 text-muted-foreground" />
-                </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-                {agents.map((agent) => (
-                    <DropdownMenuItem
-                        key={agent.id}
-                        onSelect={() => onSelect(agent)}
-                        className="flex items-center gap-2"
-                    >
-                        <Bot className="size-4 text-muted-foreground shrink-0" />
-                        <span className="flex-1 truncate">{agent.name}</span>
-                        <Check
-                            className={cn(
-                                "size-4 shrink-0",
-                                selected?.id === agent.id
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                            )}
-                        />
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Chatting with
+            </span>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2.5 rounded-full border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-muted">
+                        <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Bot className="size-3.5" />
+                        </span>
+                        <span className="max-w-56 truncate">
+                            {selected?.name ?? "Select agent"}
+                        </span>
+                        <ChevronsUpDown className="size-4 text-muted-foreground" />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-64">
+                    {agents.map((agent) => (
+                        <DropdownMenuItem
+                            key={agent.id}
+                            onSelect={() => onSelect(agent)}
+                            className="flex items-center gap-2"
+                        >
+                            <Bot className="size-4 shrink-0 text-muted-foreground" />
+                            <span className="flex-1 truncate">
+                                {agent.name}
+                            </span>
+                            <Check
+                                className={cn(
+                                    "size-4 shrink-0",
+                                    selected?.id === agent.id
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                )}
+                            />
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            {selected?.description?.trim() && (
+                <p className="mt-1 max-w-md text-center text-sm text-muted-foreground">
+                    {selected.description}
+                </p>
+            )}
+        </div>
     );
 }
 
@@ -79,76 +94,51 @@ function RouteComponent() {
         }
     }, [agents, selectedId]);
 
-    const selected =
-        agents?.data?.find((a) => a.id === selectedId) ?? null;
+    const selected = agents?.data?.find((a) => a.id === selectedId) ?? null;
+
+    if (isPending) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                    Loading agents...
+                </p>
+            </div>
+        );
+    }
+
+    if (isError || !selected) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center gap-2">
+                <Bot className="size-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">
+                    {isError ? "Failed to load agents" : "No agents found"}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
-            <div className="shrink-0 flex items-center gap-4 border-b bg-background px-6 py-4">
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-2">
-                        <h1 className="font-heading text-2xl font-semibold">
-                            Chat
-                        </h1>
-                        {selected && (
-                            <span className="min-w-0 truncate text-lg font-medium text-muted-foreground">
-                                · {selected.name}
-                            </span>
-                        )}
-                    </div>
-                    <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                        {selected?.description?.trim()
-                            ? selected.description
-                            : "Chat with any of your agents."}
-                    </p>
-                </div>
-                {agents?.data?.length ? (
-                    <AgentSwitcher
+            <ChatSanbox
+                key={selected.id}
+                agentId={selected.id}
+                agentName={selected.name}
+                dynamicKeys={(selected.webhook_body_fields ?? [])
+                    .filter((f) => f.type === "dynamic")
+                    .map((f) => f.key)}
+                dynamicHeaderKeys={(selected.webhook_header_fields ?? [])
+                    .filter((f) => f.type === "dynamic")
+                    .map((f) => f.key)}
+                outputField={selected.webhook_output_field || "reply"}
+                welcomeTitle="Hello there"
+                welcomeSlot={
+                    <AgentPicker
                         agents={agents.data}
                         selected={selected}
-                        onSelect={(agent) => setSelectedId(agent.id)}
+                        onSelect={(a) => setSelectedId(a.id)}
                     />
-                ) : null}
-            </div>
-
-            <div className="flex-1 overflow-hidden">
-                {isPending ? (
-                    <div className="flex h-full items-center justify-center">
-                        <p className="text-sm text-muted-foreground">
-                            Loading agents...
-                        </p>
-                    </div>
-                ) : isError ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-2">
-                        <Bot className="size-8 text-muted-foreground/40" />
-                        <p className="text-sm text-muted-foreground">
-                            Failed to load agents
-                        </p>
-                    </div>
-                ) : !selected ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-2">
-                        <Bot className="size-8 text-muted-foreground/40" />
-                        <p className="text-sm text-muted-foreground">
-                            No agents found
-                        </p>
-                    </div>
-                ) : (
-                    <ChatSanbox
-                        key={selected.id}
-                        agentId={selected.id}
-                        agentName={selected.name}
-                        dynamicKeys={(selected.webhook_body_fields ?? [])
-                            .filter((f) => f.type === "dynamic")
-                            .map((f) => f.key)}
-                        dynamicHeaderKeys={(
-                            selected.webhook_header_fields ?? []
-                        )
-                            .filter((f) => f.type === "dynamic")
-                            .map((f) => f.key)}
-                        outputField={selected.webhook_output_field || "reply"}
-                    />
-                )}
-            </div>
+                }
+            />
         </div>
     );
 }

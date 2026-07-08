@@ -33,9 +33,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DataTablePaginationBar } from "@/components/ui/tanstack-table";
 import { resolveServerMessage, textareaClass } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
     ChevronDown,
@@ -58,6 +64,7 @@ export const Route = createFileRoute("/(main)/mcps/")({
 const editMcpSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     description: z.string().trim(),
+    uri: z.string().trim().url("Must be a valid URL"),
 });
 
 type EditMcpValues = z.infer<typeof editMcpSchema>;
@@ -391,6 +398,9 @@ function EditMcpDialog({
         mutationFn: (payload: UpdateMcpRequest) => updateMcp(mcp.id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            queryClient.invalidateQueries({
+                queryKey: ["mcps", mcp.id, "tools"],
+            });
             onOpenChange(false);
         },
     });
@@ -399,6 +409,7 @@ function EditMcpDialog({
         defaultValues: {
             name: mcp.name,
             description: mcp.description ?? "",
+            uri: mcp.uri,
         } satisfies EditMcpValues,
         onSubmit: async ({ value }) => {
             const result = editMcpSchema.safeParse(value);
@@ -414,7 +425,11 @@ function EditMcpDialog({
         onOpenChange(nextOpen);
         mutation.reset();
         setHeaderRows(headersToRows(mcp.headers));
-        form.reset({ name: mcp.name, description: mcp.description ?? "" });
+        form.reset({
+            name: mcp.name,
+            description: mcp.description ?? "",
+            uri: mcp.uri,
+        });
     }
 
     const fieldValidator =
@@ -430,7 +445,8 @@ function EditMcpDialog({
                 <DialogHeader>
                     <DialogTitle>Edit MCP</DialogTitle>
                     <DialogDescription>
-                        Update the name and description.
+                        Update the name, description, and server URL. Changing
+                        the URL re-discovers tools.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -501,6 +517,39 @@ function EditMcpDialog({
                                         mutation.reset();
                                     }}
                                     className={textareaClass}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <form.Field
+                        name="uri"
+                        validators={{
+                            onChange: fieldValidator("uri"),
+                            onSubmit: fieldValidator("uri"),
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Server URL</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="https://mcp.example.com/mcp"
                                     aria-invalid={
                                         field.state.meta.errors.length > 0
                                     }
@@ -751,13 +800,11 @@ function McpCard({ mcp }: { mcp: Mcp }) {
                 <McpActions mcp={mcp} />
             </div>
 
-            <p className="line-clamp-2 min-h-8 text-sm text-muted-foreground">
-                {mcp.description ?? (
-                    <span className="italic text-muted-foreground/50">
-                        No description
-                    </span>
-                )}
-            </p>
+            {mcp.description && (
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {mcp.description}
+                </p>
+            )}
 
             <div>
                 <button
@@ -790,15 +837,21 @@ function McpCard({ mcp }: { mcp: Mcp }) {
 
 // ---------- Route ----------
 
+const LIMIT = 12;
+
 function RouteComponent() {
+    const [page, setPage] = useState(1);
     const {
         data: mcps,
         isPending,
         isError,
+        isFetching,
     } = useQuery({
-        queryKey: ["mcps"],
-        queryFn: getMcps,
+        queryKey: ["mcps", page],
+        queryFn: () => getMcps({ offset: page - 1, limit: LIMIT }),
+        placeholderData: keepPreviousData,
     });
+    const pagination = mcps?.pagination;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -834,10 +887,19 @@ function RouteComponent() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {mcps.data.map((mcp) => (
-                                <McpCard key={mcp.id} mcp={mcp} />
-                            ))}
+                        <div className="flex flex-col gap-6">
+                            <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {mcps.data.map((mcp) => (
+                                    <McpCard key={mcp.id} mcp={mcp} />
+                                ))}
+                            </div>
+                            <DataTablePaginationBar
+                                page={page}
+                                totalPage={pagination?.total_page ?? 1}
+                                totalRow={pagination?.total_row ?? 0}
+                                onPageChange={setPage}
+                                disabled={isFetching}
+                            />
                         </div>
                     )}
                 </div>

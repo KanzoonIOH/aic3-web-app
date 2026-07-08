@@ -152,7 +152,8 @@ export function Knowledges({ agentId }: { agentId: string }) {
 
     const { data, isPending, isError, isFetching } = useQuery({
         queryKey: ["agents", agentId, "knowledges", page],
-        queryFn: () => getAgentKnowledges(agentId, { page, limit: LIMIT }),
+        queryFn: () =>
+            getAgentKnowledges(agentId, { offset: page - 1, limit: LIMIT }),
         placeholderData: keepPreviousData,
     });
 

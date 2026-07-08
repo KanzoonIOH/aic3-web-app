@@ -29,8 +29,13 @@ export interface UpdateKnowledgeRequest {
 
 // ---------- API functions ----------
 
-export async function getKnowledges(): Promise<ResponseTemplate<Knowledge[]>> {
-    const { data } = await client.get<ResponseTemplate<Knowledge[]>>("/knowledges");
+export async function getKnowledges(
+    params: { offset?: number; limit?: number } = {},
+): Promise<ResponseTemplate<Knowledge[]>> {
+    const { data } = await client.get<ResponseTemplate<Knowledge[]>>(
+        "/knowledges",
+        { params },
+    );
     return data;
 }
 

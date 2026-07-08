@@ -103,7 +103,7 @@ export interface AgentKnowledge extends Knowledge {
 
 export async function getAgentKnowledges(
     id: string,
-    params: { page?: number; limit?: number } = {},
+    params: { offset?: number; limit?: number } = {},
 ): Promise<ResponseTemplate<AgentKnowledge[]>> {
     const { data } = await client.get<ResponseTemplate<AgentKnowledge[]>>(
         `/agents/${id}/knowledges`,
@@ -132,7 +132,7 @@ export async function getAgentKnowledgesAll(
 
 export async function getAgentMcps(
     id: string,
-    params: { page?: number; limit?: number } = {},
+    params: { offset?: number; limit?: number } = {},
 ): Promise<ResponseTemplate<Mcp[]>> {
     const { data } = await client.get<ResponseTemplate<Mcp[]>>(
         `/agents/${id}/mcps`,

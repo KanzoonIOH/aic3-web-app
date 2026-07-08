@@ -628,6 +628,20 @@ function RouteComponent() {
                 />
             </div>
 
+            <SectionHeading
+                title="System performance"
+                badge="tech"
+                muted
+                note="Reliability & latency · for engineering & ops"
+            />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <LatencyDistribution summary={summary} />
+                <ResponseTrend
+                    series={series}
+                    isPending={timeseriesQuery.isPending}
+                />
+            </div>
+
             {/* Customer experience (SAMPLE) */}
             <SectionHeading
                 title="Customer experience"
@@ -672,22 +686,7 @@ function RouteComponent() {
                 <ServiceQualityCard />
             </div>
 
-            <div className="h-px bg-border" />
-
-            {/* System performance (LIVE) */}
-            <SectionHeading
-                title="System performance"
-                badge="tech"
-                muted
-                note="Reliability & latency · for engineering & ops"
-            />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <LatencyDistribution summary={summary} />
-                <ResponseTrend
-                    series={series}
-                    isPending={timeseriesQuery.isPending}
-                />
-            </div>
+            {/*<div className="h-px bg-border" />*/}
         </div>
     );
 }

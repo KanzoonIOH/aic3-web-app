@@ -290,6 +290,23 @@ function CreateAgentButton() {
                                     );
                                 })}
                             </div>
+                            <p className="border-t pt-3 text-center text-xs text-muted-foreground">
+                                Looking for more? Browse the{" "}
+                                <a
+                                    href="#"
+                                    className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+                                >
+                                    template market
+                                </a>{" "}
+                                or{" "}
+                                <a
+                                    href="#"
+                                    className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+                                >
+                                    request a template
+                                </a>
+                                .
+                            </p>
                         </>
                     )}
                 </DialogContent>
@@ -736,6 +753,18 @@ function AgentCard({ agent }: { agent: Agent }) {
                     >
                         <Trash2 className="size-3.5" />
                     </Button>
+
+                    {/* Rendered inside the stopPropagation wrapper: Radix
+                        portals bubble React events to their tree parent (the
+                        Card), which would navigate to the detail page. */}
+                    <ConfirmDeleteDialog
+                        open={deleteOpen}
+                        onOpenChange={setDeleteOpen}
+                        onConfirm={() => remove.mutate()}
+                        isPending={remove.isPending}
+                        title="Delete agent?"
+                        name={agent.name}
+                    />
                 </div>
             </div>
 
@@ -746,15 +775,6 @@ function AgentCard({ agent }: { agent: Agent }) {
             <p className="max-h-[4.5rem] overflow-y-auto text-sm leading-relaxed text-muted-foreground">
                 {agent.description}
             </p>
-
-            <ConfirmDeleteDialog
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-                onConfirm={() => remove.mutate()}
-                isPending={remove.isPending}
-                title="Delete agent?"
-                name={agent.name}
-            />
 
             <div className="flex gap-4 pt-1 mt-auto">
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">

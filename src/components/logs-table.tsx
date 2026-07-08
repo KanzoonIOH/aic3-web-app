@@ -42,10 +42,7 @@ export function LogsTable({ agentId }: { agentId?: string }) {
     const { data, isPending, isError, isFetching } = useQuery({
         queryKey: ["logs", "messages", agentId ?? "all", page],
         queryFn: () =>
-            getLogMessages(
-                { offset: (page - 1) * LIMIT, limit: LIMIT },
-                agentId,
-            ),
+            getLogMessages({ offset: page - 1, limit: LIMIT }, agentId),
         placeholderData: keepPreviousData,
     });
 

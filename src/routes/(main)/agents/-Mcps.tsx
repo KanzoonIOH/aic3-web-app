@@ -147,7 +147,8 @@ export function Mcps({ agentId }: { agentId: string }) {
 
     const { data, isPending, isError, isFetching } = useQuery({
         queryKey: ["agents", agentId, "mcps", page],
-        queryFn: () => getAgentMcps(agentId, { page, limit: LIMIT }),
+        queryFn: () =>
+            getAgentMcps(agentId, { offset: page - 1, limit: LIMIT }),
         placeholderData: keepPreviousData,
     });
 

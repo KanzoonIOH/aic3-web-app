@@ -9,7 +9,12 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BotMessageSquare, MessageSquare, Smartphone } from "lucide-react";
+import {
+    ArrowUp,
+    BotMessageSquare,
+    MessageSquare,
+    Smartphone,
+} from "lucide-react";
 import { ChatSandboxWhatsApp } from "./-ChatSandboxWhatsApp";
 import { MarkdownMessage } from "./-MarkdownMessage";
 
@@ -571,6 +576,8 @@ function ChatDefault({
     outputField,
     initialSessionId,
     initialMessages,
+    welcomeTitle,
+    welcomeSlot,
 }: {
     agentId: string;
     agentName: string;
@@ -579,6 +586,10 @@ function ChatDefault({
     outputField: string;
     initialSessionId?: string;
     initialMessages?: Message[];
+    // Big centered greeting shown before the first message (ChatGPT-style).
+    welcomeTitle?: string;
+    // Optional content under the greeting (e.g. the agent picker).
+    welcomeSlot?: React.ReactNode;
 }) {
     const [messages, setMessages] = useState<Message[]>(
         initialMessages ?? [],
@@ -684,10 +695,30 @@ function ChatDefault({
         ccProducts &&
         ccProducts.length > 0;
 
+    const isEmpty = messages.length === 0;
+    const showWelcome = isEmpty && !!welcomeTitle;
+
     return (
         <div className="flex h-full min-h-0 flex-col">
+            {/* Centered welcome hero (before the first message) */}
+            {showWelcome ? (
+                <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-4">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                            <BotMessageSquare className="size-7" />
+                        </div>
+                        <h2 className="font-heading text-3xl font-semibold sm:text-4xl">
+                            {welcomeTitle}
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                            Pick an agent and ask anything to get started.
+                        </p>
+                    </div>
+                    {welcomeSlot}
+                </div>
+            ) : (
             <ScrollArea className="min-h-0 flex-1 px-4 py-4 w-full max-w-3xl mx-auto">
-                {messages.length === 0 && !showInitialSuggestions && (
+                {isEmpty && !showInitialSuggestions && (
                     <p className="mt-8 text-center text-sm text-muted-foreground">
                         Send a message to start the conversation.
                     </p>
@@ -743,6 +774,7 @@ function ChatDefault({
 
                 <div ref={bottomRef} />
             </ScrollArea>
+            )}
 
             {/* Initial grouped suggestions (only before first message) */}
             {showInitialSuggestions && messages.length === 0 && (
@@ -800,26 +832,40 @@ function ChatDefault({
                 </div>
             )}
 
-            <div className="shrink-0 pt-3 pb-8 mx-5">
-                <div className="flex items-end gap-2 w-full max-w-3xl mx-auto">
-                    <textarea
-                        ref={textareaRef}
-                        className="h-auto flex-1 resize-none rounded-full border border-input bg-transparent px-5 py-5 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30"
-                        placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
-                        rows={1}
-                        value={input}
-                        onChange={(e) => {
-                            setInput(e.target.value);
-                            resizeTextarea();
-                        }}
-                        onKeyDown={handleKeyDown}
-                        disabled={mutation.isPending || !dynamicReady}
-                    />
-                    <Button
-                        hidden
-                        onClick={handleSend}
-                        disabled={!input.trim() || mutation.isPending}
-                    />
+            <div className="shrink-0 px-4 pb-6 pt-3">
+                <div className="mx-auto w-full max-w-3xl">
+                    <div className="flex items-end gap-2 rounded-3xl border border-input bg-background p-2 pl-4 shadow-sm transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+                        <textarea
+                            ref={textareaRef}
+                            className="max-h-48 flex-1 resize-none self-center bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
+                            placeholder="Type a message…"
+                            rows={1}
+                            value={input}
+                            onChange={(e) => {
+                                setInput(e.target.value);
+                                resizeTextarea();
+                            }}
+                            onKeyDown={handleKeyDown}
+                            disabled={mutation.isPending || !dynamicReady}
+                        />
+                        <Button
+                            type="button"
+                            size="icon"
+                            className="size-9 shrink-0 rounded-full"
+                            onClick={handleSend}
+                            disabled={
+                                !input.trim() ||
+                                mutation.isPending ||
+                                !dynamicReady
+                            }
+                            aria-label="Send message"
+                        >
+                            <ArrowUp className="size-4" />
+                        </Button>
+                    </div>
+                    <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                        Enter to send · Shift+Enter for a new line
+                    </p>
                 </div>
             </div>
         </div>
@@ -839,6 +885,8 @@ export function ChatSanbox({
     initialSessionId,
     initialMessages,
     showWhatsApp = false,
+    welcomeTitle,
+    welcomeSlot,
 }: {
     agentId: string;
     agentName: string;
@@ -848,6 +896,8 @@ export function ChatSanbox({
     initialSessionId?: string;
     initialMessages?: Message[];
     showWhatsApp?: boolean;
+    welcomeTitle?: string;
+    welcomeSlot?: React.ReactNode;
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
@@ -894,6 +944,8 @@ export function ChatSanbox({
                         outputField={outputField}
                         initialSessionId={initialSessionId}
                         initialMessages={initialMessages}
+                        welcomeTitle={welcomeTitle}
+                        welcomeSlot={welcomeSlot}
                     />
                 ) : (
                     <ChatSandboxWhatsApp

@@ -31,6 +31,7 @@ import {
   Moon,
   Plug,
   ScrollText,
+  Settings,
   Sun,
   Tag,
   Users,
@@ -56,6 +57,7 @@ const navItems = [
   { to: "/logs", label: "Logs", icon: ScrollText },
   { to: "/members", label: "Members", icon: Users },
   { to: "/api-keys", label: "API Keys", icon: KeyRound },
+  { to: "/global-config", label: "Global Config", icon: Settings },
 ] as const;
 
 const themeOptions: { value: Theme; label: string; icon: React.ElementType }[] =

@@ -33,7 +33,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resolveServerMessage, textareaClass } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
     BookOpen,
@@ -611,15 +616,21 @@ export const knowledgeColumns = createKnowledgeColumns();
 
 // ---------- Route ----------
 
+const LIMIT = 10;
+
 function RouteComponent() {
+    const [page, setPage] = useState(1);
     const {
         data: knowledges,
         isPending,
         isError,
+        isFetching,
     } = useQuery({
-        queryKey: ["knowledges"],
-        queryFn: getKnowledges,
+        queryKey: ["knowledges", page],
+        queryFn: () => getKnowledges({ offset: page - 1, limit: LIMIT }),
+        placeholderData: keepPreviousData,
     });
+    const pagination = knowledges?.pagination;
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -647,6 +658,13 @@ function RouteComponent() {
                         emptyIcon={
                             <BookOpen className="size-8 text-muted-foreground/40" />
                         }
+                        pagination={{
+                            page,
+                            totalPage: pagination?.total_page ?? 1,
+                            totalRow: pagination?.total_row ?? 0,
+                            onPageChange: setPage,
+                            disabled: isFetching,
+                        }}
                     />
                 </div>
             </div>
