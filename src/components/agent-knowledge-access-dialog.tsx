@@ -5,6 +5,7 @@ import {
 import { getAgentKnowledgesAll } from "@/api/agents";
 import { getKnowledgeAgents } from "@/api/knowledges";
 import type { Knowledge } from "@/api/knowledges";
+import { ListToolbar } from "@/components/list-toolbar";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
@@ -265,9 +266,16 @@ export function AgentKnowledgeAccessDialog({
     const queryClient = useQueryClient();
     const limit = 5;
 
+    const [search, setSearch] = useState("");
+
     const knowledges = useQuery({
-        queryKey: ["agents", agentId, "knowledges", "all", page],
-        queryFn: () => getAgentKnowledgesAll(agentId, { offset: page - 1, limit }),
+        queryKey: ["agents", agentId, "knowledges", "all", { page, search }],
+        queryFn: () =>
+            getAgentKnowledgesAll(agentId, {
+                offset: page - 1,
+                limit,
+                search: search || undefined,
+            }),
         enabled: open,
     });
 
@@ -290,7 +298,7 @@ export function AgentKnowledgeAccessDialog({
 
     function handleOpenChange(nextOpen: boolean) {
         onOpenChange(nextOpen);
-        if (!nextOpen) { mutation.reset(); setPendingId(null); setPage(1); }
+        if (!nextOpen) { mutation.reset(); setPendingId(null); setPage(1); setSearch(""); }
     }
 
     function handleToggle(knowledgeId: string, connected: boolean, name: string) {
@@ -331,6 +339,15 @@ export function AgentKnowledgeAccessDialog({
                         {resolveServerMessage(mutation.error)}
                     </p>
                 )}
+
+                <ListToolbar
+                    search={search}
+                    onSearchChange={(v) => {
+                        setSearch(v);
+                        setPage(1);
+                    }}
+                    searchPlaceholder="Search knowledges..."
+                />
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border divide-y">
                     {knowledges.isPending ? (

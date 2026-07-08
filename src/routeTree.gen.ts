@@ -27,6 +27,8 @@ import { Route as mainGlobalConfigIndexRouteImport } from './routes/(main)/globa
 import { Route as mainChatIndexRouteImport } from './routes/(main)/chat/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
 import { Route as mainChatIdRouteImport } from './routes/(main)/chat/$id'
+import { Route as mainAgentsOrchestratorRouteImport } from './routes/(main)/agents/orchestrator'
+import { Route as mainAgentsGardenRouteImport } from './routes/(main)/agents/garden'
 import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
 
 const mainRouteRoute = mainRouteRouteImport.update({
@@ -117,6 +119,16 @@ const mainChatIdRoute = mainChatIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => mainChatRouteRoute,
 } as any)
+const mainAgentsOrchestratorRoute = mainAgentsOrchestratorRouteImport.update({
+  id: '/agents/orchestrator',
+  path: '/agents/orchestrator',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainAgentsGardenRoute = mainAgentsGardenRouteImport.update({
+  id: '/agents/garden',
+  path: '/agents/garden',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
   id: '/agents/$id',
   path: '/agents/$id',
@@ -135,6 +147,8 @@ export interface FileRoutesByFullPath {
   '/members': typeof mainMembersRoute
   '/tags': typeof mainTagsRoute
   '/agents/$id': typeof mainAgentsIdRoute
+  '/agents/garden': typeof mainAgentsGardenRoute
+  '/agents/orchestrator': typeof mainAgentsOrchestratorRoute
   '/chat/$id': typeof mainChatIdRoute
   '/agents/': typeof mainAgentsIndexRoute
   '/chat/': typeof mainChatIndexRoute
@@ -153,6 +167,8 @@ export interface FileRoutesByTo {
   '/members': typeof mainMembersRoute
   '/tags': typeof mainTagsRoute
   '/agents/$id': typeof mainAgentsIdRoute
+  '/agents/garden': typeof mainAgentsGardenRoute
+  '/agents/orchestrator': typeof mainAgentsOrchestratorRoute
   '/chat/$id': typeof mainChatIdRoute
   '/agents': typeof mainAgentsIndexRoute
   '/chat': typeof mainChatIndexRoute
@@ -175,6 +191,8 @@ export interface FileRoutesById {
   '/(main)/members': typeof mainMembersRoute
   '/(main)/tags': typeof mainTagsRoute
   '/(main)/agents/$id': typeof mainAgentsIdRoute
+  '/(main)/agents/garden': typeof mainAgentsGardenRoute
+  '/(main)/agents/orchestrator': typeof mainAgentsOrchestratorRoute
   '/(main)/chat/$id': typeof mainChatIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
   '/(main)/chat/': typeof mainChatIndexRoute
@@ -196,6 +214,8 @@ export interface FileRouteTypes {
     | '/members'
     | '/tags'
     | '/agents/$id'
+    | '/agents/garden'
+    | '/agents/orchestrator'
     | '/chat/$id'
     | '/agents/'
     | '/chat/'
@@ -214,6 +234,8 @@ export interface FileRouteTypes {
     | '/members'
     | '/tags'
     | '/agents/$id'
+    | '/agents/garden'
+    | '/agents/orchestrator'
     | '/chat/$id'
     | '/agents'
     | '/chat'
@@ -235,6 +257,8 @@ export interface FileRouteTypes {
     | '/(main)/members'
     | '/(main)/tags'
     | '/(main)/agents/$id'
+    | '/(main)/agents/garden'
+    | '/(main)/agents/orchestrator'
     | '/(main)/chat/$id'
     | '/(main)/agents/'
     | '/(main)/chat/'
@@ -377,6 +401,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainChatIdRouteImport
       parentRoute: typeof mainChatRouteRoute
     }
+    '/(main)/agents/orchestrator': {
+      id: '/(main)/agents/orchestrator'
+      path: '/agents/orchestrator'
+      fullPath: '/agents/orchestrator'
+      preLoaderRoute: typeof mainAgentsOrchestratorRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/agents/garden': {
+      id: '/(main)/agents/garden'
+      path: '/agents/garden'
+      fullPath: '/agents/garden'
+      preLoaderRoute: typeof mainAgentsGardenRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
     '/(main)/agents/$id': {
       id: '/(main)/agents/$id'
       path: '/agents/$id'
@@ -425,6 +463,8 @@ interface mainRouteRouteChildren {
   mainMembersRoute: typeof mainMembersRoute
   mainTagsRoute: typeof mainTagsRoute
   mainAgentsIdRoute: typeof mainAgentsIdRoute
+  mainAgentsGardenRoute: typeof mainAgentsGardenRoute
+  mainAgentsOrchestratorRoute: typeof mainAgentsOrchestratorRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
   mainGlobalConfigIndexRoute: typeof mainGlobalConfigIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
@@ -439,6 +479,8 @@ const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainMembersRoute: mainMembersRoute,
   mainTagsRoute: mainTagsRoute,
   mainAgentsIdRoute: mainAgentsIdRoute,
+  mainAgentsGardenRoute: mainAgentsGardenRoute,
+  mainAgentsOrchestratorRoute: mainAgentsOrchestratorRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
   mainGlobalConfigIndexRoute: mainGlobalConfigIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,

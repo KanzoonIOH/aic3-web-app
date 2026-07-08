@@ -3,6 +3,7 @@ import { disconnectAgentMcp } from "@/api/connect";
 import type { Mcp } from "@/api/mcps";
 import { AgentMcpAccessDialog } from "@/components/agent-mcp-access-dialog";
 import { CopyableUri } from "@/components/copy-button";
+import { ListToolbar, type Option } from "@/components/list-toolbar";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -102,8 +103,17 @@ function GiveMcpAccessButton({ agentId }: { agentId: string }) {
     );
 }
 
+const CONNECTED_MCP_SORTS: Option[] = [
+    { label: "Newest", value: "created_desc" },
+    { label: "Oldest", value: "created_asc" },
+    { label: "Name (A–Z)", value: "name_asc" },
+    { label: "Name (Z–A)", value: "name_desc" },
+];
+
 export function Mcps({ agentId }: { agentId: string }) {
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("");
 
     const columns: ColumnDef<Mcp>[] = [
         {
@@ -146,18 +156,41 @@ export function Mcps({ agentId }: { agentId: string }) {
     ];
 
     const { data, isPending, isError, isFetching } = useQuery({
-        queryKey: ["agents", agentId, "mcps", page],
+        queryKey: ["agents", agentId, "mcps", { page, search, sort }],
         queryFn: () =>
-            getAgentMcps(agentId, { offset: page - 1, limit: LIMIT }),
+            getAgentMcps(agentId, {
+                offset: page - 1,
+                limit: LIMIT,
+                search: search || undefined,
+                sort: sort || undefined,
+            }),
         placeholderData: keepPreviousData,
     });
 
     const pagination = data?.pagination;
 
+    function resetTo<T>(setter: (v: T) => void) {
+        return (v: T) => {
+            setter(v);
+            setPage(1);
+        };
+    }
+
     return (
         <div className="h-full overflow-y-auto p-6">
-            <div className="mb-4 flex justify-end">
-                <GiveMcpAccessButton agentId={agentId} />
+            <div className="mb-4">
+                <ListToolbar
+                    search={search}
+                    onSearchChange={resetTo(setSearch)}
+                    searchPlaceholder="Search MCPs..."
+                    sort={{
+                        label: "Sort",
+                        value: sort,
+                        options: CONNECTED_MCP_SORTS,
+                        onChange: resetTo(setSort),
+                    }}
+                    action={<GiveMcpAccessButton agentId={agentId} />}
+                />
             </div>
             <TanStackDataTable
                 columns={columns}

@@ -1,5 +1,6 @@
 import { connectAgentMcp, disconnectAgentMcp } from "@/api/connect";
 import { getAgentMcpsAll, getMcpAgents, type Mcp } from "@/api/mcps";
+import { ListToolbar } from "@/components/list-toolbar";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
@@ -267,9 +268,16 @@ export function AgentMcpAccessDialog({
     const queryClient = useQueryClient();
     const limit = 5;
 
+    const [search, setSearch] = useState("");
+
     const mcps = useQuery({
-        queryKey: ["agents", agentId, "mcps", "all", page],
-        queryFn: () => getAgentMcpsAll(agentId, { offset: page - 1, limit }),
+        queryKey: ["agents", agentId, "mcps", "all", { page, search }],
+        queryFn: () =>
+            getAgentMcpsAll(agentId, {
+                offset: page - 1,
+                limit,
+                search: search || undefined,
+            }),
         enabled: open,
     });
 
@@ -302,6 +310,7 @@ export function AgentMcpAccessDialog({
             mutation.reset();
             setPendingId(null);
             setPage(1);
+            setSearch("");
         }
     }
 
@@ -342,6 +351,15 @@ export function AgentMcpAccessDialog({
                         {resolveServerMessage(mutation.error)}
                     </p>
                 )}
+
+                <ListToolbar
+                    search={search}
+                    onSearchChange={(v) => {
+                        setSearch(v);
+                        setPage(1);
+                    }}
+                    searchPlaceholder="Search MCPs..."
+                />
 
                 <div className="max-h-80 overflow-y-auto rounded-lg border divide-y">
                     {mcps.isPending ? (

@@ -2,7 +2,7 @@ import { client } from "./client";
 import type { Knowledge } from "./knowledges";
 import type { Mcp } from "./mcps";
 import type { Tag } from "./tags";
-import type { ResponseTemplate } from "./types";
+import type { ListParams, ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
@@ -88,8 +88,17 @@ export async function createAgent(
     return data;
 }
 
-export async function getAgents(): Promise<ResponseTemplate<Agent[]>> {
-    const { data } = await client.get<ResponseTemplate<Agent[]>>("/agents");
+export type GetAgentsParams = ListParams & {
+    is_active?: boolean;
+    tag_id?: string;
+};
+
+export async function getAgents(
+    params: GetAgentsParams = {},
+): Promise<ResponseTemplate<Agent[]>> {
+    const { data } = await client.get<ResponseTemplate<Agent[]>>("/agents", {
+        params,
+    });
     return data;
 }
 
@@ -119,7 +128,7 @@ export interface AgentKnowledge extends Knowledge {
 
 export async function getAgentKnowledges(
     id: string,
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<AgentKnowledge[]>> {
     const { data } = await client.get<ResponseTemplate<AgentKnowledge[]>>(
         `/agents/${id}/knowledges`,
@@ -137,7 +146,7 @@ export interface AgentKnowledgeOption {
 
 export async function getAgentKnowledgesAll(
     id: string,
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<AgentKnowledgeOption[]>> {
     const { data } = await client.get<ResponseTemplate<AgentKnowledgeOption[]>>(
         `/agents/${id}/knowledges/all`,
@@ -148,7 +157,7 @@ export async function getAgentKnowledgesAll(
 
 export async function getAgentMcps(
     id: string,
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<Mcp[]>> {
     const { data } = await client.get<ResponseTemplate<Mcp[]>>(
         `/agents/${id}/mcps`,

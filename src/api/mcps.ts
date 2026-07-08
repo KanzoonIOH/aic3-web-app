@@ -1,5 +1,5 @@
 import { client } from "./client";
-import type { ResponseTemplate } from "./types";
+import type { ListParams, ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
@@ -68,7 +68,7 @@ export interface McpTool {
 // ---------- API functions ----------
 
 export async function getMcps(
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<Mcp[]>> {
     const { data } = await client.get<ResponseTemplate<Mcp[]>>("/mcps", {
         params,
@@ -93,7 +93,7 @@ export async function createMcp(
 
 export async function getAgentMcpsAll(
     agentId: string,
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<McpOption[]>> {
     const { data } = await client.get<ResponseTemplate<McpOption[]>>(
         `/agents/${agentId}/mcps/all`,
@@ -111,7 +111,7 @@ export interface McpAgent {
 
 export async function getMcpAgents(
     id: string,
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<McpAgent[]>> {
     const { data } = await client.get<ResponseTemplate<McpAgent[]>>(
         `/mcps/${id}/agents`,

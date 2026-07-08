@@ -578,6 +578,7 @@ function ChatDefault({
     initialMessages,
     welcomeTitle,
     welcomeSlot,
+    welcomeImage,
 }: {
     agentId: string;
     agentName: string;
@@ -590,6 +591,8 @@ function ChatDefault({
     welcomeTitle?: string;
     // Optional content under the greeting (e.g. the agent picker).
     welcomeSlot?: React.ReactNode;
+    // Agent image: HTTP URL or emoji string. Falls back to icon when null.
+    welcomeImage?: string | null;
 }) {
     const [messages, setMessages] = useState<Message[]>(
         initialMessages ?? [],
@@ -704,8 +707,18 @@ function ChatDefault({
             {showWelcome ? (
                 <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-4">
                     <div className="flex flex-col items-center gap-3 text-center">
-                        <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                            <BotMessageSquare className="size-7" />
+                        <div className="flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary">
+                            {welcomeImage && /^https?:\/\//.test(welcomeImage) ? (
+                                <img
+                                    src={welcomeImage}
+                                    alt=""
+                                    className="size-full object-cover"
+                                />
+                            ) : welcomeImage ? (
+                                <span className="text-3xl">{welcomeImage}</span>
+                            ) : (
+                                <BotMessageSquare className="size-7" />
+                            )}
                         </div>
                         <h2 className="font-heading text-3xl font-semibold sm:text-4xl">
                             {welcomeTitle}
@@ -887,6 +900,7 @@ export function ChatSanbox({
     showWhatsApp = false,
     welcomeTitle,
     welcomeSlot,
+    welcomeImage,
 }: {
     agentId: string;
     agentName: string;
@@ -898,6 +912,7 @@ export function ChatSanbox({
     showWhatsApp?: boolean;
     welcomeTitle?: string;
     welcomeSlot?: React.ReactNode;
+    welcomeImage?: string | null;
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
@@ -946,6 +961,7 @@ export function ChatSanbox({
                         initialMessages={initialMessages}
                         welcomeTitle={welcomeTitle}
                         welcomeSlot={welcomeSlot}
+                        welcomeImage={welcomeImage}
                     />
                 ) : (
                     <ChatSandboxWhatsApp

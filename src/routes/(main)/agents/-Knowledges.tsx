@@ -1,6 +1,7 @@
 import { getAgentKnowledges, type AgentKnowledge } from "@/api/agents";
 import { disconnectAgentKnowledge } from "@/api/connect";
 import { AgentKnowledgeAccessDialog } from "@/components/agent-knowledge-access-dialog";
+import { ListToolbar, type Option } from "@/components/list-toolbar";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog,
@@ -133,8 +134,17 @@ function GiveKnowledgeAccessButton({ agentId }: { agentId: string }) {
     );
 }
 
+const CONNECTED_SORTS: Option[] = [
+    { label: "Newest", value: "created_desc" },
+    { label: "Oldest", value: "created_asc" },
+    { label: "Name (A–Z)", value: "name_asc" },
+    { label: "Name (Z–A)", value: "name_desc" },
+];
+
 export function Knowledges({ agentId }: { agentId: string }) {
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("");
     const baseColumns = createKnowledgeColumns({
         renderActions: (knowledge) => (
             <AgentKnowledgeRowActions
@@ -151,18 +161,41 @@ export function Knowledges({ agentId }: { agentId: string }) {
     ];
 
     const { data, isPending, isError, isFetching } = useQuery({
-        queryKey: ["agents", agentId, "knowledges", page],
+        queryKey: ["agents", agentId, "knowledges", { page, search, sort }],
         queryFn: () =>
-            getAgentKnowledges(agentId, { offset: page - 1, limit: LIMIT }),
+            getAgentKnowledges(agentId, {
+                offset: page - 1,
+                limit: LIMIT,
+                search: search || undefined,
+                sort: sort || undefined,
+            }),
         placeholderData: keepPreviousData,
     });
 
     const pagination = data?.pagination;
 
+    function resetTo<T>(setter: (v: T) => void) {
+        return (v: T) => {
+            setter(v);
+            setPage(1);
+        };
+    }
+
     return (
         <div className="h-full overflow-y-auto p-6">
-            <div className="mb-4 flex justify-end">
-                <GiveKnowledgeAccessButton agentId={agentId} />
+            <div className="mb-4">
+                <ListToolbar
+                    search={search}
+                    onSearchChange={resetTo(setSearch)}
+                    searchPlaceholder="Search knowledges..."
+                    sort={{
+                        label: "Sort",
+                        value: sort,
+                        options: CONNECTED_SORTS,
+                        onChange: resetTo(setSort),
+                    }}
+                    action={<GiveKnowledgeAccessButton agentId={agentId} />}
+                />
             </div>
             <TanStackDataTable
                 columns={columns}

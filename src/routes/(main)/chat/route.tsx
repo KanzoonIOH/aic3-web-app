@@ -9,7 +9,7 @@ import {
     useNavigate,
     useParams,
 } from "@tanstack/react-router";
-import { Plus, Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/(main)/chat")({
@@ -61,6 +61,18 @@ function ChatLayout() {
         <div className="flex h-full overflow-hidden">
             {/* Conversation list */}
             <aside className="flex w-72 shrink-0 flex-col border-r bg-background">
+                <div className="shrink-0 p-3">
+                    <Link
+                        to="/chat"
+                        className={cn(
+                            "flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted",
+                            !activeId && "ring-1 ring-border",
+                        )}
+                    >
+                        <SquarePen className="size-4 shrink-0" />
+                        New chat
+                    </Link>
+                </div>
                 <div className="flex-1 overflow-y-auto p-2">
                     {isPending ? (
                         <p className="p-2 text-sm text-muted-foreground">
@@ -110,15 +122,6 @@ function ChatLayout() {
                             ))}
                         </ul>
                     )}
-                </div>
-                <div className="shrink-0 border-t p-3">
-                    <Link
-                        to="/chat"
-                        className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                    >
-                        <Plus className="size-4" />
-                        New chat
-                    </Link>
                 </div>
             </aside>
 

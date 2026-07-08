@@ -34,8 +34,14 @@ function AgentPicker({
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2.5 rounded-full border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-muted">
-                        <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <Bot className="size-3.5" />
+                        <span className="flex size-6 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                            {selected?.image && /^https?:\/\//.test(selected.image) ? (
+                                <img src={selected.image} alt="" className="size-full object-cover" />
+                            ) : selected?.image ? (
+                                <span className="text-sm">{selected.image}</span>
+                            ) : (
+                                <Bot className="size-3.5" />
+                            )}
                         </span>
                         <span className="max-w-56 truncate">
                             {selected?.name ?? "Select agent"}
@@ -50,7 +56,15 @@ function AgentPicker({
                             onSelect={() => onSelect(agent)}
                             className="flex items-center gap-2"
                         >
-                            <Bot className="size-4 shrink-0 text-muted-foreground" />
+                            <span className="flex size-4 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                                {agent.image && /^https?:\/\//.test(agent.image) ? (
+                                    <img src={agent.image} alt="" className="size-full object-cover" />
+                                ) : agent.image ? (
+                                    <span className="text-xs">{agent.image}</span>
+                                ) : (
+                                    <Bot className="size-3" />
+                                )}
+                            </span>
                             <span className="flex-1 truncate">
                                 {agent.name}
                             </span>
@@ -81,8 +95,9 @@ function RouteComponent() {
         isPending,
         isError,
     } = useQuery({
-        queryKey: ["agents"],
-        queryFn: getAgents,
+        queryKey: ["agents", "all"],
+        // Chat needs the full agent list for the picker, so ask for a large page.
+        queryFn: () => getAgents({ limit: 1000 }),
     });
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -131,6 +146,7 @@ function RouteComponent() {
                     .map((f) => f.key)}
                 outputField={selected.webhook_output_field || "reply"}
                 welcomeTitle="Hello there"
+                welcomeImage={selected.image}
                 welcomeSlot={
                     <AgentPicker
                         agents={agents.data}

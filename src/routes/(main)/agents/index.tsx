@@ -2,6 +2,7 @@ import {
     createAgent,
     deleteAgent,
     getAgents,
+    uploadImage,
     type Agent,
     type BodyField,
 } from "@/api/agents";
@@ -9,10 +10,13 @@ import {
     BodyFieldsEditor,
     cleanBodyFields,
 } from "@/components/body-fields-editor";
+import { getTags } from "@/api/tags";
 import { AvatarPicker } from "@/components/avatar-picker";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { ListToolbar, type Option } from "@/components/list-toolbar";
 import { TagsInput } from "@/components/tags-input";
 import { tagChipStyle } from "@/lib/tag-color";
+import { DataTablePaginationBar } from "@/components/ui/tanstack-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,7 +42,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn, resolveServerMessage, textareaClass } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
     ArrowLeft,
@@ -347,6 +356,8 @@ function CreateAgentDrawer({
     const [headerFields, setHeaderFields] = useState<BodyField[]>([]);
     const [tags, setTags] = useState<string[]>([]);
     const [image, setImage] = useState("");
+    // Cropped picture pending upload; uploaded on submit, not on crop.
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -357,6 +368,7 @@ function CreateAgentDrawer({
             setHeaderFields([]);
             setTags([]);
             setImage("");
+            setImageFile(null);
             onClose();
         },
     });
@@ -366,13 +378,14 @@ function CreateAgentDrawer({
         onSubmit: async ({ value }) => {
             const result = createAgentSchema.safeParse(value);
             if (!result.success) return;
+            const imageUrl = imageFile ? await uploadImage(imageFile) : image;
             await mutation.mutateAsync({
                 ...result.data,
                 milvus_collection: autoMilvusCollection(result.data.name),
                 webhook_body_fields: cleanBodyFields(bodyFields),
                 webhook_header_fields: cleanBodyFields(headerFields),
                 tags,
-                image: image || null,
+                image: imageUrl || null,
             });
         },
     });
@@ -385,6 +398,7 @@ function CreateAgentDrawer({
             setHeaderFields([]);
             setTags([]);
             setImage("");
+            setImageFile(null);
             onClose();
         }
     }
@@ -461,7 +475,11 @@ function CreateAgentDrawer({
 
                         <AvatarPicker
                             value={image}
-                            onChange={setImage}
+                            onChange={(v) => {
+                                setImage(v);
+                                setImageFile(null);
+                            }}
+                            onFile={setImageFile}
                             name={form.state.values.name}
                         />
 
@@ -819,42 +837,64 @@ function AgentCard({ agent }: { agent: Agent }) {
     );
 }
 
-function RouteComponent() {
+const LIMIT = 12;
+
+const AGENT_SORTS: Option[] = [
+    { label: "Newest", value: "created_desc" },
+    { label: "Oldest", value: "created_asc" },
+    { label: "Recently updated", value: "modified_desc" },
+    { label: "Least recently updated", value: "modified_asc" },
+    { label: "Name (A–Z)", value: "name_asc" },
+    { label: "Name (Z–A)", value: "name_desc" },
+    { label: "Active first", value: "is_active_asc" },
+    { label: "Inactive first", value: "is_active_desc" },
+];
+
+const AGENT_STATUS: Option[] = [
+    { label: "Active", value: "true" },
+    { label: "Inactive", value: "false" },
+];
+
+export function RouteComponent() {
+    const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("");
+    const [status, setStatus] = useState(""); // "" | "true" | "false"
+    const [tagId, setTagId] = useState("");
+
     const {
         data: agents,
         isPending,
         isError,
+        isFetching,
     } = useQuery({
-        queryKey: ["agents"],
-        queryFn: getAgents,
+        queryKey: ["agents", { page, search, sort, status, tagId }],
+        queryFn: () =>
+            getAgents({
+                offset: page - 1,
+                limit: LIMIT,
+                search: search || undefined,
+                sort: sort || undefined,
+                is_active: status === "" ? undefined : status === "true",
+                tag_id: tagId || undefined,
+            }),
+        placeholderData: keepPreviousData,
     });
+    const pagination = agents?.pagination;
 
-    const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
+    // Tags come from the dedicated endpoint so the filter list is complete and
+    // stable across pages (can't be derived from a single page of agents).
+    const { data: tags } = useQuery({ queryKey: ["tags"], queryFn: getTags });
+    const tagOptions: Option[] = (tags?.data ?? []).map((t) => ({
+        label: t.name,
+        value: t.id,
+    }));
 
-    // Distinct tags across all agents, keyed by id (so rename/color reflect here).
-    const allTags = agents
-        ? Object.values(
-              Object.fromEntries(
-                  agents.data
-                      .flatMap((a) => a.tags ?? [])
-                      .map((t) => [t.id, t] as const),
-              ),
-          ).sort((a, b) => a.name.localeCompare(b.name))
-        : [];
-
-    // Match ANY: keep agents that carry at least one selected tag.
-    const visibleAgents = agents
-        ? activeTagIds.length === 0
-            ? agents.data
-            : agents.data.filter((a) =>
-                  (a.tags ?? []).some((t) => activeTagIds.includes(t.id)),
-              )
-        : [];
-
-    function toggleTag(id: string) {
-        setActiveTagIds((prev) =>
-            prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
-        );
+    function resetTo<T>(setter: (v: T) => void) {
+        return (v: T) => {
+            setter(v);
+            setPage(1);
+        };
     }
 
     return (
@@ -867,52 +907,38 @@ function RouteComponent() {
                         </h1>
                         <p className="mt-0.5 text-sm text-muted-foreground flex gap-2"></p>
                     </div>
-
-                    <div className="ml-auto flex items-center gap-2">
-                        <CreateAgentButton />
-                    </div>
                 </div>
 
-                {allTags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 px-6 pt-4">
-                        <span className="mr-1 text-xs text-muted-foreground">
-                            Filter by tag:
-                        </span>
-                        {allTags.map((tag) => {
-                            const active = activeTagIds.includes(tag.id);
-                            return (
-                                <button
-                                    key={tag.id}
-                                    type="button"
-                                    onClick={() => toggleTag(tag.id)}
-                                    className="rounded-full border px-2.5 py-0.5 text-xs transition-opacity hover:opacity-80"
-                                    style={
-                                        active
-                                            ? {
-                                                  backgroundColor: tag.color,
-                                                  borderColor: tag.color,
-                                                  color: "#fff",
-                                              }
-                                            : tagChipStyle(tag.color)
-                                    }
-                                >
-                                    {tag.name}
-                                </button>
-                            );
-                        })}
-                        {activeTagIds.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => setActiveTagIds([])}
-                                className="ml-1 text-xs text-muted-foreground underline-offset-2 hover:underline"
-                            >
-                                Clear
-                            </button>
-                        )}
-                    </div>
-                )}
+                <div className="p-6 space-y-4">
+                    <ListToolbar
+                        search={search}
+                        onSearchChange={resetTo(setSearch)}
+                        searchPlaceholder="Search agents..."
+                        filters={[
+                            {
+                                label: "Status",
+                                value: status,
+                                options: AGENT_STATUS,
+                                onChange: resetTo(setStatus),
+                                allLabel: "All statuses",
+                            },
+                            {
+                                label: "Tag",
+                                value: tagId,
+                                options: tagOptions,
+                                onChange: resetTo(setTagId),
+                                allLabel: "All tags",
+                            },
+                        ]}
+                        sort={{
+                            label: "Sort",
+                            value: sort,
+                            options: AGENT_SORTS,
+                            onChange: resetTo(setSort),
+                        }}
+                        action={<CreateAgentButton />}
+                    />
 
-                <div className="p-6">
                     {isPending ? (
                         <div className="flex flex-col items-center justify-center gap-2 py-16">
                             <p className="text-sm text-muted-foreground">
@@ -926,7 +952,7 @@ function RouteComponent() {
                                 Failed to load agents
                             </p>
                         </div>
-                    ) : visibleAgents.length === 0 ? (
+                    ) : agents.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
                             <Bot className="size-8 text-muted-foreground/40" />
                             <p className="text-sm text-muted-foreground">
@@ -934,10 +960,19 @@ function RouteComponent() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {visibleAgents.map((agent) => (
-                                <AgentCard key={agent.id} agent={agent} />
-                            ))}
+                        <div className="flex flex-col gap-6">
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {agents.data.map((agent) => (
+                                    <AgentCard key={agent.id} agent={agent} />
+                                ))}
+                            </div>
+                            <DataTablePaginationBar
+                                page={page}
+                                totalPage={pagination?.total_page ?? 1}
+                                totalRow={pagination?.total_row ?? 0}
+                                onPageChange={setPage}
+                                disabled={isFetching}
+                            />
                         </div>
                     )}
                 </div>

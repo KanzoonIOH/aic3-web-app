@@ -1,6 +1,7 @@
 import {
     getAgent,
     updateAgent,
+    uploadImage,
     type Agent,
     type BodyField,
 } from "@/api/agents";
@@ -99,6 +100,8 @@ export function EditAgentDialog({
         (agent.tags ?? []).map((t) => t.name),
     );
     const [image, setImage] = useState(agent.image ?? "");
+    // Cropped picture pending upload; uploaded on submit, not on crop.
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -131,6 +134,7 @@ export function EditAgentDialog({
             const result = updateAgentSchema.safeParse(value);
             if (!result.success) return;
 
+            const imageUrl = imageFile ? await uploadImage(imageFile) : image;
             await mutation.mutateAsync({
                 ...result.data,
                 webhook_body_fields: cleanBodyFields(bodyFields),
@@ -138,7 +142,7 @@ export function EditAgentDialog({
                 // guardrail is edited on the Persona tab; preserve it here.
                 guardrail: agent.guardrail,
                 tags,
-                image: image || null,
+                image: imageUrl || null,
             });
         },
     });
@@ -150,6 +154,7 @@ export function EditAgentDialog({
         setHeaderFields(bodyFieldsToRows(agent.webhook_header_fields));
         setTags((agent.tags ?? []).map((t) => t.name));
         setImage(agent.image ?? "");
+        setImageFile(null);
         form.reset({
             name: agent.name,
             description: agent.description,
@@ -248,7 +253,11 @@ export function EditAgentDialog({
 
                         <AvatarPicker
                             value={image}
-                            onChange={setImage}
+                            onChange={(v) => {
+                                setImage(v);
+                                setImageFile(null);
+                            }}
+                            onFile={setImageFile}
                             name={form.state.values.name}
                         />
 

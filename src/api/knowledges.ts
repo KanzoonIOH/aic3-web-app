@@ -1,5 +1,5 @@
 import { client } from "./client";
-import type { ResponseTemplate } from "./types";
+import type { ListParams, ResponseTemplate } from "./types";
 
 // ---------- Types ----------
 
@@ -9,18 +9,24 @@ export interface Knowledge {
     description: string | null;
     source_type: string;
     source_uri: string | null;
+    is_crawl: boolean;
     agents_count?: number;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
 }
 
-export interface CreateKnowledgeRequest {
-    name: string;
-    description: string;
-    source_type: string;
-    file: File;
-}
+// Either a file upload or a link. For a link, source_type is "link", source_uri
+// holds the URL, and is_crawl decides crawl-whole-site vs single-page.
+export type CreateKnowledgeRequest =
+    | { name: string; description: string; source_type: string; file: File }
+    | {
+          name: string;
+          description: string;
+          source_type: "link";
+          source_uri: string;
+          is_crawl: boolean;
+      };
 
 export interface UpdateKnowledgeRequest {
     name: string;
@@ -29,8 +35,12 @@ export interface UpdateKnowledgeRequest {
 
 // ---------- API functions ----------
 
+export type GetKnowledgesParams = ListParams & {
+    source_type?: string;
+};
+
 export async function getKnowledges(
-    params: { offset?: number; limit?: number } = {},
+    params: GetKnowledgesParams = {},
 ): Promise<ResponseTemplate<Knowledge[]>> {
     const { data } = await client.get<ResponseTemplate<Knowledge[]>>(
         "/knowledges",
@@ -53,7 +63,12 @@ export async function createKnowledge(
     form.append("name", payload.name);
     form.append("description", payload.description);
     form.append("source_type", payload.source_type);
-    form.append("file", payload.file);
+    if ("file" in payload) {
+        form.append("file", payload.file);
+    } else {
+        form.append("source_uri", payload.source_uri);
+        form.append("is_crawl", String(payload.is_crawl));
+    }
 
     const { data } = await client.post<ResponseTemplate<Knowledge>>(
         "/knowledges",
@@ -87,7 +102,7 @@ export interface KnowledgeAgent {
 
 export async function getKnowledgeAgents(
     id: string,
-    params: { offset?: number; limit?: number } = {},
+    params: ListParams = {},
 ): Promise<ResponseTemplate<KnowledgeAgent[]>> {
     const { data } = await client.get<ResponseTemplate<KnowledgeAgent[]>>(
         `/knowledges/${id}/agents`,

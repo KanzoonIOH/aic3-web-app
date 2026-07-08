@@ -1,8 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
-// image is either a URL (picture), an emoji string, or null/"" (show initials).
-const isUrl = (v: string) => /^https?:\/\//.test(v);
+// image is either a URL/blob (picture), an emoji string, or null/"" (initials).
+const isUrl = (v: string) => /^(https?:|blob:|data:)/.test(v);
 
 function initialsOf(name: string) {
     return (

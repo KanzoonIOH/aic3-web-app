@@ -5,8 +5,7 @@ import {
     uploadAvatar,
     type Me,
 } from "@/api/me";
-import { EmojiPickerPopover } from "@/components/emoji-picker";
-import { UserAvatar } from "@/components/user-avatar";
+import { AvatarPicker } from "@/components/avatar-picker";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -21,8 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { resolveServerMessage } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Smile } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 export function SettingsDialog({
     open,
@@ -69,30 +67,32 @@ export function SettingsDialog({
 function SettingsForm({ me, onClose }: { me: Me; onClose: () => void }) {
     const setUser = useAuthStore((s) => s.setUser);
     const queryClient = useQueryClient();
-    const fileRef = useRef<HTMLInputElement>(null);
 
     const [name, setName] = useState(me.name);
     const [username, setUsername] = useState(me.username);
     const [image, setImage] = useState<string>(me.image ?? "");
+    // Cropped picture pending upload; uploaded on submit, not on crop.
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
 
     const profile = useMutation({
-        mutationFn: () => updateDetails({ name, username, image: image || null }),
+        // Upload the cropped avatar first (if any), then persist details.
+        mutationFn: async () => {
+            const imageUrl = imageFile
+                ? (await uploadAvatar(imageFile)).data.image
+                : image;
+            return updateDetails({
+                name,
+                username,
+                image: imageUrl || null,
+            });
+        },
         onSuccess: (res) => {
             queryClient.setQueryData(["me"], res);
             setUser({ username: res.data.username, image: res.data.image });
             onClose();
-        },
-    });
-
-    const avatar = useMutation({
-        mutationFn: (file: File) => uploadAvatar(file),
-        onSuccess: (res) => {
-            queryClient.setQueryData(["me"], res);
-            setImage(res.data.image ?? "");
-            setUser({ image: res.data.image });
         },
     });
 
@@ -118,56 +118,15 @@ function SettingsForm({ me, onClose }: { me: Me; onClose: () => void }) {
                     }}
                     className="flex flex-col gap-4"
                 >
-                    <div className="flex items-center gap-4">
-                        <UserAvatar image={image} name={username} size="lg" />
-                        <div className="flex flex-wrap gap-2">
-                            <input
-                                ref={fileRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f) avatar.mutate(f);
-                                    e.target.value = "";
-                                }}
-                            />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={avatar.isPending}
-                                onClick={() => fileRef.current?.click()}
-                            >
-                                {avatar.isPending
-                                    ? "Uploading..."
-                                    : "Upload picture"}
-                            </Button>
-                            <EmojiPickerPopover
-                                onSelect={setImage}
-                                trigger={
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        <Smile className="size-4" />
-                                        Emoji
-                                    </Button>
-                                }
-                            />
-                            {image && (
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setImage("")}
-                                >
-                                    Remove
-                                </Button>
-                            )}
-                        </div>
-                    </div>
+                    <AvatarPicker
+                        value={image}
+                        onChange={(v) => {
+                            setImage(v);
+                            setImageFile(null);
+                        }}
+                        onFile={setImageFile}
+                        name={username}
+                    />
 
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor="set-name">Name</Label>

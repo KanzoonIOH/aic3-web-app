@@ -21,6 +21,7 @@ import {
 import {
   BookOpen,
   Bot,
+  ChevronDown,
   ChevronsUpDownIcon,
   Clock,
   KeyRound,
@@ -54,7 +55,14 @@ const navGroups = [
     label: "Workspace",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
-      { to: "/agents", label: "Agents", icon: Bot },
+      {
+        label: "Agents",
+        icon: Bot,
+        children: [
+          { to: "/agents/orchestrator", label: "Agent Orchestrator" },
+          { to: "/agents/garden", label: "Agent Garden" },
+        ],
+      },
       { to: "/tags", label: "Tags", icon: Tag },
       { to: "/chat", label: "Chat", icon: MessagesSquare },
     ],
@@ -243,6 +251,7 @@ function PendingGate() {
 
 function RouteComponent() {
   const role = useAuthStore((s) => s.user?.role);
+  const [agentsOpen, setAgentsOpen] = useState(true);
   if (role === "PENDING") {
     return <PendingGate />;
   }
@@ -260,23 +269,67 @@ function RouteComponent() {
               <span className="px-2.5 pb-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">
                 {group.label}
               </span>
-              {group.items.map(({ to, label, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className={cn(
-                    "relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all overflow-clip",
-                    "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-0.5 before:rounded-r-full before:bg-primary before:transition-all",
-                  )}
-                  activeProps={{
-                    className:
-                      "bg-sidebar-accent !text-sidebar-foreground font-medium before:h-4/6",
-                  }}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  {label}
-                </Link>
-              ))}
+              {group.items.map((item) => {
+                if ("children" in item) {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label}>
+                      <button
+                        type="button"
+                        onClick={() => setAgentsOpen((v) => !v)}
+                        className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all"
+                      >
+                        <Icon className="size-4 shrink-0" />
+                        {item.label}
+                        <ChevronDown
+                          className={cn(
+                            "ml-auto size-4 transition-transform",
+                            agentsOpen && "rotate-180",
+                          )}
+                        />
+                      </button>
+                      {agentsOpen && (
+                        <div className="flex flex-col gap-0.5">
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.to}
+                              to={child.to}
+                              className={cn(
+                                "relative flex items-center rounded-md px-2.5 py-1.5 pl-7 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all overflow-clip",
+                                "before:absolute before:left-2.5 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-0.5 before:rounded-r-full before:bg-primary before:transition-all",
+                              )}
+                              activeProps={{
+                                className:
+                                  "bg-sidebar-accent !text-sidebar-foreground font-medium before:h-4/6",
+                              }}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={cn(
+                      "relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all overflow-clip",
+                      "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-0.5 before:rounded-r-full before:bg-primary before:transition-all",
+                    )}
+                    activeProps={{
+                      className:
+                        "bg-sidebar-accent !text-sidebar-foreground font-medium before:h-4/6",
+                    }}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
           ))}
         </nav>

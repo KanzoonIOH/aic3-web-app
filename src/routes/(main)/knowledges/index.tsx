@@ -7,6 +7,7 @@ import {
 } from "@/api/knowledges";
 import { KnowledgeAgentAccessDialog } from "@/components/agent-knowledge-access-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { ListToolbar, type Option } from "@/components/list-toolbar";
 import { CopyableUri } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,10 +81,20 @@ type EditKnowledgeValues = z.infer<typeof editKnowledgeSchema>;
 
 function CreateKnowledgeDialog() {
     const [open, setOpen] = useState(false);
+    const [mode, setMode] = useState<"file" | "link">("file");
     const [file, setFile] = useState<File | null>(null);
+    const [url, setUrl] = useState("");
+    const [crawl, setCrawl] = useState(false);
     const [dragging, setDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
+
+    function resetExtras() {
+        setMode("file");
+        setFile(null);
+        setUrl("");
+        setCrawl(false);
+    }
 
     const mutation = useMutation({
         mutationFn: createKnowledge,
@@ -91,7 +102,7 @@ function CreateKnowledgeDialog() {
             queryClient.invalidateQueries({ queryKey: ["knowledges"] });
             setOpen(false);
             form.reset();
-            setFile(null);
+            resetExtras();
         },
     });
 
@@ -102,7 +113,18 @@ function CreateKnowledgeDialog() {
         } satisfies CreateKnowledgeValues,
         onSubmit: async ({ value }) => {
             const result = createKnowledgeSchema.safeParse(value);
-            if (!result.success || !file) return;
+            if (!result.success) return;
+            if (mode === "link") {
+                if (!url.trim()) return;
+                await mutation.mutateAsync({
+                    ...result.data,
+                    source_type: "link",
+                    source_uri: url.trim(),
+                    is_crawl: crawl,
+                });
+                return;
+            }
+            if (!file) return;
             await mutation.mutateAsync({
                 ...result.data,
                 source_type: sourceTypeFromFile(file),
@@ -116,7 +138,7 @@ function CreateKnowledgeDialog() {
         if (!nextOpen) {
             mutation.reset();
             form.reset();
-            setFile(null);
+            resetExtras();
         }
     }
 
@@ -233,51 +255,100 @@ function CreateKnowledgeDialog() {
                         )}
                     </form.Field>
 
-                    {/* File upload — source type is auto-derived from the file extension */}
+                    {/* Source: upload a file or point at a link */}
                     <div className="flex flex-col gap-1.5">
-                        <Label>Document</Label>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-
-                        {!file ? (
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                onDragOver={(e) => {
-                                    e.preventDefault();
-                                    setDragging(true);
-                                }}
-                                onDragLeave={() => setDragging(false)}
-                                onDrop={handleDrop}
-                                className={`flex items-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm transition-colors w-full justify-center ${
-                                    dragging
-                                        ? "border-ring bg-muted/50 text-foreground"
-                                        : "border-input text-muted-foreground hover:border-ring hover:text-foreground"
-                                }`}
-                            >
-                                <FileUp className="size-4" />
-                                {dragging
-                                    ? "Drop the document here"
-                                    : "Click or drag & drop a document"}
-                            </button>
-                        ) : (
-                            <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm">
-                                <Paperclip className="size-4 shrink-0 text-muted-foreground" />
-                                <span className="truncate flex-1 text-foreground font-medium">
-                                    {file.name}
-                                </span>
+                        <Label>Source</Label>
+                        <div className="grid grid-cols-2 gap-1 rounded-md bg-muted/50 p-1">
+                            {(["file", "link"] as const).map((m) => (
                                 <button
+                                    key={m}
                                     type="button"
-                                    onClick={handleChangeFile}
-                                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
+                                    onClick={() => {
+                                        setMode(m);
+                                        mutation.reset();
+                                    }}
+                                    className={`rounded px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                                        mode === m
+                                            ? "bg-background shadow-sm"
+                                            : "text-muted-foreground hover:text-foreground"
+                                    }`}
                                 >
-                                    Change
+                                    {m === "file" ? "Upload file" : "Link"}
                                 </button>
-                            </div>
+                            ))}
+                        </div>
+
+                        {mode === "file" ? (
+                            <>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                                {!file ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            setDragging(true);
+                                        }}
+                                        onDragLeave={() => setDragging(false)}
+                                        onDrop={handleDrop}
+                                        className={`flex items-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm transition-colors w-full justify-center ${
+                                            dragging
+                                                ? "border-ring bg-muted/50 text-foreground"
+                                                : "border-input text-muted-foreground hover:border-ring hover:text-foreground"
+                                        }`}
+                                    >
+                                        <FileUp className="size-4" />
+                                        {dragging
+                                            ? "Drop the document here"
+                                            : "Click or drag & drop a document"}
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-2 rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm">
+                                        <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                                        <span className="truncate flex-1 text-foreground font-medium">
+                                            {file.name}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={handleChangeFile}
+                                            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <Input
+                                    type="url"
+                                    value={url}
+                                    onChange={(e) => {
+                                        setUrl(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="https://example.com/docs"
+                                />
+                                <label className="mt-1 flex cursor-pointer items-start gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={crawl}
+                                        onChange={(e) => setCrawl(e.target.checked)}
+                                        className="mt-0.5 size-4"
+                                    />
+                                    <span>
+                                        Crawl the whole site
+                                        <span className="block text-xs text-muted-foreground">
+                                            Off = index just this one page.
+                                        </span>
+                                    </span>
+                                </label>
+                            </>
                         )}
                     </div>
 
@@ -297,7 +368,7 @@ function CreateKnowledgeDialog() {
                                         !canSubmit ||
                                         isSubmitting ||
                                         mutation.isPending ||
-                                        !file
+                                        (mode === "file" ? !file : !url.trim())
                                     }
                                 >
                                     {mutation.isPending ? "Creating..." : "Create"}
@@ -618,19 +689,57 @@ export const knowledgeColumns = createKnowledgeColumns();
 
 const LIMIT = 10;
 
+const KNOWLEDGE_SORTS: Option[] = [
+    { label: "Newest", value: "created_desc" },
+    { label: "Oldest", value: "created_asc" },
+    { label: "Name (A–Z)", value: "name_asc" },
+    { label: "Name (Z–A)", value: "name_desc" },
+    { label: "Source type (A–Z)", value: "source_type_asc" },
+    { label: "Source type (Z–A)", value: "source_type_desc" },
+];
+
 function RouteComponent() {
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("");
+    const [sourceType, setSourceType] = useState("");
+
     const {
         data: knowledges,
         isPending,
         isError,
         isFetching,
     } = useQuery({
-        queryKey: ["knowledges", page],
-        queryFn: () => getKnowledges({ offset: page - 1, limit: LIMIT }),
+        queryKey: ["knowledges", { page, search, sort, sourceType }],
+        queryFn: () =>
+            getKnowledges({
+                offset: page - 1,
+                limit: LIMIT,
+                search: search || undefined,
+                sort: sort || undefined,
+                source_type: sourceType || undefined,
+            }),
         placeholderData: keepPreviousData,
     });
     const pagination = knowledges?.pagination;
+
+    // Reset to first page whenever the filters change.
+    function resetTo<T>(setter: (v: T) => void) {
+        return (v: T) => {
+            setter(v);
+            setPage(1);
+        };
+    }
+
+    // Source types are open-ended file extensions; build the option list from
+    // what's loaded and keep the active one so the selection never vanishes.
+    const sourceTypeOptions: Option[] = Array.from(
+        new Set(
+            [...(knowledges?.data ?? []).map((k) => k.source_type), sourceType].filter(
+                Boolean,
+            ),
+        ),
+    ).map((t) => ({ label: t, value: t }));
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -641,10 +750,30 @@ function RouteComponent() {
                             All Knowledges
                         </h1>
                     </div>
-                    <CreateKnowledgeDialog />
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 space-y-4">
+                    <ListToolbar
+                        search={search}
+                        onSearchChange={resetTo(setSearch)}
+                        searchPlaceholder="Search knowledges..."
+                        filters={[
+                            {
+                                label: "Source type",
+                                value: sourceType,
+                                options: sourceTypeOptions,
+                                onChange: resetTo(setSourceType),
+                                allLabel: "All types",
+                            },
+                        ]}
+                        sort={{
+                            label: "Sort",
+                            value: sort,
+                            options: KNOWLEDGE_SORTS,
+                            onChange: resetTo(setSort),
+                        }}
+                        action={<CreateKnowledgeDialog />}
+                    />
                     <TanStackDataTable
                         columns={knowledgeColumns}
                         data={knowledges?.data ?? []}

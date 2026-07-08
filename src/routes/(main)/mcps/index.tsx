@@ -12,6 +12,7 @@ import {
 } from "@/api/mcps";
 import { McpAgentAccessDialog } from "@/components/agent-mcp-access-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { ListToolbar, type Option } from "@/components/list-toolbar";
 import { CopyableUri } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -839,19 +840,44 @@ function McpCard({ mcp }: { mcp: Mcp }) {
 
 const LIMIT = 12;
 
+const MCP_SORTS: Option[] = [
+    { label: "Newest", value: "created_desc" },
+    { label: "Oldest", value: "created_asc" },
+    { label: "Name (A–Z)", value: "name_asc" },
+    { label: "Name (Z–A)", value: "name_desc" },
+    { label: "Most tools", value: "tools_count_desc" },
+    { label: "Fewest tools", value: "tools_count_asc" },
+];
+
 function RouteComponent() {
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("");
+
     const {
         data: mcps,
         isPending,
         isError,
         isFetching,
     } = useQuery({
-        queryKey: ["mcps", page],
-        queryFn: () => getMcps({ offset: page - 1, limit: LIMIT }),
+        queryKey: ["mcps", { page, search, sort }],
+        queryFn: () =>
+            getMcps({
+                offset: page - 1,
+                limit: LIMIT,
+                search: search || undefined,
+                sort: sort || undefined,
+            }),
         placeholderData: keepPreviousData,
     });
     const pagination = mcps?.pagination;
+
+    function resetTo<T>(setter: (v: T) => void) {
+        return (v: T) => {
+            setter(v);
+            setPage(1);
+        };
+    }
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -862,10 +888,21 @@ function RouteComponent() {
                             All MCPs
                         </h1>
                     </div>
-                    <AddMcpDialog />
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 space-y-4">
+                    <ListToolbar
+                        search={search}
+                        onSearchChange={resetTo(setSearch)}
+                        searchPlaceholder="Search MCPs..."
+                        sort={{
+                            label: "Sort",
+                            value: sort,
+                            options: MCP_SORTS,
+                            onChange: resetTo(setSort),
+                        }}
+                        action={<AddMcpDialog />}
+                    />
                     {isPending ? (
                         <div className="flex items-center justify-center py-16">
                             <p className="text-sm text-muted-foreground">
