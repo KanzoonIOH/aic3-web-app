@@ -1,3 +1,4 @@
+import type { UserRole } from "@/api/auth";
 import {
     acceptMember,
     deleteMember,
@@ -7,6 +8,7 @@ import {
     type Member,
 } from "@/api/members";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/copy-button";
 import {
@@ -87,6 +89,26 @@ function RoleBadge({ role }: { role: string }) {
 function useCanManage() {
     const role = useAuthStore((s) => s.user?.role);
     return role === "ADMIN" || role === "SUPERADMIN";
+}
+
+// Mirror of the backend canEditMember rule (members.go). Nobody edits
+// themselves; nobody edits a SUPERADMIN; an ADMIN can't edit another ADMIN.
+function canEditMember(
+    actorId: string | undefined,
+    actorRole: UserRole | undefined,
+    target: Member,
+): boolean {
+    if (actorRole !== "ADMIN" && actorRole !== "SUPERADMIN") return false;
+    if (actorId === target.id) return false;
+    if (target.role === "SUPERADMIN") return false;
+    if (actorRole === "ADMIN" && target.role === "ADMIN") return false;
+    return true;
+}
+
+function useCanEditMember() {
+    const actorId = useAuthStore((s) => s.user?.id);
+    const actorRole = useAuthStore((s) => s.user?.role);
+    return (target: Member) => canEditMember(actorId, actorRole, target);
 }
 
 // ---------- Invite dialog (D1) ----------
@@ -207,7 +229,7 @@ function InviteMemberDialog() {
 
 function MemberActions({ member }: { member: Member }) {
     const queryClient = useQueryClient();
-    const canManage = useCanManage();
+    const canEdit = useCanEditMember()(member);
 
     const { mutate: accept, isPending: isAccepting } = useMutation({
         mutationFn: () => acceptMember(member.id),
@@ -233,9 +255,22 @@ function MemberActions({ member }: { member: Member }) {
 
     const isPending = isAccepting || isUpdatingStatus || isRemoving;
 
-    // Non-admins can't change anyone's role (D4).
-    if (!canManage) {
-        return <span className="text-xs text-muted-foreground">—</span>;
+    // No edit rights over this member: show a muted, disabled three-dots so the
+    // column stays visually aligned (no dash, no active affordance).
+    if (!canEdit) {
+        return (
+            <div className="flex items-center justify-end">
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled
+                    className="text-muted-foreground/40"
+                    aria-label="No actions available"
+                >
+                    <MoreHorizontal className="size-4" />
+                </Button>
+            </div>
+        );
     }
 
     return (
@@ -327,7 +362,16 @@ const baseColumns: ColumnDef<Member>[] = [
         id: "name",
         header: "Name",
         meta: { className: "font-medium" },
-        cell: ({ row }) => row.original.name || "—",
+        cell: ({ row }) => (
+            <div className="flex items-center gap-2.5">
+                <UserAvatar
+                    image={row.original.image}
+                    name={row.original.name || row.original.username}
+                    size="sm"
+                />
+                <span>{row.original.name || "—"}</span>
+            </div>
+        ),
     },
     {
         id: "email",
@@ -391,6 +435,7 @@ const pendingColumns: ColumnDef<Member>[] = [
 
 function RouteComponent() {
     const canManage = useCanManage();
+    const canEditMemberFn = useCanEditMember();
 
     const activeQuery = useQuery({
         queryKey: ["members", "active"],
@@ -426,6 +471,11 @@ function RouteComponent() {
                         data={activeMembers}
                         getRowKey={(member) => member.id}
                         enableSorting={false}
+                        rowClassName={(member) =>
+                            canEditMemberFn(member)
+                                ? undefined
+                                : "hover:bg-transparent"
+                        }
                         isLoading={activeQuery.isPending}
                         isError={activeQuery.isError}
                         loadingMessage="Loading members..."

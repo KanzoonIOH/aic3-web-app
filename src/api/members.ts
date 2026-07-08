@@ -10,6 +10,7 @@ export interface Member {
     username: string;
     email: string;
     role: UserRole;
+    image: string | null;
     created_at: string;
     updated_at: string;
     // has_password=false + role=PENDING => invited, not yet accepted.

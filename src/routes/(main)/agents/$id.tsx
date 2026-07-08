@@ -9,6 +9,7 @@ import {
     bodyFieldsToRows,
     cleanBodyFields,
 } from "@/components/body-fields-editor";
+import { AvatarPicker } from "@/components/avatar-picker";
 import { LogsTable } from "@/components/logs-table";
 import { TagsInput } from "@/components/tags-input";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ export function EditAgentDialog({
     const [tags, setTags] = useState<string[]>(
         (agent.tags ?? []).map((t) => t.name),
     );
+    const [image, setImage] = useState(agent.image ?? "");
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -106,6 +108,7 @@ export function EditAgentDialog({
                 webhook_header_fields: BodyField[];
                 guardrail: string;
                 tags: string[];
+                image: string | null;
             },
         ) => updateAgent(agent.id, payload),
         onSuccess: () => {
@@ -135,6 +138,7 @@ export function EditAgentDialog({
                 // guardrail is edited on the Persona tab; preserve it here.
                 guardrail: agent.guardrail,
                 tags,
+                image: image || null,
             });
         },
     });
@@ -145,6 +149,7 @@ export function EditAgentDialog({
         setBodyFields(bodyFieldsToRows(agent.webhook_body_fields));
         setHeaderFields(bodyFieldsToRows(agent.webhook_header_fields));
         setTags((agent.tags ?? []).map((t) => t.name));
+        setImage(agent.image ?? "");
         form.reset({
             name: agent.name,
             description: agent.description,
@@ -237,9 +242,15 @@ export function EditAgentDialog({
                                             {field.state.meta.errors[0]}
                                         </p>
                                     )}
-                                </div>
+                                 </div>
                             )}
                         </form.Field>
+
+                        <AvatarPicker
+                            value={image}
+                            onChange={setImage}
+                            name={form.state.values.name}
+                        />
 
                         <form.Field
                             name="description"

@@ -1,6 +1,6 @@
 import logoDark from "@/assets/logo_ioh_dark.svg";
 import logoLight from "@/assets/logo_ioh_light.svg";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -36,6 +36,8 @@ import {
   Tag,
   Users,
 } from "lucide-react";
+import { useState } from "react";
+import { SettingsDialog } from "./-SettingsDialog";
 
 export const Route = createFileRoute("/(main)")({
   beforeLoad: () => {
@@ -47,17 +49,35 @@ export const Route = createFileRoute("/(main)")({
   component: RouteComponent,
 });
 
-const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
-  { to: "/agents", label: "Agents", icon: Bot },
-  { to: "/tags", label: "Tags", icon: Tag },
-  { to: "/chat", label: "Chat", icon: MessagesSquare },
-  { to: "/knowledges", label: "Knowledges", icon: BookOpen },
-  { to: "/mcps", label: "MCPs", icon: Plug },
-  { to: "/logs", label: "Logs", icon: ScrollText },
-  { to: "/members", label: "Members", icon: Users },
-  { to: "/api-keys", label: "API Keys", icon: KeyRound },
-  { to: "/global-config", label: "Global Config", icon: Settings },
+const navGroups = [
+  {
+    label: "Workspace",
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+      { to: "/agents", label: "Agents", icon: Bot },
+      { to: "/tags", label: "Tags", icon: Tag },
+      { to: "/chat", label: "Chat", icon: MessagesSquare },
+    ],
+  },
+  {
+    label: "Resources",
+    items: [
+      { to: "/knowledges", label: "Knowledges", icon: BookOpen },
+      { to: "/mcps", label: "MCPs", icon: Plug },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [{ to: "/logs", label: "Logs", icon: ScrollText }],
+  },
+  {
+    label: "Administration",
+    items: [
+      { to: "/members", label: "Members", icon: Users },
+      { to: "/api-keys", label: "API Keys", icon: KeyRound },
+      { to: "/global-config", label: "Global Config", icon: Settings },
+    ],
+  },
 ] as const;
 
 const themeOptions: { value: Theme; label: string; icon: React.ElementType }[] =
@@ -93,72 +113,78 @@ function ThemeToggle() {
   );
 }
 
-function getInitials(username: string) {
-  return username
-    .split(/[\s_-]+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 function UserSection() {
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const router = useRouter();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   function handleLogout() {
     clearAuth();
     router.navigate({ to: "/login" });
   }
 
-  const initials = user ? getInitials(user.username) : "?";
-
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent transition-colors">
-          <Avatar>
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-          <span className="truncate font-medium text-foreground">
-            {user?.username ?? "Account"}
-          </span>
-          <ChevronsUpDownIcon className="size-4 ml-auto text-foreground/50" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side="right"
-        align="end"
-        sideOffset={18}
-        className="w-56 p-0"
-      >
-        <div className="flex items-center gap-3 px-3.5 py-1.5">
-          <div className="flex flex-col min-w-0">
-            <span className="truncate text-sm text-muted-foreground">
-              {user?.email}
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent transition-colors">
+            <UserAvatar image={user?.image} name={user?.username ?? "?"} />
+            <span className="truncate font-medium text-foreground">
+              {user?.username ?? "Account"}
             </span>
+            <ChevronsUpDownIcon className="size-4 ml-auto text-foreground/50" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          side="right"
+          align="end"
+          sideOffset={18}
+          className="w-56 p-0"
+        >
+          <div className="flex items-center gap-3 px-3.5 py-1.5">
+            <div className="flex flex-col min-w-0">
+              <span className="truncate text-sm text-muted-foreground">
+                {user?.email}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        <ThemeToggle />
+          <div className="p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 font-normal"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings className="size-4" />
+              Settings
+            </Button>
+          </div>
 
-        <Separator />
+          <Separator />
 
-        <div className="p-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start gap-2 font-normal text-destructive hover:bg-destructive/5 hover:text-destructive"
-            onClick={handleLogout}
-          >
-            <LogOut className="size-4" />
-            Log out
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+          <ThemeToggle />
+
+          <Separator />
+
+          <div className="p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 font-normal text-destructive hover:bg-destructive/5 hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="size-4" />
+              Log out
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
   );
 }
 
@@ -228,23 +254,30 @@ function RouteComponent() {
           <SidebarLogo />
         </div>
         {/*<Separator />*/}
-        <nav className="flex flex-col flex-1 gap-0.5 p-2 overflow-y-auto">
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className={cn(
-                "relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all overflow-clip",
-                "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-0.5 before:rounded-r-full before:bg-primary before:transition-all",
-              )}
-              activeProps={{
-                className:
-                  "bg-sidebar-accent !text-sidebar-foreground font-medium before:h-4/6",
-              }}
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </Link>
+        <nav className="flex flex-col flex-1 gap-4 p-2 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label} className="flex flex-col gap-0.5">
+              <span className="px-2.5 pb-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">
+                {group.label}
+              </span>
+              {group.items.map(({ to, label, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={cn(
+                    "relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-all overflow-clip",
+                    "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-0 before:w-0.5 before:rounded-r-full before:bg-primary before:transition-all",
+                  )}
+                  activeProps={{
+                    className:
+                      "bg-sidebar-accent !text-sidebar-foreground font-medium before:h-4/6",
+                  }}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  {label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <Separator />

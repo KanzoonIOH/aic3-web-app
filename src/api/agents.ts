@@ -28,6 +28,7 @@ export interface Agent {
     webhook_header_fields: BodyField[] | null;
     guardrail: string;
     tags: Tag[] | null;
+    image: string | null; // emoji string or object-storage URL
     knowledges_count: number;
     mcps_count: number;
     pinned: boolean;
@@ -44,6 +45,7 @@ export interface UpdateAgentRequest {
     webhook_header_fields: BodyField[];
     guardrail: string;
     tags: string[];
+    image?: string | null;
     // milvus_collection is immutable after create — not sent on update.
 }
 
@@ -58,6 +60,20 @@ export interface CreateAgentRequest {
     webhook_header_fields: BodyField[];
     guardrail: string;
     tags: string[];
+    image?: string | null;
+}
+
+// Uploads an agent picture and returns its public URL. Emojis are stored as
+// plain strings and never hit this endpoint.
+export async function uploadImage(file: File): Promise<string> {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await client.post<ResponseTemplate<{ url: string }>>(
+        "/uploads/image",
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return data.data.url;
 }
 
 // ---------- API functions ----------

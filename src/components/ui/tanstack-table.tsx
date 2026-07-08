@@ -467,8 +467,8 @@ export interface TanStackDataTableProps<TData> {
     /** Enable header-click sorting (client-side). Defaults to true. */
     enableSorting?: boolean;
     className?: string;
-    /** Extra className for each body row. */
-    rowClassName?: string;
+    /** Extra className for each body row (string, or per-row function). */
+    rowClassName?: string | ((row: TData) => string | undefined);
 }
 
 export function TanStackDataTable<TData>({

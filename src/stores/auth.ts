@@ -7,6 +7,7 @@ interface User {
     username: string;
     email: string;
     role: UserRole;
+    image?: string | null;
 }
 
 interface AuthState {
@@ -14,6 +15,7 @@ interface AuthState {
     user: User | null;
     // Actions
     setAuth: (response: AuthResponse) => void;
+    setUser: (user: Partial<User>) => void;
     clearAuth: () => void;
 }
 
@@ -24,6 +26,8 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             setAuth: (response) =>
                 set({ token: response.token, user: response.user }),
+            setUser: (patch) =>
+                set((s) => (s.user ? { user: { ...s.user, ...patch } } : s)),
             clearAuth: () => set({ token: null, user: null }),
         }),
         {

@@ -9,6 +9,7 @@ import {
     BodyFieldsEditor,
     cleanBodyFields,
 } from "@/components/body-fields-editor";
+import { AvatarPicker } from "@/components/avatar-picker";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { TagsInput } from "@/components/tags-input";
 import { tagChipStyle } from "@/lib/tag-color";
@@ -345,6 +346,7 @@ function CreateAgentDrawer({
     const [bodyFields, setBodyFields] = useState<BodyField[]>([]);
     const [headerFields, setHeaderFields] = useState<BodyField[]>([]);
     const [tags, setTags] = useState<string[]>([]);
+    const [image, setImage] = useState("");
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -354,6 +356,7 @@ function CreateAgentDrawer({
             setBodyFields([]);
             setHeaderFields([]);
             setTags([]);
+            setImage("");
             onClose();
         },
     });
@@ -369,6 +372,7 @@ function CreateAgentDrawer({
                 webhook_body_fields: cleanBodyFields(bodyFields),
                 webhook_header_fields: cleanBodyFields(headerFields),
                 tags,
+                image: image || null,
             });
         },
     });
@@ -380,6 +384,7 @@ function CreateAgentDrawer({
             setBodyFields([]);
             setHeaderFields([]);
             setTags([]);
+            setImage("");
             onClose();
         }
     }
@@ -453,6 +458,12 @@ function CreateAgentDrawer({
                                 </div>
                             )}
                         </form.Field>
+
+                        <AvatarPicker
+                            value={image}
+                            onChange={setImage}
+                            name={form.state.values.name}
+                        />
 
                         <form.Field name="description">
                             {(field) => (
@@ -651,17 +662,35 @@ function CreateAgentDrawer({
     );
 }
 
-function AgentInitialsAvatar({ name }: { name: string }) {
+function AgentInitialsAvatar({
+    name,
+    image,
+}: {
+    name: string;
+    image?: string | null;
+}) {
+    const box =
+        "flex aspect-square size-14 items-center justify-center overflow-hidden rounded-xl border bg-primary/10 text-xl font-semibold text-primary";
+    if (image && /^https?:\/\//.test(image)) {
+        return (
+            <div className={box}>
+                <img
+                    src={image}
+                    alt={name}
+                    className="size-full object-cover"
+                />
+            </div>
+        );
+    }
+    if (image) {
+        return <div className={box}>{image}</div>;
+    }
     const parts = name.trim().split(/\s+/);
     const initial =
         parts.length === 1
             ? parts[0][0].toUpperCase()
             : (parts[0][0] + parts[1][0]).toUpperCase();
-    return (
-        <div className="flex aspect-square size-14 items-center justify-center rounded-xl border bg-primary/10 text-xl font-semibold text-primary">
-            {initial}
-        </div>
-    );
+    return <div className={box}>{initial}</div>;
 }
 
 function AgentCard({ agent }: { agent: Agent }) {
@@ -696,7 +725,7 @@ function AgentCard({ agent }: { agent: Agent }) {
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-stretch gap-3">
-                    <AgentInitialsAvatar name={agent.name} />
+                    <AgentInitialsAvatar name={agent.name} image={agent.image} />
                     <div className="flex h-14 flex-col justify-between">
                         <Badge
                             variant={agent.is_active ? "outline" : "secondary"}
