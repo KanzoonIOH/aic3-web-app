@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ChevronsUpDownIcon,
   Clock,
+  History,
   KeyRound,
   LayoutDashboardIcon,
   LogOut,
@@ -76,7 +77,10 @@ const navGroups = [
   },
   {
     label: "Operations",
-    items: [{ to: "/logs", label: "Logs", icon: ScrollText }],
+    items: [
+      { to: "/logs", label: "Logs", icon: ScrollText },
+      { to: "/audit-logs", label: "Audit Log", icon: History },
+    ],
   },
   {
     label: "Administration",

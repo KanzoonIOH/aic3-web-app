@@ -16,6 +16,7 @@ import { Route as mainTagsRouteImport } from './routes/(main)/tags'
 import { Route as mainMembersRouteImport } from './routes/(main)/members'
 import { Route as mainLogsRouteImport } from './routes/(main)/logs'
 import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
+import { Route as mainAuditLogsRouteImport } from './routes/(main)/audit-logs'
 import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
@@ -62,6 +63,11 @@ const mainLogsRoute = mainLogsRouteImport.update({
 const mainDashboardRoute = mainDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainAuditLogsRoute = mainAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainApiKeysRoute = mainApiKeysRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
+  '/audit-logs': typeof mainAuditLogsRoute
   '/dashboard': typeof mainDashboardRoute
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/login': typeof authLoginRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
+  '/audit-logs': typeof mainAuditLogsRoute
   '/dashboard': typeof mainDashboardRoute
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(main)/api-keys': typeof mainApiKeysRoute
+  '/(main)/audit-logs': typeof mainAuditLogsRoute
   '/(main)/dashboard': typeof mainDashboardRoute
   '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/api-keys'
+    | '/audit-logs'
     | '/dashboard'
     | '/logs'
     | '/members'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/api-keys'
+    | '/audit-logs'
     | '/dashboard'
     | '/logs'
     | '/members'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/(auth)/login'
     | '/(auth)/signup'
     | '/(main)/api-keys'
+    | '/(main)/audit-logs'
     | '/(main)/dashboard'
     | '/(main)/logs'
     | '/(main)/members'
@@ -322,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof mainDashboardRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/audit-logs': {
+      id: '/(main)/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/audit-logs'
+      preLoaderRoute: typeof mainAuditLogsRouteImport
       parentRoute: typeof mainRouteRoute
     }
     '/(main)/api-keys': {
@@ -458,6 +477,7 @@ const mainChatRouteRouteWithChildren = mainChatRouteRoute._addFileChildren(
 interface mainRouteRouteChildren {
   mainChatRouteRoute: typeof mainChatRouteRouteWithChildren
   mainApiKeysRoute: typeof mainApiKeysRoute
+  mainAuditLogsRoute: typeof mainAuditLogsRoute
   mainDashboardRoute: typeof mainDashboardRoute
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
@@ -474,6 +494,7 @@ interface mainRouteRouteChildren {
 const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainChatRouteRoute: mainChatRouteRouteWithChildren,
   mainApiKeysRoute: mainApiKeysRoute,
+  mainAuditLogsRoute: mainAuditLogsRoute,
   mainDashboardRoute: mainDashboardRoute,
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
