@@ -1,4 +1,5 @@
 import { client } from "./client";
+import type { Tag } from "./tags";
 import type { ListParams, ResponseTemplate } from "./types";
 
 // ---------- Types ----------
@@ -13,6 +14,7 @@ export interface Mcp {
     headers: McpHeaders | null;
     agent_id: string;
     tools_count: number;
+    tags: Tag[] | null;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
@@ -23,6 +25,7 @@ export interface CreateMcpRequest {
     description: string;
     uri: string;
     headers: McpHeaders;
+    tags: string[];
 }
 
 export interface UpdateMcpRequest {
@@ -30,7 +33,12 @@ export interface UpdateMcpRequest {
     description: string;
     uri: string;
     headers: McpHeaders;
+    tags: string[];
 }
+
+export type GetMcpsParams = ListParams & {
+    tag_id?: string;
+};
 
 export interface McpOption {
     id: string;
@@ -68,7 +76,7 @@ export interface McpTool {
 // ---------- API functions ----------
 
 export async function getMcps(
-    params: ListParams = {},
+    params: GetMcpsParams = {},
 ): Promise<ResponseTemplate<Mcp[]>> {
     const { data } = await client.get<ResponseTemplate<Mcp[]>>("/mcps", {
         params,

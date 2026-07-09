@@ -1,3 +1,4 @@
+import type { Tag } from "./tags";
 import { client } from "./client";
 import type { ListParams, ResponseTemplate } from "./types";
 
@@ -11,6 +12,7 @@ export interface Knowledge {
     source_uri: string | null;
     is_crawl: boolean;
     agents_count?: number;
+    tags: Tag[] | null;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
@@ -18,7 +20,7 @@ export interface Knowledge {
 
 // Either a file upload or a link. For a link, source_type is "web", source_uri
 // holds the URL, and is_crawl decides crawl-whole-site vs single-page.
-export type CreateKnowledgeRequest =
+export type CreateKnowledgeRequest = { tags: string[] } & (
     | { name: string; description: string; source_type: string; file: File }
     | {
           name: string;
@@ -26,17 +28,20 @@ export type CreateKnowledgeRequest =
           source_type: "web";
           source_uri: string;
           is_crawl: boolean;
-      };
+      }
+);
 
 export interface UpdateKnowledgeRequest {
     name: string;
     description: string;
+    tags: string[];
 }
 
 // ---------- API functions ----------
 
 export type GetKnowledgesParams = ListParams & {
     source_type?: string;
+    tag_id?: string;
 };
 
 export async function getKnowledges(
@@ -69,6 +74,7 @@ export async function createKnowledge(
         form.append("source_uri", payload.source_uri);
         form.append("is_crawl", String(payload.is_crawl));
     }
+    for (const tag of payload.tags) form.append("tags", tag);
 
     const { data } = await client.post<ResponseTemplate<Knowledge>>(
         "/knowledges",

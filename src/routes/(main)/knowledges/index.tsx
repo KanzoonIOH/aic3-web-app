@@ -5,9 +5,12 @@ import {
     updateKnowledge,
     type Knowledge,
 } from "@/api/knowledges";
+import { getTags } from "@/api/tags";
 import { KnowledgeAgentAccessDialog } from "@/components/agent-knowledge-access-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { ListToolbar, type Option } from "@/components/list-toolbar";
+import { TagsInput } from "@/components/tags-input";
+import { tagChipStyle } from "@/lib/tag-color";
 import { CopyableUri } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,6 +89,7 @@ function CreateKnowledgeDialog() {
     const [url, setUrl] = useState("");
     const [crawl, setCrawl] = useState(false);
     const [dragging, setDragging] = useState(false);
+    const [tags, setTags] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
@@ -94,12 +98,14 @@ function CreateKnowledgeDialog() {
         setFile(null);
         setUrl("");
         setCrawl(false);
+        setTags([]);
     }
 
     const mutation = useMutation({
         mutationFn: createKnowledge,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["knowledges"] });
+            queryClient.invalidateQueries({ queryKey: ["tags"] });
             setOpen(false);
             form.reset();
             resetExtras();
@@ -121,6 +127,7 @@ function CreateKnowledgeDialog() {
                     source_type: "web",
                     source_uri: url.trim(),
                     is_crawl: crawl,
+                    tags,
                 });
                 return;
             }
@@ -129,6 +136,7 @@ function CreateKnowledgeDialog() {
                 ...result.data,
                 source_type: sourceTypeFromFile(file),
                 file,
+                tags,
             });
         },
     });
@@ -352,6 +360,14 @@ function CreateKnowledgeDialog() {
                         )}
                     </div>
 
+                    <TagsInput
+                        value={tags}
+                        onChange={(t) => {
+                            setTags(t);
+                            mutation.reset();
+                        }}
+                    />
+
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button type="button" variant="outline">
@@ -393,13 +409,17 @@ function EditKnowledgeDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const [tags, setTags] = useState<string[]>(
+        (knowledge.tags ?? []).map((t) => t.name),
+    );
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (payload: EditKnowledgeValues) =>
+        mutationFn: (payload: EditKnowledgeValues & { tags: string[] }) =>
             updateKnowledge(knowledge.id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["knowledges"] });
+            queryClient.invalidateQueries({ queryKey: ["tags"] });
             onOpenChange(false);
         },
     });
@@ -412,13 +432,14 @@ function EditKnowledgeDialog({
         onSubmit: async ({ value }) => {
             const result = editKnowledgeSchema.safeParse(value);
             if (!result.success) return;
-            await mutation.mutateAsync(result.data);
+            await mutation.mutateAsync({ ...result.data, tags });
         },
     });
 
     function handleOpenChange(nextOpen: boolean) {
         onOpenChange(nextOpen);
         mutation.reset();
+        setTags((knowledge.tags ?? []).map((t) => t.name));
         form.reset({ name: knowledge.name, description: knowledge.description ?? "" });
     }
 
@@ -521,6 +542,14 @@ function EditKnowledgeDialog({
                             </div>
                         )}
                     </form.Field>
+
+                    <TagsInput
+                        value={tags}
+                        onChange={(t) => {
+                            setTags(t);
+                            mutation.reset();
+                        }}
+                    />
 
                     <DialogFooter>
                         <DialogClose asChild>
@@ -649,6 +678,30 @@ export function createKnowledgeColumns({
             ),
         },
         {
+            id: "tags",
+            header: "Tags",
+            cell: ({ row }) => {
+                const tags = row.original.tags ?? [];
+                if (tags.length === 0)
+                    return (
+                        <span className="italic text-muted-foreground/50">—</span>
+                    );
+                return (
+                    <div className="flex flex-wrap items-center gap-1">
+                        {tags.map((tag) => (
+                            <span
+                                key={tag.id}
+                                className="max-w-[8rem] truncate rounded-full border px-2 py-0.5 text-xs"
+                                style={tagChipStyle(tag.color)}
+                            >
+                                {tag.name}
+                            </span>
+                        ))}
+                    </div>
+                );
+            },
+        },
+        {
             id: "source_uri",
             header: "Source URI",
             meta: { className: "max-w-48" },
@@ -703,6 +756,7 @@ function RouteComponent() {
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("");
     const [sourceType, setSourceType] = useState("");
+    const [tagId, setTagId] = useState("");
 
     const {
         data: knowledges,
@@ -710,7 +764,7 @@ function RouteComponent() {
         isError,
         isFetching,
     } = useQuery({
-        queryKey: ["knowledges", { page, search, sort, sourceType }],
+        queryKey: ["knowledges", { page, search, sort, sourceType, tagId }],
         queryFn: () =>
             getKnowledges({
                 offset: page - 1,
@@ -718,10 +772,17 @@ function RouteComponent() {
                 search: search || undefined,
                 sort: sort || undefined,
                 source_type: sourceType || undefined,
+                tag_id: tagId || undefined,
             }),
         placeholderData: keepPreviousData,
     });
     const pagination = knowledges?.pagination;
+
+    const { data: tags } = useQuery({ queryKey: ["tags"], queryFn: getTags });
+    const tagOptions: Option[] = (tags?.data ?? []).map((t) => ({
+        label: t.name,
+        value: t.id,
+    }));
 
     // Reset to first page whenever the filters change.
     function resetTo<T>(setter: (v: T) => void) {
@@ -764,6 +825,13 @@ function RouteComponent() {
                                 options: sourceTypeOptions,
                                 onChange: resetTo(setSourceType),
                                 allLabel: "All types",
+                            },
+                            {
+                                label: "Tag",
+                                value: tagId,
+                                options: tagOptions,
+                                onChange: resetTo(setTagId),
+                                allLabel: "All tags",
                             },
                         ]}
                         sort={{

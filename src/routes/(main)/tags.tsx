@@ -216,6 +216,12 @@ function TagActions({ tag }: { tag: Tag }) {
     );
 }
 
+// "" when zero, so the caller can drop empty types from the breakdown.
+function pluralize(n: number, singular: string, plural = `${singular}s`): string {
+    if (n === 0) return "";
+    return `${n} ${n === 1 ? singular : plural}`;
+}
+
 const columns: ColumnDef<Tag>[] = [
     {
         id: "name",
@@ -240,8 +246,12 @@ const columns: ColumnDef<Tag>[] = [
         header: "Used by",
         meta: { className: "text-muted-foreground" },
         cell: ({ row }) => {
-            const n = row.original.agents_count ?? 0;
-            return `${n} ${n === 1 ? "agent" : "agents"}`;
+            const parts = [
+                pluralize(row.original.agents_count ?? 0, "agent"),
+                pluralize(row.original.mcps_count ?? 0, "MCP"),
+                pluralize(row.original.knowledges_count ?? 0, "knowledge", "knowledges"),
+            ].filter(Boolean);
+            return parts.length ? parts.join(" · ") : "Unused";
         },
     },
     {

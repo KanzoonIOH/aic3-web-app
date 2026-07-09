@@ -5,8 +5,10 @@ export interface Tag {
     id: string;
     name: string;
     color: string;
-    // Present only on the tags-list endpoint (not on agent.tags).
+    // Present only on the tags-list endpoint (not on embedded entity.tags).
     agents_count?: number;
+    mcps_count?: number;
+    knowledges_count?: number;
 }
 
 export async function getTags(): Promise<ResponseTemplate<Tag[]>> {

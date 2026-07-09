@@ -2,20 +2,24 @@ import {
     createMcp,
     deleteMcp,
     getMcps,
+    getMcpAgents,
     getMcpTools,
     refreshMcpTools,
     updateMcp,
     type Mcp,
+    type McpAgent,
     type McpHeaders,
     type McpTool,
     type UpdateMcpRequest,
 } from "@/api/mcps";
+import { getTags } from "@/api/tags";
 import { McpAgentAccessDialog } from "@/components/agent-mcp-access-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
-import { ListToolbar, type Option } from "@/components/list-toolbar";
 import { CopyableUri } from "@/components/copy-button";
+import { ListToolbar, type Option } from "@/components/list-toolbar";
+import { TagsInput } from "@/components/tags-input";
+import { tagChipStyle } from "@/lib/tag-color";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
     Dialog,
     DialogClose,
@@ -27,6 +31,14 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+    Drawer,
+    DrawerContent,
+    DrawerDescription,
+    DrawerHeader,
+    DrawerTitle,
+    useResponsiveDrawerDirection,
+} from "@/components/ui/drawer";
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -34,7 +46,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DataTablePaginationBar } from "@/components/ui/tanstack-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    TanStackDataTable,
+    type ColumnDef,
+} from "@/components/ui/tanstack-table";
 import { resolveServerMessage, textareaClass } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import {
@@ -45,7 +61,6 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-    ChevronDown,
     MoreHorizontal,
     Plug,
     Plus,
@@ -53,7 +68,7 @@ import {
     Trash2,
     Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/(main)/mcps/")({
@@ -175,14 +190,17 @@ function HeadersEditor({
 function AddMcpDialog() {
     const [open, setOpen] = useState(false);
     const [headerRows, setHeaderRows] = useState<HeaderRow[]>([]);
+    const [tags, setTags] = useState<string[]>([]);
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: createMcp,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            queryClient.invalidateQueries({ queryKey: ["tags"] });
             setOpen(false);
             setHeaderRows([]);
+            setTags([]);
             form.reset();
         },
     });
@@ -199,6 +217,7 @@ function AddMcpDialog() {
             await mutation.mutateAsync({
                 ...result.data,
                 headers: rowsToHeaders(headerRows),
+                tags,
             });
         },
     });
@@ -208,6 +227,7 @@ function AddMcpDialog() {
         if (!nextOpen) {
             mutation.reset();
             setHeaderRows([]);
+            setTags([]);
             form.reset();
         }
     }
@@ -345,6 +365,14 @@ function AddMcpDialog() {
                         }}
                     />
 
+                    <TagsInput
+                        value={tags}
+                        onChange={(t) => {
+                            setTags(t);
+                            mutation.reset();
+                        }}
+                    />
+
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button type="button" variant="outline">
@@ -393,12 +421,16 @@ function EditMcpDialog({
     const [headerRows, setHeaderRows] = useState<HeaderRow[]>(
         headersToRows(mcp.headers),
     );
+    const [tags, setTags] = useState<string[]>(
+        (mcp.tags ?? []).map((t) => t.name),
+    );
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
         mutationFn: (payload: UpdateMcpRequest) => updateMcp(mcp.id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["mcps"] });
+            queryClient.invalidateQueries({ queryKey: ["tags"] });
             queryClient.invalidateQueries({
                 queryKey: ["mcps", mcp.id, "tools"],
             });
@@ -418,6 +450,7 @@ function EditMcpDialog({
             await mutation.mutateAsync({
                 ...result.data,
                 headers: rowsToHeaders(headerRows),
+                tags,
             });
         },
     });
@@ -426,6 +459,7 @@ function EditMcpDialog({
         onOpenChange(nextOpen);
         mutation.reset();
         setHeaderRows(headersToRows(mcp.headers));
+        setTags((mcp.tags ?? []).map((t) => t.name));
         form.reset({
             name: mcp.name,
             description: mcp.description ?? "",
@@ -572,6 +606,14 @@ function EditMcpDialog({
                         }}
                     />
 
+                    <TagsInput
+                        value={tags}
+                        onChange={(t) => {
+                            setTags(t);
+                            mutation.reset();
+                        }}
+                    />
+
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button type="button" variant="outline">
@@ -714,6 +756,9 @@ function ToolItem({ tool }: { tool: McpTool }) {
     );
 }
 
+// Tools list with a Refresh button. Rendered inside the drawer body, so it
+// drops the bordered box / max-h the inline card version had — the drawer
+// itself provides the scroll container.
 function ToolsPanel({ mcpId }: { mcpId: string }) {
     const queryClient = useQueryClient();
     const { data, isPending, isError } = useQuery({
@@ -732,8 +777,8 @@ function ToolsPanel({ mcpId }: { mcpId: string }) {
     });
 
     return (
-        <div className="rounded-lg border bg-muted/20 p-2">
-            <div className="mb-2 flex items-center justify-between px-1">
+        <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">
                     Tools
                 </span>
@@ -751,90 +796,337 @@ function ToolsPanel({ mcpId }: { mcpId: string }) {
                 </Button>
             </div>
 
-            <div className="max-h-64 overflow-y-auto pr-0.5">
-                {refresh.isError && (
-                    <p className="px-1 py-2 text-xs text-destructive">
-                        Failed to fetch tools. Check the server URL and headers.
-                    </p>
-                )}
-                {isPending ? (
-                    <p className="px-1 py-2 text-xs text-muted-foreground">
-                        Loading tools...
-                    </p>
-                ) : isError || !data ? (
-                    <p className="px-1 py-2 text-xs text-destructive">
-                        Failed to load tools
-                    </p>
-                ) : data.data.length === 0 ? (
-                    <p className="px-1 py-2 text-xs text-muted-foreground">
-                        No tools found. Try Refresh if this server needs auth.
-                    </p>
-                ) : (
-                    <div className="flex flex-col gap-2">
-                        {data.data.map((tool) => (
-                            <ToolItem key={tool.id} tool={tool} />
-                        ))}
-                    </div>
-                )}
-            </div>
+            {refresh.isError && (
+                <p className="py-2 text-xs text-destructive">
+                    Failed to fetch tools. Check the server URL and headers.
+                </p>
+            )}
+            {isPending ? (
+                <p className="py-2 text-xs text-muted-foreground">
+                    Loading tools...
+                </p>
+            ) : isError || !data ? (
+                <p className="py-2 text-xs text-destructive">
+                    Failed to load tools
+                </p>
+            ) : data.data.length === 0 ? (
+                <p className="py-2 text-xs text-muted-foreground">
+                    No tools found. Try Refresh if this server needs auth.
+                </p>
+            ) : (
+                <div className="flex flex-col gap-2">
+                    {data.data.map((tool) => (
+                        <ToolItem key={tool.id} tool={tool} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
 
-// ---------- MCP card ----------
+// ---------- Details drawer ----------
 
-function McpCard({ mcp }: { mcp: Mcp }) {
-    const [expanded, setExpanded] = useState(false);
+// Agents connected to this MCP. Read-only list (connecting happens via the
+// "Give Access" action in the row menu). Paginated like the access dialog.
+function McpAgentsPanel({ mcpId }: { mcpId: string }) {
+    const [page, setPage] = useState(1);
+    const limit = 10;
+    const { data, isPending, isError } = useQuery({
+        queryKey: ["mcps", mcpId, "agents", page],
+        queryFn: () => getMcpAgents(mcpId, { offset: page - 1, limit }),
+    });
+
+    const totalPage = data?.pagination?.total_page ?? 1;
+    const agents: McpAgent[] = data?.data ?? [];
 
     return (
-        <Card size="sm" className="h-fit self-start p-4">
-            <div className="flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2.5">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-primary/10 text-primary">
-                        <Plug className="size-4" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="truncate font-medium">{mcp.name}</p>
-                        <CopyableUri uri={mcp.uri} />
-                    </div>
-                </div>
-                <McpActions mcp={mcp} />
-            </div>
-
-            {mcp.description && (
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                    {mcp.description}
+        <div className="flex flex-col gap-2">
+            {isPending ? (
+                <p className="py-2 text-xs text-muted-foreground">
+                    Loading agents...
                 </p>
+            ) : isError ? (
+                <p className="py-2 text-xs text-destructive">
+                    Failed to load agents
+                </p>
+            ) : agents.length === 0 ? (
+                <p className="py-2 text-xs text-muted-foreground">
+                    Not connected to any agent yet.
+                </p>
+            ) : (
+                <div className="flex flex-col divide-y rounded-lg border">
+                    {agents.map((agent) => (
+                        <div
+                            key={agent.id}
+                            className="flex items-center gap-3 px-3 py-2.5"
+                        >
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                    <p className="truncate text-sm font-medium">
+                                        {agent.name}
+                                    </p>
+                                    {agent.connected && (
+                                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                            Connected
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="truncate text-xs text-muted-foreground">
+                                    {agent.description || "No description"}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
 
-            <div>
-                <button
-                    type="button"
-                    onClick={() => setExpanded((v) => !v)}
-                    className="flex w-full items-center justify-between rounded-lg border bg-muted/40 px-3 py-2 text-sm transition-colors hover:bg-muted"
-                    aria-expanded={expanded}
-                >
-                    <span className="flex items-center gap-1.5 font-medium">
-                        <Wrench className="size-3.5 text-muted-foreground" />
-                        {mcp.tools_count}{" "}
-                        {mcp.tools_count === 1 ? "tool" : "tools"}
+            {totalPage > 1 && (
+                <div className="flex items-center justify-end gap-2 pt-1">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                        Prev
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                        {page} / {totalPage}
                     </span>
-                    <ChevronDown
-                        className={`size-4 text-muted-foreground transition-transform ${
-                            expanded ? "rotate-180" : ""
-                        }`}
-                    />
-                </button>
-
-                {expanded && (
-                    <div className="mt-2">
-                        <ToolsPanel mcpId={mcp.id} />
-                    </div>
-                )}
-            </div>
-        </Card>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= totalPage}
+                        onClick={() => setPage((p) => p + 1)}
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
+        </div>
     );
 }
+
+function DetailRow({
+    label,
+    children,
+}: {
+    label: string;
+    children: ReactNode;
+}) {
+    return (
+        <div className="flex flex-col gap-0.5 py-2">
+            <dt className="text-xs font-medium text-muted-foreground">
+                {label}
+            </dt>
+            <dd className="text-sm">{children}</dd>
+        </div>
+    );
+}
+
+// Right-side (desktop) / bottom (mobile) drawer with Overview / Tools / Agents.
+// Each tab's data is fetch-on-open (Tools/Agents only mount when the drawer is
+// open; Overview uses only the row data already in hand).
+function McpDetailsDrawer({
+    mcp,
+    open,
+    onOpenChange,
+    initialTab = "overview",
+}: {
+    mcp: Mcp;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    initialTab?: "overview" | "tools" | "agents";
+}) {
+    const direction = useResponsiveDrawerDirection();
+
+    return (
+        <Drawer open={open} onOpenChange={onOpenChange} direction={direction}>
+            <DrawerContent>
+                <DrawerHeader>
+                    <DrawerTitle>{mcp.name}</DrawerTitle>
+                    <DrawerDescription>
+                        <span className="font-mono">{mcp.uri}</span>
+                    </DrawerDescription>
+                </DrawerHeader>
+
+                <Tabs defaultValue={initialTab} className="flex min-h-0 flex-1 flex-col">
+                    <TabsList className="mx-4">
+                        <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="tools">
+                            Tools ({mcp.tools_count})
+                        </TabsTrigger>
+                        <TabsTrigger value="agents">Agents</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent
+                        value="overview"
+                        className="flex-1 overflow-y-auto px-4 pb-4"
+                    >
+                        <dl className="divide-y">
+                            <DetailRow label="Name">{mcp.name}</DetailRow>
+                            <DetailRow label="Description">
+                                {mcp.description || (
+                                    <span className="italic text-muted-foreground/50">
+                                        No description
+                                    </span>
+                                )}
+                            </DetailRow>
+                            <DetailRow label="Server URL">
+                                <CopyableUri uri={mcp.uri} />
+                            </DetailRow>
+                            <DetailRow label="Tools">
+                                {mcp.tools_count}{" "}
+                                {mcp.tools_count === 1 ? "tool" : "tools"}
+                            </DetailRow>
+                            <DetailRow label="Tags">
+                                {(mcp.tags ?? []).length === 0 ? (
+                                    <span className="italic text-muted-foreground/50">
+                                        No tags
+                                    </span>
+                                ) : (
+                                    <div className="flex flex-wrap items-center gap-1">
+                                        {(mcp.tags ?? []).map((tag) => (
+                                            <span
+                                                key={tag.id}
+                                                className="max-w-[8rem] truncate rounded-full border px-2 py-0.5 text-xs"
+                                                style={tagChipStyle(tag.color)}
+                                            >
+                                                {tag.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </DetailRow>
+                        </dl>
+                    </TabsContent>
+
+                    <TabsContent
+                        value="tools"
+                        className="flex-1 overflow-y-auto px-4 pb-4"
+                    >
+                        {open && <ToolsPanel mcpId={mcp.id} />}
+                    </TabsContent>
+
+                    <TabsContent
+                        value="agents"
+                        className="flex-1 overflow-y-auto px-4 pb-4"
+                    >
+                        {open && <McpAgentsPanel mcpId={mcp.id} />}
+                    </TabsContent>
+                </Tabs>
+            </DrawerContent>
+        </Drawer>
+    );
+}
+
+// ---------- Columns ----------
+
+// Name cell opens the details drawer on the Overview tab.
+function NameCell({ mcp }: { mcp: Mcp }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="truncate text-left font-medium hover:underline"
+            >
+                {mcp.name}
+            </button>
+            <McpDetailsDrawer mcp={mcp} open={open} onOpenChange={setOpen} />
+        </>
+    );
+}
+
+// Tools cell opens the details drawer straight on the Tools tab.
+function ToolsCell({ mcp }: { mcp: Mcp }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground"
+                onClick={() => setOpen(true)}
+            >
+                <Wrench className="size-3.5" />
+                {mcp.tools_count} {mcp.tools_count === 1 ? "tool" : "tools"}
+            </Button>
+            <McpDetailsDrawer
+                mcp={mcp}
+                open={open}
+                onOpenChange={setOpen}
+                initialTab="tools"
+            />
+        </>
+    );
+}
+
+export function createMcpColumns({
+    renderActions,
+}: {
+    renderActions?: (mcp: Mcp) => ReactNode;
+} = {}): ColumnDef<Mcp>[] {
+    return [
+        {
+            id: "name",
+            header: "Name",
+            meta: { className: "max-w-48 truncate" },
+            cell: ({ row }) => <NameCell mcp={row.original} />,
+        },
+        {
+            id: "uri",
+            header: "Server URL",
+            meta: { className: "max-w-56" },
+            cell: ({ row }) => <CopyableUri uri={row.original.uri} />,
+        },
+        {
+            id: "tags",
+            header: "Tags",
+            cell: ({ row }) => {
+                const tags = row.original.tags ?? [];
+                if (tags.length === 0)
+                    return (
+                        <span className="italic text-muted-foreground/50">—</span>
+                    );
+                return (
+                    <div className="flex flex-wrap items-center gap-1">
+                        {tags.map((tag) => (
+                            <span
+                                key={tag.id}
+                                className="max-w-[8rem] truncate rounded-full border px-2 py-0.5 text-xs"
+                                style={tagChipStyle(tag.color)}
+                            >
+                                {tag.name}
+                            </span>
+                        ))}
+                    </div>
+                );
+            },
+        },
+        {
+            id: "tools",
+            header: "Tools",
+            enableSorting: false,
+            cell: ({ row }) => <ToolsCell mcp={row.original} />,
+        },
+        {
+            id: "actions",
+            header: "",
+            enableSorting: false,
+            meta: { headerClassName: "w-0", cellClassName: "text-right" },
+            cell: ({ row }) =>
+                renderActions ? (
+                    renderActions(row.original)
+                ) : (
+                    <McpActions mcp={row.original} />
+                ),
+        },
+    ];
+}
+
+export const mcpColumns = createMcpColumns();
 
 // ---------- Route ----------
 
@@ -853,6 +1145,7 @@ function RouteComponent() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("");
+    const [tagId, setTagId] = useState("");
 
     const {
         data: mcps,
@@ -860,17 +1153,24 @@ function RouteComponent() {
         isError,
         isFetching,
     } = useQuery({
-        queryKey: ["mcps", { page, search, sort }],
+        queryKey: ["mcps", { page, search, sort, tagId }],
         queryFn: () =>
             getMcps({
                 offset: page - 1,
                 limit: LIMIT,
                 search: search || undefined,
                 sort: sort || undefined,
+                tag_id: tagId || undefined,
             }),
         placeholderData: keepPreviousData,
     });
     const pagination = mcps?.pagination;
+
+    const { data: tags } = useQuery({ queryKey: ["tags"], queryFn: getTags });
+    const tagOptions: Option[] = (tags?.data ?? []).map((t) => ({
+        label: t.name,
+        value: t.id,
+    }));
 
     function resetTo<T>(setter: (v: T) => void) {
         return (v: T) => {
@@ -895,6 +1195,15 @@ function RouteComponent() {
                         search={search}
                         onSearchChange={resetTo(setSearch)}
                         searchPlaceholder="Search MCPs..."
+                        filters={[
+                            {
+                                label: "Tag",
+                                value: tagId,
+                                options: tagOptions,
+                                onChange: resetTo(setTagId),
+                                allLabel: "All tags",
+                            },
+                        ]}
                         sort={{
                             label: "Sort",
                             value: sort,
@@ -903,42 +1212,27 @@ function RouteComponent() {
                         }}
                         action={<AddMcpDialog />}
                     />
-                    {isPending ? (
-                        <div className="flex items-center justify-center py-16">
-                            <p className="text-sm text-muted-foreground">
-                                Loading MCPs...
-                            </p>
-                        </div>
-                    ) : isError ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+                    <TanStackDataTable
+                        columns={mcpColumns}
+                        data={mcps?.data ?? []}
+                        getRowKey={(mcp) => mcp.id}
+                        enableSorting={false}
+                        isLoading={isPending}
+                        isError={isError}
+                        loadingMessage="Loading MCPs..."
+                        errorMessage="Failed to load MCPs"
+                        emptyMessage="No MCPs found"
+                        emptyIcon={
                             <Plug className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                Failed to load MCPs
-                            </p>
-                        </div>
-                    ) : mcps.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-                            <Plug className="size-8 text-muted-foreground/40" />
-                            <p className="text-sm text-muted-foreground">
-                                No MCPs found
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-6">
-                            <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {mcps.data.map((mcp) => (
-                                    <McpCard key={mcp.id} mcp={mcp} />
-                                ))}
-                            </div>
-                            <DataTablePaginationBar
-                                page={page}
-                                totalPage={pagination?.total_page ?? 1}
-                                totalRow={pagination?.total_row ?? 0}
-                                onPageChange={setPage}
-                                disabled={isFetching}
-                            />
-                        </div>
-                    )}
+                        }
+                        pagination={{
+                            page,
+                            totalPage: pagination?.total_page ?? 1,
+                            totalRow: pagination?.total_row ?? 0,
+                            onPageChange: setPage,
+                            disabled: isFetching,
+                        }}
+                    />
                 </div>
             </div>
         </div>
