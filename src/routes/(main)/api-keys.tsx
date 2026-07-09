@@ -26,6 +26,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resolveServerMessage } from "@/lib/utils";
@@ -42,9 +43,53 @@ export const Route = createFileRoute("/(main)/api-keys")({
 
 const createApiKeySchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
+    // "" = never expires. A date string must be today or later.
+    expires_at: z
+        .string()
+        .refine(
+            (v) => v === "" || new Date(v) >= new Date(new Date().toDateString()),
+            "Expiration date must be today or later",
+        ),
 });
 
 type CreateApiKeyValues = z.infer<typeof createApiKeySchema>;
+
+// The form stores the expiry as "YYYY-MM-DD" (local). Convert to an RFC3339
+// timestamp at the end of that day so a key stays valid through its last day.
+function expiryToIso(date: string): string | null {
+    if (!date) return null;
+    const d = new Date(`${date}T23:59:59.999`);
+    return d.toISOString();
+}
+
+// Local "YYYY-MM-DD" <-> Date for the picker (avoids UTC off-by-one).
+function ymdToDate(ymd: string): Date | undefined {
+    return ymd ? new Date(`${ymd}T00:00:00`) : undefined;
+}
+
+function dateToYmd(date: Date | undefined): string {
+    if (!date) return "";
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${m}-${d}`;
+}
+
+// Expiry display for a key. Kept out of the render body so the `Date.now()`
+// read isn't an impure call during render.
+function describeExpiry(expiresAt: string | null): {
+    label: string;
+    isExpired: boolean;
+} {
+    if (!expiresAt) return { label: "Never expires", isExpired: false };
+    const d = new Date(expiresAt);
+    const isExpired = d.getTime() <= Date.now();
+    const date = d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+    return { label: `${isExpired ? "Expired" : "Expires"} ${date}`, isExpired };
+}
 
 function CreateApiKeyDialog() {
     const [open, setOpen] = useState(false);
@@ -62,12 +107,16 @@ function CreateApiKeyDialog() {
     const form = useForm({
         defaultValues: {
             name: "",
+            expires_at: "",
         } satisfies CreateApiKeyValues,
         onSubmit: async ({ value }) => {
             const result = createApiKeySchema.safeParse(value);
             if (!result.success) return;
 
-            await mutation.mutateAsync(result.data);
+            await mutation.mutateAsync({
+                name: result.data.name,
+                expires_at: expiryToIso(result.data.expires_at),
+            });
         },
     });
 
@@ -159,6 +208,53 @@ function CreateApiKeyDialog() {
                         )}
                     </form.Field>
 
+                    <form.Field
+                        name="expires_at"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const result =
+                                    createApiKeySchema.shape.expires_at.safeParse(
+                                        value,
+                                    );
+                                return result.success
+                                    ? undefined
+                                    : result.error.issues[0]?.message;
+                            },
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>
+                                    Expiration date{" "}
+                                    <span className="font-normal text-muted-foreground">
+                                        (optional)
+                                    </span>
+                                </Label>
+                                <DatePicker
+                                    id={field.name}
+                                    value={ymdToDate(field.state.value)}
+                                    fromDate={new Date()}
+                                    placeholder="Never expires"
+                                    onChange={(date) => {
+                                        field.handleChange(dateToYmd(date));
+                                        mutation.reset();
+                                    }}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Leave empty for a key that never expires.
+                                </p>
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button type="button" variant="outline">
@@ -208,6 +304,8 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
         { year: "numeric", month: "short", day: "numeric" },
     );
 
+    const { label: expiryLabel, isExpired } = describeExpiry(apiKey.expires_at);
+
     function handleCopy() {
         navigator.clipboard.writeText(apiKey.token);
         setCopied(true);
@@ -246,9 +344,20 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
                     </Button>
                 </div>
             </div>
-            <span className="shrink-0 text-xs text-muted-foreground">
-                {formattedDate}
-            </span>
+            <div className="flex shrink-0 flex-col items-end gap-0.5">
+                <span
+                    className={`text-xs ${
+                        isExpired
+                            ? "font-medium text-destructive"
+                            : "text-muted-foreground"
+                    }`}
+                >
+                    {expiryLabel}
+                </span>
+                <span className="text-[11px] text-muted-foreground/70">
+                    Created {formattedDate}
+                </span>
+            </div>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button

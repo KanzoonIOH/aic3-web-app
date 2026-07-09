@@ -7,11 +7,14 @@ export interface ApiKey {
     id: string;
     name: string;
     token: string;
+    expires_at: string | null;
     created_at: string;
 }
 
 export interface CreateApiKeyRequest {
     name: string;
+    // RFC3339 timestamp, or null/omitted for a key that never expires.
+    expires_at?: string | null;
 }
 
 // ---------- API functions ----------

@@ -1,5 +1,9 @@
 import logoDark from "@/assets/logo_ioh_dark.svg";
 import logoLight from "@/assets/logo_ioh_light.svg";
+import {
+    ShortcutsDialog,
+    useKeyboardShortcuts,
+} from "@/components/keyboard-shortcuts";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +29,7 @@ import {
     ChevronsUpDownIcon,
     Clock,
     History,
+    Keyboard,
     KeyRound,
     LayoutDashboardIcon,
     LogOut,
@@ -38,7 +43,7 @@ import {
     Tag,
     Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { SettingsDialog } from "./-SettingsDialog";
 
 export const Route = createFileRoute("/(main)")({
@@ -125,7 +130,11 @@ function ThemeToggle() {
     );
 }
 
-function UserSection() {
+function UserSection({
+    onShowShortcuts,
+}: {
+    onShowShortcuts: () => void;
+}) {
     const user = useAuthStore((s) => s.user);
     const clearAuth = useAuthStore((s) => s.clearAuth);
     const router = useRouter();
@@ -176,6 +185,18 @@ function UserSection() {
                         >
                             <Settings className="size-4" />
                             Settings
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2 font-normal"
+                            onClick={onShowShortcuts}
+                        >
+                            <Keyboard className="size-4" />
+                            Keyboard shortcuts
+                            <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
+                                ?
+                            </kbd>
                         </Button>
                     </div>
 
@@ -262,6 +283,9 @@ function PendingGate() {
 function RouteComponent() {
     const role = useAuthStore((s) => s.user?.role);
     const [agentsOpen, setAgentsOpen] = useState(true);
+    const [shortcutsOpen, setShortcutsOpen] = useState(false);
+    const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
+    useKeyboardShortcuts(showShortcuts);
     if (role === "PENDING") {
         return <PendingGate />;
     }
@@ -353,11 +377,16 @@ function RouteComponent() {
                 </nav>
                 <Separator />
                 <div className="p-2">
-                    <UserSection />
+                    <UserSection onShowShortcuts={showShortcuts} />
                 </div>
             </aside>
 
             <Outlet />
+
+            <ShortcutsDialog
+                open={shortcutsOpen}
+                onOpenChange={setShortcutsOpen}
+            />
         </div>
     );
 }
