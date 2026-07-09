@@ -141,12 +141,11 @@ function ImageCropDialog({
     const [offset, setOffset] = useState({ x: 0, y: 0 });
     // Natural dimensions of the loaded image (0 until known).
     const [dims, setDims] = useState({ w: 0, h: 0 });
-    // Object URL for the source file, created once per mount. The dialog
-    // remounts per file (via key), so StrictMode's mount→unmount→remount makes
-    // a fresh URL here instead of reusing a revoked one.
-    const [url] = useState(() =>
-        file ? URL.createObjectURL(file) : null,
-    );
+    // Object URL for the source file. Created and revoked in one effect so
+    // StrictMode's mount→unmount→remount recreates it instead of reusing a
+    // revoked URL (useState-initialized state survives the remount, the URL
+    // string didn't — hence the broken preview in dev).
+    const [url, setUrl] = useState<string | null>(null);
     const imgRef = useRef<HTMLImageElement>(null);
     // In-progress drag state (null = not dragging).
     const dragRef = useRef<{
@@ -157,9 +156,11 @@ function ImageCropDialog({
     } | null>(null);
 
     useEffect(() => {
-        if (!url) return;
-        return () => URL.revokeObjectURL(url);
-    }, [url]);
+        if (!file) return;
+        const u = URL.createObjectURL(file);
+        setUrl(u);
+        return () => URL.revokeObjectURL(u);
+    }, [file]);
 
     // coverScale: scale so the image covers the square viewport at zoom 1.
     const coverScale =
