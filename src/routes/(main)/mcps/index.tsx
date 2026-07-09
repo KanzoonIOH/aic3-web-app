@@ -649,6 +649,7 @@ function EditMcpDialog({
 // ---------- MCP actions menu ----------
 
 function McpActions({ mcp }: { mcp: Mcp }) {
+    const [detailsOpen, setDetailsOpen] = useState(false);
     const [accessOpen, setAccessOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -676,6 +677,9 @@ function McpActions({ mcp }: { mcp: Mcp }) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setDetailsOpen(true)}>
+                        Details
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setAccessOpen(true)}>
                         Give Access
                     </DropdownMenuItem>
@@ -690,6 +694,12 @@ function McpActions({ mcp }: { mcp: Mcp }) {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            <McpDetailsDrawer
+                mcp={mcp}
+                open={detailsOpen}
+                onOpenChange={setDetailsOpen}
+            />
 
             <McpAgentAccessDialog
                 mcp={mcp}
@@ -1063,6 +1073,8 @@ function ToolsCell({ mcp }: { mcp: Mcp }) {
     );
 }
 
+
+
 export function createMcpColumns({
     renderActions,
 }: {
@@ -1110,6 +1122,16 @@ export function createMcpColumns({
             header: "Tools",
             enableSorting: false,
             cell: ({ row }) => <ToolsCell mcp={row.original} />,
+        },
+        {
+            id: "used_by",
+            header: "Used By",
+            enableSorting: false,
+            meta: { className: "text-sm text-muted-foreground" },
+            cell: ({ row }) => {
+                const agentsCount = row.original.agents_count ?? 0;
+                return `${agentsCount} ${agentsCount === 1 ? "agent" : "agents"}`;
+            },
         },
         {
             id: "actions",

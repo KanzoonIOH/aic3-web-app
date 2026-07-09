@@ -14,6 +14,7 @@ export interface Mcp {
     headers: McpHeaders | null;
     agent_id: string;
     tools_count: number;
+    agents_count: number;
     tags: Tag[] | null;
     created_at: string;
     updated_at: string;
