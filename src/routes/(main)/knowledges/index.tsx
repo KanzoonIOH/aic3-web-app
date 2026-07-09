@@ -118,7 +118,7 @@ function CreateKnowledgeDialog() {
                 if (!url.trim()) return;
                 await mutation.mutateAsync({
                     ...result.data,
-                    source_type: "link",
+                    source_type: "web",
                     source_uri: url.trim(),
                     is_crawl: crawl,
                 });

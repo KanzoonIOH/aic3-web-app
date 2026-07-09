@@ -16,14 +16,14 @@ export interface Knowledge {
     deleted_at: string | null;
 }
 
-// Either a file upload or a link. For a link, source_type is "link", source_uri
+// Either a file upload or a link. For a link, source_type is "web", source_uri
 // holds the URL, and is_crawl decides crawl-whole-site vs single-page.
 export type CreateKnowledgeRequest =
     | { name: string; description: string; source_type: string; file: File }
     | {
           name: string;
           description: string;
-          source_type: "link";
+          source_type: "web";
           source_uri: string;
           is_crawl: boolean;
       };
