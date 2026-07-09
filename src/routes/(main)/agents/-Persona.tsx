@@ -252,6 +252,13 @@ export function Persona({ agentId }: { agentId: string }) {
         setLoadedFor(agent.data.id);
         setGuardrail(serverGuardrail);
         setSavedGuardrail(serverGuardrail);
+        const serverPersona: PersonaState = {
+            tone: agent.data.tone as Tone,
+            length: agent.data.response_length as Length,
+            communicationStyle: agent.data.communication_style as CommunicationStyle,
+        };
+        setPersona(serverPersona);
+        setSavedPersona(serverPersona);
     }
 
     const isDirty =

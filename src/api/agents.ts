@@ -27,6 +27,9 @@ export interface Agent {
     webhook_body_fields: BodyField[] | null;
     webhook_header_fields: BodyField[] | null;
     guardrail: string;
+    tone: string;
+    response_length: string;
+    communication_style: string;
     tags: Tag[] | null;
     image: string | null; // emoji string or object-storage URL
     knowledges_count: number;
