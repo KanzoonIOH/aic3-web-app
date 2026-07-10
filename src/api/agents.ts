@@ -33,6 +33,8 @@ export interface Agent {
     communication_style: string;
     tags: Tag[] | null;
     image: string | null; // emoji string or object-storage URL
+    can_act: boolean;
+    template_id: string; // static template id ("product", "booking", ...) or ""
     knowledges_count: number;
     mcps_count: number;
     pinned: boolean;
@@ -65,6 +67,8 @@ export interface CreateAgentRequest {
     guardrail: string;
     tags: string[];
     image?: string | null;
+    can_act: boolean;
+    template_id: string;
 }
 
 // Uploads an agent picture and returns its public URL. Emojis are stored as

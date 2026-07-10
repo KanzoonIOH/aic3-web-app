@@ -21,6 +21,7 @@ export interface AgentTemplate {
     webhook_uri: string;
     webhook_input_field: string;
     webhook_output_field: string;
+    can_act: boolean;
     // Card visuals for the picker.
     icon: LucideIcon;
     // Tailwind classes for the icon tile (accent per template).
@@ -29,7 +30,7 @@ export interface AgentTemplate {
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
     {
-        id: "product-inquiry",
+        id: "product",
         name: "Product Inquiry Agent",
         description:
             "Answers questions about Indosat products, packages, pricing, and availability. Helps customers compare options and pick the right plan.",
@@ -38,6 +39,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
         webhook_uri: "https://103.67.43.198:8443/agents/product/ask",
         webhook_input_field: "chatInput",
         webhook_output_field: "reply",
+        can_act: false,
         icon: ShoppingBag,
         accent: "text-sky-600 bg-sky-500/10 ring-sky-500/20",
     },
@@ -51,6 +53,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
         webhook_uri: "https://103.67.43.198:8443/agents/booking/ask",
         webhook_input_field: "chatInput",
         webhook_output_field: "reply",
+        can_act: true,
         icon: Ticket,
         accent: "text-violet-600 bg-violet-500/10 ring-violet-500/20",
     },
@@ -64,11 +67,12 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
         webhook_uri: "https://103.67.43.198:8443/agents/general/ask",
         webhook_input_field: "chatInput",
         webhook_output_field: "reply",
+        can_act: false,
         icon: MessageCircleQuestion,
         accent: "text-emerald-600 bg-emerald-500/10 ring-emerald-500/20",
     },
     {
-        id: "complaint-handler",
+        id: "complaint",
         name: "Complaint Handler Agent",
         description:
             "Handles customer complaints with empathy, logs the issue, and either resolves it or escalates to the correct team with full context.",
@@ -77,6 +81,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
         webhook_uri: "https://103.67.43.198:8443/agents/complaint/ask",
         webhook_input_field: "chatInput",
         webhook_output_field: "reply",
+        can_act: true,
         icon: HeadphonesIcon,
         accent: "text-amber-600 bg-amber-500/10 ring-amber-500/20",
     },

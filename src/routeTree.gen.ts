@@ -28,9 +28,10 @@ import { Route as mainGlobalConfigIndexRouteImport } from './routes/(main)/globa
 import { Route as mainChatIndexRouteImport } from './routes/(main)/chat/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
 import { Route as mainChatIdRouteImport } from './routes/(main)/chat/$id'
-import { Route as mainAgentsOrchestratorRouteImport } from './routes/(main)/agents/orchestrator'
-import { Route as mainAgentsGardenRouteImport } from './routes/(main)/agents/garden'
-import { Route as mainAgentsIdRouteImport } from './routes/(main)/agents/$id'
+import { Route as mainAgentsOrchestratorIndexRouteImport } from './routes/(main)/agents/orchestrator/index'
+import { Route as mainAgentsGardenIndexRouteImport } from './routes/(main)/agents/garden/index'
+import { Route as mainAgentsOrchestratorIdRouteImport } from './routes/(main)/agents/orchestrator/$id'
+import { Route as mainAgentsGardenIdRouteImport } from './routes/(main)/agents/garden/$id'
 
 const mainRouteRoute = mainRouteRouteImport.update({
   id: '/(main)',
@@ -125,19 +126,26 @@ const mainChatIdRoute = mainChatIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => mainChatRouteRoute,
 } as any)
-const mainAgentsOrchestratorRoute = mainAgentsOrchestratorRouteImport.update({
-  id: '/agents/orchestrator',
-  path: '/agents/orchestrator',
+const mainAgentsOrchestratorIndexRoute =
+  mainAgentsOrchestratorIndexRouteImport.update({
+    id: '/agents/orchestrator/',
+    path: '/agents/orchestrator/',
+    getParentRoute: () => mainRouteRoute,
+  } as any)
+const mainAgentsGardenIndexRoute = mainAgentsGardenIndexRouteImport.update({
+  id: '/agents/garden/',
+  path: '/agents/garden/',
   getParentRoute: () => mainRouteRoute,
 } as any)
-const mainAgentsGardenRoute = mainAgentsGardenRouteImport.update({
-  id: '/agents/garden',
-  path: '/agents/garden',
-  getParentRoute: () => mainRouteRoute,
-} as any)
-const mainAgentsIdRoute = mainAgentsIdRouteImport.update({
-  id: '/agents/$id',
-  path: '/agents/$id',
+const mainAgentsOrchestratorIdRoute =
+  mainAgentsOrchestratorIdRouteImport.update({
+    id: '/agents/orchestrator/$id',
+    path: '/agents/orchestrator/$id',
+    getParentRoute: () => mainRouteRoute,
+  } as any)
+const mainAgentsGardenIdRoute = mainAgentsGardenIdRouteImport.update({
+  id: '/agents/garden/$id',
+  path: '/agents/garden/$id',
   getParentRoute: () => mainRouteRoute,
 } as any)
 
@@ -153,15 +161,16 @@ export interface FileRoutesByFullPath {
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/tags': typeof mainTagsRoute
-  '/agents/$id': typeof mainAgentsIdRoute
-  '/agents/garden': typeof mainAgentsGardenRoute
-  '/agents/orchestrator': typeof mainAgentsOrchestratorRoute
   '/chat/$id': typeof mainChatIdRoute
   '/agents/': typeof mainAgentsIndexRoute
   '/chat/': typeof mainChatIndexRoute
   '/global-config/': typeof mainGlobalConfigIndexRoute
   '/knowledges/': typeof mainKnowledgesIndexRoute
   '/mcps/': typeof mainMcpsIndexRoute
+  '/agents/garden/$id': typeof mainAgentsGardenIdRoute
+  '/agents/orchestrator/$id': typeof mainAgentsOrchestratorIdRoute
+  '/agents/garden/': typeof mainAgentsGardenIndexRoute
+  '/agents/orchestrator/': typeof mainAgentsOrchestratorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,15 +183,16 @@ export interface FileRoutesByTo {
   '/logs': typeof mainLogsRoute
   '/members': typeof mainMembersRoute
   '/tags': typeof mainTagsRoute
-  '/agents/$id': typeof mainAgentsIdRoute
-  '/agents/garden': typeof mainAgentsGardenRoute
-  '/agents/orchestrator': typeof mainAgentsOrchestratorRoute
   '/chat/$id': typeof mainChatIdRoute
   '/agents': typeof mainAgentsIndexRoute
   '/chat': typeof mainChatIndexRoute
   '/global-config': typeof mainGlobalConfigIndexRoute
   '/knowledges': typeof mainKnowledgesIndexRoute
   '/mcps': typeof mainMcpsIndexRoute
+  '/agents/garden/$id': typeof mainAgentsGardenIdRoute
+  '/agents/orchestrator/$id': typeof mainAgentsOrchestratorIdRoute
+  '/agents/garden': typeof mainAgentsGardenIndexRoute
+  '/agents/orchestrator': typeof mainAgentsOrchestratorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -199,15 +209,16 @@ export interface FileRoutesById {
   '/(main)/logs': typeof mainLogsRoute
   '/(main)/members': typeof mainMembersRoute
   '/(main)/tags': typeof mainTagsRoute
-  '/(main)/agents/$id': typeof mainAgentsIdRoute
-  '/(main)/agents/garden': typeof mainAgentsGardenRoute
-  '/(main)/agents/orchestrator': typeof mainAgentsOrchestratorRoute
   '/(main)/chat/$id': typeof mainChatIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
   '/(main)/chat/': typeof mainChatIndexRoute
   '/(main)/global-config/': typeof mainGlobalConfigIndexRoute
   '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
   '/(main)/mcps/': typeof mainMcpsIndexRoute
+  '/(main)/agents/garden/$id': typeof mainAgentsGardenIdRoute
+  '/(main)/agents/orchestrator/$id': typeof mainAgentsOrchestratorIdRoute
+  '/(main)/agents/garden/': typeof mainAgentsGardenIndexRoute
+  '/(main)/agents/orchestrator/': typeof mainAgentsOrchestratorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -223,15 +234,16 @@ export interface FileRouteTypes {
     | '/logs'
     | '/members'
     | '/tags'
-    | '/agents/$id'
-    | '/agents/garden'
-    | '/agents/orchestrator'
     | '/chat/$id'
     | '/agents/'
     | '/chat/'
     | '/global-config/'
     | '/knowledges/'
     | '/mcps/'
+    | '/agents/garden/$id'
+    | '/agents/orchestrator/$id'
+    | '/agents/garden/'
+    | '/agents/orchestrator/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -244,15 +256,16 @@ export interface FileRouteTypes {
     | '/logs'
     | '/members'
     | '/tags'
-    | '/agents/$id'
-    | '/agents/garden'
-    | '/agents/orchestrator'
     | '/chat/$id'
     | '/agents'
     | '/chat'
     | '/global-config'
     | '/knowledges'
     | '/mcps'
+    | '/agents/garden/$id'
+    | '/agents/orchestrator/$id'
+    | '/agents/garden'
+    | '/agents/orchestrator'
   id:
     | '__root__'
     | '/'
@@ -268,15 +281,16 @@ export interface FileRouteTypes {
     | '/(main)/logs'
     | '/(main)/members'
     | '/(main)/tags'
-    | '/(main)/agents/$id'
-    | '/(main)/agents/garden'
-    | '/(main)/agents/orchestrator'
     | '/(main)/chat/$id'
     | '/(main)/agents/'
     | '/(main)/chat/'
     | '/(main)/global-config/'
     | '/(main)/knowledges/'
     | '/(main)/mcps/'
+    | '/(main)/agents/garden/$id'
+    | '/(main)/agents/orchestrator/$id'
+    | '/(main)/agents/garden/'
+    | '/(main)/agents/orchestrator/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -420,25 +434,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainChatIdRouteImport
       parentRoute: typeof mainChatRouteRoute
     }
-    '/(main)/agents/orchestrator': {
-      id: '/(main)/agents/orchestrator'
+    '/(main)/agents/orchestrator/': {
+      id: '/(main)/agents/orchestrator/'
       path: '/agents/orchestrator'
-      fullPath: '/agents/orchestrator'
-      preLoaderRoute: typeof mainAgentsOrchestratorRouteImport
+      fullPath: '/agents/orchestrator/'
+      preLoaderRoute: typeof mainAgentsOrchestratorIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/agents/garden': {
-      id: '/(main)/agents/garden'
+    '/(main)/agents/garden/': {
+      id: '/(main)/agents/garden/'
       path: '/agents/garden'
-      fullPath: '/agents/garden'
-      preLoaderRoute: typeof mainAgentsGardenRouteImport
+      fullPath: '/agents/garden/'
+      preLoaderRoute: typeof mainAgentsGardenIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
-    '/(main)/agents/$id': {
-      id: '/(main)/agents/$id'
-      path: '/agents/$id'
-      fullPath: '/agents/$id'
-      preLoaderRoute: typeof mainAgentsIdRouteImport
+    '/(main)/agents/orchestrator/$id': {
+      id: '/(main)/agents/orchestrator/$id'
+      path: '/agents/orchestrator/$id'
+      fullPath: '/agents/orchestrator/$id'
+      preLoaderRoute: typeof mainAgentsOrchestratorIdRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/agents/garden/$id': {
+      id: '/(main)/agents/garden/$id'
+      path: '/agents/garden/$id'
+      fullPath: '/agents/garden/$id'
+      preLoaderRoute: typeof mainAgentsGardenIdRouteImport
       parentRoute: typeof mainRouteRoute
     }
   }
@@ -482,13 +503,14 @@ interface mainRouteRouteChildren {
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainTagsRoute: typeof mainTagsRoute
-  mainAgentsIdRoute: typeof mainAgentsIdRoute
-  mainAgentsGardenRoute: typeof mainAgentsGardenRoute
-  mainAgentsOrchestratorRoute: typeof mainAgentsOrchestratorRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
   mainGlobalConfigIndexRoute: typeof mainGlobalConfigIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
   mainMcpsIndexRoute: typeof mainMcpsIndexRoute
+  mainAgentsGardenIdRoute: typeof mainAgentsGardenIdRoute
+  mainAgentsOrchestratorIdRoute: typeof mainAgentsOrchestratorIdRoute
+  mainAgentsGardenIndexRoute: typeof mainAgentsGardenIndexRoute
+  mainAgentsOrchestratorIndexRoute: typeof mainAgentsOrchestratorIndexRoute
 }
 
 const mainRouteRouteChildren: mainRouteRouteChildren = {
@@ -499,13 +521,14 @@ const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
   mainTagsRoute: mainTagsRoute,
-  mainAgentsIdRoute: mainAgentsIdRoute,
-  mainAgentsGardenRoute: mainAgentsGardenRoute,
-  mainAgentsOrchestratorRoute: mainAgentsOrchestratorRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
   mainGlobalConfigIndexRoute: mainGlobalConfigIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,
   mainMcpsIndexRoute: mainMcpsIndexRoute,
+  mainAgentsGardenIdRoute: mainAgentsGardenIdRoute,
+  mainAgentsOrchestratorIdRoute: mainAgentsOrchestratorIdRoute,
+  mainAgentsGardenIndexRoute: mainAgentsGardenIndexRoute,
+  mainAgentsOrchestratorIndexRoute: mainAgentsOrchestratorIndexRoute,
 }
 
 const mainRouteRouteWithChildren = mainRouteRoute._addFileChildren(

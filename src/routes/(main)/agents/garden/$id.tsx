@@ -47,14 +47,15 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { z } from "zod";
-import { ChatSanbox } from "./-ChatSandbox";
-import { ChatWidget } from "./-ChatWidget";
-import { Knowledges } from "./-Knowledges";
-import { Mcps } from "./-Mcps";
-import { Overview } from "./-Overview";
-import { Persona } from "./-Persona";
+import { ChatSanbox } from "../-ChatSandbox";
+import { ChatWidget } from "../-ChatWidget";
+import { Knowledges } from "../-Knowledges";
+import { Mcps } from "../-Mcps";
+import { Overview } from "../-Overview";
+import { Persona } from "../-Persona";
+import { DetailHeader } from "../-DetailHeader";
 
-export const Route = createFileRoute("/(main)/agents/$id")({
+export const Route = createFileRoute("/(main)/agents/garden/$id")({
     component: RouteComponent,
 });
 
@@ -940,17 +941,13 @@ function RouteComponent() {
 
     return (
         <div className="flex h-full flex-col overflow-hidden">
-            <div className="px-6 py-4 bg-background border-b shrink-0 flex items-start gap-4">
-                <div className="min-w-0 flex-1">
-                    <h1 className="font-heading text-2xl font-semibold">
-                        {agent.data.name}
-                    </h1>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                        {agent.data.description}
-                    </p>
-                </div>
-                <EditAgentDialog agent={agent.data} />
-            </div>
+            <DetailHeader
+                name={agent.data.name}
+                description={agent.data.description}
+                image={agent.data.image}
+                isActive={agent.data.is_active}
+                editTrigger={<EditAgentDialog agent={agent.data} />}
+            />
 
             <Tabs
                 defaultValue="overview"
