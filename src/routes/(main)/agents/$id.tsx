@@ -708,12 +708,25 @@ ${extraHeaders ? extraHeaders + "\n" : ""}  --data '{
 ${bodyEntries.join(",\n")}
 }'`;
 
+    // Streaming: same contract, append /stream to the URL. -N disables curl
+    // buffering so chunks print live; the reply arrives as SSE data: lines.
+    const curlSnippetStream = `curl -N --request POST \\
+  --url ${endpointUrl}/stream \\
+  --header 'authorization: Bearer [your token here]' \\
+  --header 'content-type: application/json' \\
+  --header 'accept: text/event-stream' \\
+  --header 'x-session-id: [existing session id]' \\
+${extraHeaders ? extraHeaders + "\n" : ""}  --data '{
+${bodyEntries.join(",\n")}
+}'`;
+
     const widgetSnippet = buildWidgetSnippet(
         endpointUrl,
         agent.webhook_output_field || "reply",
     );
 
     const curlCopy = useCopyState();
+    const curlStreamCopy = useCopyState();
     const urlCopy = useCopyState();
     const widgetCopy = useCopyState();
 
@@ -768,11 +781,11 @@ ${bodyEntries.join(",\n")}
                     </div>
                 </div>
 
-                {/* cURL snippet */}
+                {/* cURL snippet — non-streaming */}
                 <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
                         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            cURL example
+                            cURL example — non-streaming
                         </p>
                         <Button
                             size="sm"
@@ -792,8 +805,53 @@ ${bodyEntries.join(",\n")}
                             )}
                         </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                        Returns the full JSON reply in one response.
+                    </p>
                     <pre className="overflow-x-auto rounded-lg border border-border bg-muted/40 px-4 py-3.5 text-xs font-mono leading-relaxed text-foreground whitespace-pre">
                         {curlSnippet}
+                    </pre>
+                </div>
+
+                {/* cURL snippet — streaming */}
+                <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            cURL example — streaming
+                        </p>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                                curlStreamCopy.copy(curlSnippetStream)
+                            }
+                            className="gap-1.5 h-7 text-xs"
+                        >
+                            {curlStreamCopy.copied ? (
+                                <>
+                                    <Check className="size-3.5 text-green-500" />{" "}
+                                    Copied
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="size-3.5" /> Copy cURL
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        Same request with{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                            /stream
+                        </code>{" "}
+                        appended to the URL. The reply streams back as{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                            text/event-stream
+                        </code>{" "}
+                        chunks (SSE).
+                    </p>
+                    <pre className="overflow-x-auto rounded-lg border border-border bg-muted/40 px-4 py-3.5 text-xs font-mono leading-relaxed text-foreground whitespace-pre">
+                        {curlSnippetStream}
                     </pre>
                 </div>
 

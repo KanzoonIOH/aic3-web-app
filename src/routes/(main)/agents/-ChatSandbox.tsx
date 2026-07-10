@@ -1,5 +1,6 @@
 import {
     chatWithAgent,
+    chatWithAgentStream,
     type CcProduct,
     type NextStep,
     type SuggestionItem,
@@ -579,6 +580,7 @@ function ChatDefault({
     welcomeTitle,
     welcomeSlot,
     welcomeImage,
+    stream = true,
 }: {
     agentId: string;
     agentName: string;
@@ -593,6 +595,9 @@ function ChatDefault({
     welcomeSlot?: React.ReactNode;
     // Agent image: HTTP URL or emoji string. Falls back to icon when null.
     welcomeImage?: string | null;
+    // Uses the streaming endpoint (/chat/{id}/stream) and appends the reply
+    // live. Defaults true: all in-app chat streams.
+    stream?: boolean;
 }) {
     const [messages, setMessages] = useState<Message[]>(
         initialMessages ?? [],
@@ -610,9 +615,17 @@ function ChatDefault({
     );
     const [nextSteps, setNextSteps] = useState<NextStep[] | null>(null);
     const [ccProducts, setCcProducts] = useState<CcProduct[] | null>(null);
+    // Streaming-only: live flag + error, since the stream path bypasses the mutation.
+    const [streaming, setStreaming] = useState(false);
+    const [streamError, setStreamError] = useState(false);
+    // Latest thinking-process step title from the stream (SSE event:"step").
+    const [stepTitle, setStepTitle] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const sessionIdRef = useRef<string | undefined>(initialSessionId);
+    // Guards against a duplicate stream send (e.g. StrictMode double-invoke or a
+    // rapid re-trigger) creating two assistant bubbles for one turn.
+    const streamingRef = useRef(false);
 
     const resizeTextarea = useCallback(() => {
         const el = textareaRef.current;
@@ -663,14 +676,68 @@ function ChatDefault({
         dynamicKeys.every((k) => (dynamicValues[k] ?? "").trim()) &&
         dynamicHeaderKeys.every((k) => (headerValues[k] ?? "").trim());
 
+    const pending = stream ? streaming : mutation.isPending;
+    const errored = stream ? streamError : mutation.isError;
+
+    // Streaming send: append an empty assistant bubble, then grow it as chunks
+    // arrive. next_step/product cards aren't emitted mid-stream, so cleared.
+    async function sendTextStream(text: string, suggestion?: SuggestionItem) {
+        if (streamingRef.current) return; // already streaming this turn
+        streamingRef.current = true;
+        setStreamError(false);
+        setStreaming(true);
+        setStepTitle(null);
+        // Placeholder assistant message we mutate in place as deltas land.
+        setMessages((prev) => [...prev, { role: "assistant", text: "" }]);
+        try {
+            const { sessionId } = await chatWithAgentStream(
+                agentId,
+                text,
+                (fullReply) => {
+                    // fullReply is cumulative; SET the bubble (never append) so
+                    // the render is idempotent and can't duplicate text.
+                    setStepTitle(null);
+                    setMessages((prev) => {
+                        const next = [...prev];
+                        const last = next[next.length - 1];
+                        if (last && last.role === "assistant") {
+                            next[next.length - 1] = {
+                                ...last,
+                                text: fullReply,
+                            };
+                        }
+                        return next;
+                    });
+                },
+                sessionIdRef.current,
+                suggestion,
+                dynamicValues,
+                headerValues,
+                outputField,
+                (title) => setStepTitle(title),
+            );
+            if (sessionId) sessionIdRef.current = sessionId;
+        } catch {
+            setStreamError(true);
+        } finally {
+            setStreaming(false);
+            setStepTitle(null);
+            streamingRef.current = false;
+        }
+    }
+
     function sendText(text: string, suggestion?: SuggestionItem) {
-        if (!text.trim() || mutation.isPending || !dynamicReady) return;
+        if (!text.trim() || pending || !dynamicReady) return;
         setShowInitialSuggestions(false);
         setNextSteps(null);
         setCcProducts(null);
         setInput("");
         setMessages((prev) => [...prev, { role: "user", text }]);
-        mutation.mutate({ text, suggestion });
+        if (stream) {
+            void sendTextStream(text, suggestion);
+        } else {
+            mutation.mutate({ text, suggestion });
+        }
         requestAnimationFrame(() => resizeTextarea());
     }
 
@@ -687,16 +754,15 @@ function ChatDefault({
     const lastIsAssistant =
         messages.length > 0 &&
         messages[messages.length - 1].role === "assistant";
+    // While streaming we append an empty assistant bubble up front; this tells
+    // whether real answer text has started landing in it yet.
+    const lastAssistantHasText =
+        lastIsAssistant &&
+        messages[messages.length - 1].text.length > 0;
     const showNextSteps =
-        lastIsAssistant &&
-        !mutation.isPending &&
-        nextSteps &&
-        nextSteps.length > 0;
+        lastIsAssistant && !pending && nextSteps && nextSteps.length > 0;
     const showCcProducts =
-        lastIsAssistant &&
-        !mutation.isPending &&
-        ccProducts &&
-        ccProducts.length > 0;
+        lastIsAssistant && !pending && ccProducts && ccProducts.length > 0;
 
     const isEmpty = messages.length === 0;
     const showWelcome = isEmpty && !!welcomeTitle;
@@ -745,7 +811,7 @@ function ChatDefault({
                                     {msg.text}
                                 </div>
                             </div>
-                        ) : (
+                        ) : msg.text.length === 0 ? null : (
                             <div key={i} className="flex justify-start">
                                 <MarkdownMessage
                                     text={msg.text}
@@ -754,14 +820,32 @@ function ChatDefault({
                             </div>
                         ),
                     )}
-                    {mutation.isPending && (
+                    {pending && !stream && (
                         <div className="flex justify-start">
                             <p className="text-sm text-muted-foreground animate-pulse">
                                 Thinking...
                             </p>
                         </div>
                     )}
-                    {mutation.isError && (
+                    {/* Streaming: show the current thinking-process step title
+                        while no answer text has arrived yet. */}
+                    {stream &&
+                        streaming &&
+                        !lastAssistantHasText &&
+                        (stepTitle ? (
+                            <div className="flex justify-start">
+                                <p className="text-sm text-muted-foreground animate-pulse">
+                                    {stepTitle}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="flex justify-start">
+                                <p className="text-sm text-muted-foreground animate-pulse">
+                                    Thinking...
+                                </p>
+                            </div>
+                        ))}
+                    {errored && (
                         <div className="flex justify-start">
                             <p className="text-sm text-destructive">
                                 Something went wrong. Please try again.
@@ -859,18 +943,14 @@ function ChatDefault({
                                 resizeTextarea();
                             }}
                             onKeyDown={handleKeyDown}
-                            disabled={mutation.isPending || !dynamicReady}
+                            disabled={pending || !dynamicReady}
                         />
                         <Button
                             type="button"
                             size="icon"
                             className="size-9 shrink-0 rounded-full"
                             onClick={handleSend}
-                            disabled={
-                                !input.trim() ||
-                                mutation.isPending ||
-                                !dynamicReady
-                            }
+                            disabled={!input.trim() || pending || !dynamicReady}
                             aria-label="Send message"
                         >
                             <ArrowUp className="size-4" />
@@ -901,6 +981,7 @@ export function ChatSanbox({
     welcomeTitle,
     welcomeSlot,
     welcomeImage,
+    stream = true,
 }: {
     agentId: string;
     agentName: string;
@@ -913,6 +994,7 @@ export function ChatSanbox({
     welcomeTitle?: string;
     welcomeSlot?: React.ReactNode;
     welcomeImage?: string | null;
+    stream?: boolean;
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
@@ -962,6 +1044,7 @@ export function ChatSanbox({
                         welcomeTitle={welcomeTitle}
                         welcomeSlot={welcomeSlot}
                         welcomeImage={welcomeImage}
+                        stream={stream}
                     />
                 ) : (
                     <ChatSandboxWhatsApp

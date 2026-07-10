@@ -1,4 +1,5 @@
 import { client } from "./client";
+import { getToken } from "@/stores/auth";
 import type { Knowledge } from "./knowledges";
 import type { Mcp } from "./mcps";
 import type { Tag } from "./tags";
@@ -251,4 +252,134 @@ export async function chatWithAgent(
         product: data.product as CcProduct[] | null | undefined,
         sessionId: response.headers["x-session-id"] || undefined,
     };
+}
+
+// Streaming counterpart of chatWithAgent. Every agent supports both: this just
+// appends /stream to the URL.
+// Hits POST /chat/{id}/stream and invokes onChunk for each text delta as it
+// arrives. Returns the full assembled reply + session id when the stream ends.
+// Uses fetch (axios can't stream a response body in the browser).
+export async function chatWithAgentStream(
+    id: string,
+    chatInput: string,
+    onChunk: (delta: string) => void,
+    sessionId?: string,
+    suggestion?: SuggestionItem,
+    dynamicFields?: Record<string, string>,
+    dynamicHeaders?: Record<string, string>,
+    outputField = "reply",
+    onStep?: (title: string) => void,
+    signal?: AbortSignal,
+): Promise<{ reply: string; sessionId?: string }> {
+    const token = getToken();
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/chat/${id}/stream`, {
+        method: "POST",
+        signal,
+        headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+            ...(sessionId && { "x-session-id": sessionId }),
+        },
+        body: JSON.stringify({
+            chatInput,
+            ...dynamicFields,
+            ...(dynamicHeaders &&
+                Object.keys(dynamicHeaders).length > 0 && {
+                    headers: dynamicHeaders,
+                }),
+            ...(suggestion && { milvus: true, ...suggestion }),
+        }),
+    });
+
+    if (!res.ok || !res.body) {
+        throw new Error(`stream request failed: ${res.status}`);
+    }
+
+    const returnedSession =
+        res.headers.get("x-session-id") || sessionId || undefined;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let reply = "";
+    let sawSSE = false; // did the upstream actually send SSE `data:` lines?
+    let rawBody = ""; // full body, kept for the non-SSE JSON fallback
+
+    // Emit one SSE data payload. onChunk always receives the FULL reply so far
+    // (cumulative), and the UI sets the bubble to it — never appends. This makes
+    // the render idempotent, so a re-run or duplicate emit can't double the text.
+    const emit = (payload: string) => {
+        const p = payload.trim();
+        if (!p || p === "[DONE]") return;
+        try {
+            const obj = JSON.parse(p);
+            // Thinking-process events carry a step title, not answer text.
+            if (obj.event === "step") {
+                if (obj.title) onStep?.(obj.title);
+                return;
+            }
+            // Incremental token chunk -> append to the running reply.
+            const delta = obj.delta ?? obj.text ?? obj.content;
+            if (typeof delta === "string" && delta) {
+                reply += delta;
+                onChunk(reply);
+                return;
+            }
+            // Full answer field (final/one-shot) -> replace the running reply.
+            const full = obj[outputField] ?? obj.reply ?? obj.output;
+            if (typeof full === "string" && full) {
+                reply = full;
+                onChunk(reply);
+            }
+        } catch {
+            // Not JSON: treat the raw payload as an appended chunk.
+            reply += p;
+            onChunk(reply);
+        }
+    };
+
+    for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        rawBody += chunk;
+        buffer += chunk;
+
+        // Process complete lines; keep the trailing partial in the buffer.
+        let nl = buffer.indexOf("\n");
+        while (nl !== -1) {
+            const line = buffer.slice(0, nl).trim();
+            buffer = buffer.slice(nl + 1);
+            if (line.startsWith("data:")) {
+                sawSSE = true;
+                emit(line.slice(5));
+            }
+            nl = buffer.indexOf("\n");
+        }
+    }
+    // Flush any trailing data line without a newline terminator.
+    if (buffer.trim().startsWith("data:")) {
+        sawSSE = true;
+        emit(buffer.trim().slice(5));
+    }
+
+    // Fallback: upstream returned a plain JSON blob (not SSE), same shape as the
+    // non-streaming endpoint. Extract the configured output field and emit it
+    // once so the bubble isn't left empty.
+    if (!sawSSE) {
+        const body = rawBody.trim();
+        let text = body;
+        try {
+            const obj = JSON.parse(body);
+            text = obj[outputField] ?? obj.reply ?? obj.output ?? "";
+        } catch {
+            // not JSON — show the raw text as-is
+        }
+        if (typeof text === "string" && text) {
+            reply = text;
+            onChunk(text);
+        }
+    }
+
+    return { reply, sessionId: returnedSession };
 }
