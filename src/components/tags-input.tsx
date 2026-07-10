@@ -1,10 +1,15 @@
 import { getTags } from "@/api/tags";
 import { Label } from "@/components/ui/label";
+import {
+    Popover,
+    PopoverAnchor,
+    PopoverContent,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { tagChipStyle } from "@/lib/tag-color";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 // Searchable tag combobox. Value is a list of tag names (new names are created
 // on save). Chips live inside the input; typing filters existing tags in a
@@ -77,17 +82,6 @@ export function TagsInput({
     // so we never index past the list without a syncing effect.
     const activeIndex = Math.min(highlight, Math.max(0, options.length - 1));
 
-    // Close dropdown on outside click.
-    useEffect(() => {
-        function onDocClick(e: MouseEvent) {
-            if (!containerRef.current?.contains(e.target as Node)) {
-                setOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", onDocClick);
-        return () => document.removeEventListener("mousedown", onDocClick);
-    }, []);
-
     function choose(i: number) {
         const opt = options[i];
         if (opt) add(opt.name);
@@ -96,88 +90,106 @@ export function TagsInput({
     return (
         <div className="flex flex-col gap-2">
             <Label>{label}</Label>
-            <div ref={containerRef} className="relative">
-                <div
-                    className={cn(
-                        "flex min-h-9 w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-2 py-1.5 text-sm shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30",
-                    )}
-                    onClick={() => inputRef.current?.focus()}
-                >
-                    {value.map((tag) => (
-                        <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
-                            style={tagChipStyle(colorFor(tag))}
+            <Popover open={open && options.length > 0} onOpenChange={setOpen}>
+                <PopoverAnchor asChild>
+                    <div ref={containerRef}>
+                        <div
+                            className={cn(
+                                "flex min-h-9 w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-2 py-1.5 text-sm shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30",
+                            )}
+                            onClick={() => inputRef.current?.focus()}
                         >
-                            {tag}
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    remove(tag);
+                            {value.map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+                                    style={tagChipStyle(colorFor(tag))}
+                                >
+                                    {tag}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            remove(tag);
+                                        }}
+                                        aria-label={`Remove ${tag}`}
+                                        className="opacity-70 hover:opacity-100"
+                                    >
+                                        <X className="size-3" />
+                                    </button>
+                                </span>
+                            ))}
+                            <input
+                                ref={inputRef}
+                                value={draft}
+                                onChange={(e) => {
+                                    setDraft(e.target.value);
+                                    setOpen(true);
+                                    setHighlight(0);
                                 }}
-                                aria-label={`Remove ${tag}`}
-                                className="opacity-70 hover:opacity-100"
-                            >
-                                <X className="size-3" />
-                            </button>
-                        </span>
-                    ))}
-                    <input
-                        ref={inputRef}
-                        value={draft}
-                        onChange={(e) => {
-                            setDraft(e.target.value);
-                            setOpen(true);
-                            setHighlight(0);
-                        }}
-                        onFocus={() => setOpen(true)}
-                        onKeyDown={(e) => {
-                            if (e.key === "ArrowDown") {
-                                e.preventDefault();
-                                setOpen(true);
-                                setHighlight((h) =>
-                                    options.length
-                                        ? (h + 1) % options.length
-                                        : 0,
-                                );
-                            } else if (e.key === "ArrowUp") {
-                                e.preventDefault();
-                                setHighlight((h) =>
-                                    options.length
-                                        ? (h - 1 + options.length) %
-                                          options.length
-                                        : 0,
-                                );
-                            } else if (e.key === "Enter") {
-                                e.preventDefault();
-                                if (options.length) choose(activeIndex);
-                                else add(draft);
-                            } else if (
-                                e.key === "Backspace" &&
-                                draft === "" &&
-                                value.length > 0
-                            ) {
-                                remove(value[value.length - 1]);
-                            } else if (e.key === "Escape") {
-                                setOpen(false);
-                            }
-                        }}
-                        placeholder={
-                            value.length === 0 ? "Search or create a tag..." : ""
+                                onFocus={() => setOpen(true)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "ArrowDown") {
+                                        e.preventDefault();
+                                        setOpen(true);
+                                        setHighlight((h) =>
+                                            options.length
+                                                ? (h + 1) % options.length
+                                                : 0,
+                                        );
+                                    } else if (e.key === "ArrowUp") {
+                                        e.preventDefault();
+                                        setHighlight((h) =>
+                                            options.length
+                                                ? (h - 1 + options.length) %
+                                                  options.length
+                                                : 0,
+                                        );
+                                    } else if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        if (options.length) choose(activeIndex);
+                                        else add(draft);
+                                    } else if (
+                                        e.key === "Backspace" &&
+                                        draft === "" &&
+                                        value.length > 0
+                                    ) {
+                                        remove(value[value.length - 1]);
+                                    } else if (e.key === "Escape") {
+                                        setOpen(false);
+                                    }
+                                }}
+                                placeholder={
+                                    value.length === 0
+                                        ? "Search or create a tag..."
+                                        : ""
+                                }
+                                className="min-w-24 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                            />
+                        </div>
+                    </div>
+                </PopoverAnchor>
+                <PopoverContent
+                    portal={false}
+                    align="start"
+                    sideOffset={4}
+                    className="w-(--radix-popover-anchor-width) max-h-56 overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                    onInteractOutside={(e) => {
+                        if (
+                            containerRef.current?.contains(
+                                e.target as Node,
+                            )
+                        ) {
+                            e.preventDefault();
                         }
-                        className="min-w-24 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-                    />
-                </div>
-
-                {open && options.length > 0 && (
-                    <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                    }}
+                >
+                    <ul>
                         {options.map((opt, i) => (
                             <li key={`${opt.type}-${opt.name}`}>
                                 <button
                                     type="button"
-                                    // ponytail: mousedown not click so the blur
-                                    // from clicking doesn't close before select.
                                     onMouseDown={(e) => {
                                         e.preventDefault();
                                         choose(i);
@@ -214,8 +226,8 @@ export function TagsInput({
                             </li>
                         ))}
                     </ul>
-                )}
-            </div>
+                </PopoverContent>
+            </Popover>
         </div>
     );
 }

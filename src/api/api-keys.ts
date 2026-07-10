@@ -17,6 +17,10 @@ export interface CreateApiKeyRequest {
     expires_at?: string | null;
 }
 
+export interface UpdateApiKeyRequest {
+    name: string;
+}
+
 // ---------- API functions ----------
 
 export async function getApiKeys(): Promise<ResponseTemplate<ApiKey[]>> {
@@ -37,6 +41,17 @@ export async function createApiKey(
 export async function revokeApiKey(id: string): Promise<ResponseTemplate<null>> {
     const { data } = await client.delete<ResponseTemplate<null>>(
         `/api-keys/${id}`,
+    );
+    return data;
+}
+
+export async function updateApiKey(
+    id: string,
+    payload: UpdateApiKeyRequest,
+): Promise<ResponseTemplate<ApiKey>> {
+    const { data } = await client.patch<ResponseTemplate<ApiKey>>(
+        `/api-keys/${id}`,
+        payload,
     );
     return data;
 }

@@ -2,6 +2,7 @@ import {
     createApiKey,
     getApiKeys,
     revokeApiKey,
+    updateApiKey,
     type ApiKey,
 } from "@/api/api-keys";
 import {
@@ -33,7 +34,7 @@ import { resolveServerMessage } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -289,6 +290,150 @@ function CreateApiKeyDialog() {
     );
 }
 
+function EditApiKeyDialog({ apiKey }: { apiKey: ApiKey }) {
+    const [open, setOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (name: string) =>
+            updateApiKey(apiKey.id, { name }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+            setOpen(false);
+            form.reset();
+        },
+    });
+
+    const form = useForm({
+        defaultValues: { name: apiKey.name },
+        onSubmit: async ({ value }) => {
+            const result = createApiKeySchema.shape.name.safeParse(value.name);
+            if (!result.success) return;
+            await mutation.mutateAsync(result.data);
+        },
+    });
+
+    function handleOpenChange(nextOpen: boolean) {
+        setOpen(nextOpen);
+        if (!nextOpen) {
+            mutation.reset();
+            form.reset({ name: apiKey.name });
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                >
+                    <Pencil className="size-4" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit API key</DialogTitle>
+                    <DialogDescription>
+                        Rename this API key. The token and expiration cannot be changed.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    {mutation.isError && (
+                        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {resolveServerMessage(mutation.error)}
+                        </p>
+                    )}
+
+                    <form.Field
+                        name="name"
+                        validators={{
+                            onChange: ({ value }) => {
+                                const result =
+                                    createApiKeySchema.shape.name.safeParse(value);
+                                return result.success
+                                    ? undefined
+                                    : result.error.issues[0]?.message;
+                            },
+                            onSubmit: ({ value }) => {
+                                const result =
+                                    createApiKeySchema.shape.name.safeParse(value);
+                                return result.success
+                                    ? undefined
+                                    : result.error.issues[0]?.message;
+                            },
+                        }}
+                    >
+                        {(field) => (
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor={field.name}>Name</Label>
+                                <Input
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.state.value}
+                                    onBlur={field.handleBlur}
+                                    onChange={(e) => {
+                                        field.handleChange(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="Production integration"
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
+                                    autoFocus
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                    <p className="text-xs text-destructive">
+                                        {field.state.meta.errors[0]}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </form.Field>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="outline">
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <form.Subscribe
+                            selector={(state) => [
+                                state.canSubmit,
+                                state.isSubmitting,
+                            ]}
+                        >
+                            {([canSubmit, isSubmitting]) => (
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending
+                                    }
+                                >
+                                    {mutation.isPending
+                                        ? "Saving..."
+                                        : "Save"}
+                                </Button>
+                            )}
+                        </form.Subscribe>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
     const [copied, setCopied] = useState(false);
     const queryClient = useQueryClient();
@@ -358,6 +503,7 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
                     Created {formattedDate}
                 </span>
             </div>
+            <EditApiKeyDialog apiKey={apiKey} />
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button
