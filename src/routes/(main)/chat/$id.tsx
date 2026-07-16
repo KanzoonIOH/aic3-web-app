@@ -19,6 +19,8 @@ function RouteComponent() {
     } = useQuery({
         queryKey: ["conversation", id],
         queryFn: () => getConversation(id),
+        staleTime: 0,
+        refetchOnMount: "always",
     });
 
     // Agent config (dynamic fields, output field) needed to continue the chat.
@@ -74,7 +76,7 @@ function RouteComponent() {
             </div>
             <div className="flex-1 overflow-hidden">
                 <ChatSanbox
-                    key={id}
+                    key={`${id}:${initialMessages.length}`}
                     agentId={conv.conversation.agent_id}
                     agentName={conv.conversation.agent_name}
                     dynamicKeys={(agent?.webhook_body_fields ?? [])
