@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { copyText } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
@@ -7,7 +8,7 @@ export function CopyButton({ value, className }: { value: string; className?: st
     const [copied, setCopied] = useState(false);
 
     function handleCopy() {
-        navigator.clipboard.writeText(value).then(() => {
+        copyText(value).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
         });

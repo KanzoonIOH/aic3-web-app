@@ -30,7 +30,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { resolveServerMessage } from "@/lib/utils";
+import { copyText, resolveServerMessage } from "@/lib/utils";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -452,7 +452,7 @@ function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
     const { label: expiryLabel, isExpired } = describeExpiry(apiKey.expires_at);
 
     function handleCopy() {
-        navigator.clipboard.writeText(apiKey.token);
+        copyText(apiKey.token);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     }

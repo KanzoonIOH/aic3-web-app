@@ -17,6 +17,26 @@ export function resolveServerMessage(error: unknown): string {
   return "An unexpected error occurred.";
 }
 
+// Prefers navigator.clipboard (modern, only exists in a secure context: HTTPS
+// or localhost). On plain HTTP it's undefined, so we fall back to the
+// deprecated execCommand path. Works either way, no deploy edits needed.
+export function copyText(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+
+  // execCommand fallback for non-secure (HTTP) deployments. Deprecated but works.
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand("copy");
+  document.body.removeChild(ta);
+  return ok ? Promise.resolve() : Promise.reject(new Error("copy failed"));
+}
+
 export function formatDateTime(dateStr: string): string {
   return new Date(dateStr).toLocaleString(undefined, {
     year: "numeric",

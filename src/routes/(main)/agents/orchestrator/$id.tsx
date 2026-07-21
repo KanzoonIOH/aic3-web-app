@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { resolveServerMessage, textareaClass } from "@/lib/utils";
+import { copyText, resolveServerMessage, textareaClass } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -235,7 +235,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL as string;
 function useCopyState() {
     const [copied, setCopied] = useState(false);
     function copy(text: string) {
-        navigator.clipboard.writeText(text).then(() => {
+        copyText(text).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         });
