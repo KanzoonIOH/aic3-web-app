@@ -19,8 +19,10 @@ import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
 import { Route as mainAuditLogsRouteImport } from './routes/(main)/audit-logs'
 import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
+import { Route as authResetPasswordRouteImport } from './routes/(auth)/reset-password'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authInviteRouteImport } from './routes/(auth)/invite'
+import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as mainChatRouteRouteImport } from './routes/(main)/chat/route'
 import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
 import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
@@ -81,6 +83,11 @@ const authSignupRoute = authSignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => authRouteRoute,
 } as any)
+const authResetPasswordRoute = authResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => authRouteRoute,
+} as any)
 const authLoginRoute = authLoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -89,6 +96,11 @@ const authLoginRoute = authLoginRouteImport.update({
 const authInviteRoute = authInviteRouteImport.update({
   id: '/invite',
   path: '/invite',
+  getParentRoute: () => authRouteRoute,
+} as any)
+const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => authRouteRoute,
 } as any)
 const mainChatRouteRoute = mainChatRouteRouteImport.update({
@@ -152,8 +164,10 @@ const mainAgentsGardenIdRoute = mainAgentsGardenIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof mainChatRouteRouteWithChildren
+  '/forgot-password': typeof authForgotPasswordRoute
   '/invite': typeof authInviteRoute
   '/login': typeof authLoginRoute
+  '/reset-password': typeof authResetPasswordRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
   '/audit-logs': typeof mainAuditLogsRoute
@@ -174,8 +188,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof authForgotPasswordRoute
   '/invite': typeof authInviteRoute
   '/login': typeof authLoginRoute
+  '/reset-password': typeof authResetPasswordRoute
   '/signup': typeof authSignupRoute
   '/api-keys': typeof mainApiKeysRoute
   '/audit-logs': typeof mainAuditLogsRoute
@@ -200,8 +216,10 @@ export interface FileRoutesById {
   '/(auth)': typeof authRouteRouteWithChildren
   '/(main)': typeof mainRouteRouteWithChildren
   '/(main)/chat': typeof mainChatRouteRouteWithChildren
+  '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/invite': typeof authInviteRoute
   '/(auth)/login': typeof authLoginRoute
+  '/(auth)/reset-password': typeof authResetPasswordRoute
   '/(auth)/signup': typeof authSignupRoute
   '/(main)/api-keys': typeof mainApiKeysRoute
   '/(main)/audit-logs': typeof mainAuditLogsRoute
@@ -225,8 +243,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/chat'
+    | '/forgot-password'
     | '/invite'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/api-keys'
     | '/audit-logs'
@@ -247,8 +267,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
     | '/invite'
     | '/login'
+    | '/reset-password'
     | '/signup'
     | '/api-keys'
     | '/audit-logs'
@@ -272,8 +294,10 @@ export interface FileRouteTypes {
     | '/(auth)'
     | '/(main)'
     | '/(main)/chat'
+    | '/(auth)/forgot-password'
     | '/(auth)/invite'
     | '/(auth)/login'
+    | '/(auth)/reset-password'
     | '/(auth)/signup'
     | '/(main)/api-keys'
     | '/(main)/audit-logs'
@@ -371,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSignupRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/(auth)/reset-password': {
+      id: '/(auth)/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof authResetPasswordRouteImport
+      parentRoute: typeof authRouteRoute
+    }
     '/(auth)/login': {
       id: '/(auth)/login'
       path: '/login'
@@ -383,6 +414,13 @@ declare module '@tanstack/react-router' {
       path: '/invite'
       fullPath: '/invite'
       preLoaderRoute: typeof authInviteRouteImport
+      parentRoute: typeof authRouteRoute
+    }
+    '/(auth)/forgot-password': {
+      id: '/(auth)/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof authRouteRoute
     }
     '/(main)/chat': {
@@ -466,14 +504,18 @@ declare module '@tanstack/react-router' {
 }
 
 interface authRouteRouteChildren {
+  authForgotPasswordRoute: typeof authForgotPasswordRoute
   authInviteRoute: typeof authInviteRoute
   authLoginRoute: typeof authLoginRoute
+  authResetPasswordRoute: typeof authResetPasswordRoute
   authSignupRoute: typeof authSignupRoute
 }
 
 const authRouteRouteChildren: authRouteRouteChildren = {
+  authForgotPasswordRoute: authForgotPasswordRoute,
   authInviteRoute: authInviteRoute,
   authLoginRoute: authLoginRoute,
+  authResetPasswordRoute: authResetPasswordRoute,
   authSignupRoute: authSignupRoute,
 }
 

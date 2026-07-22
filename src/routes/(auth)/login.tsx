@@ -111,7 +111,15 @@ function RouteComponent() {
         >
           {(field) => (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={field.name}>Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor={field.name}>Password</Label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id={field.name}
                 name={field.name}

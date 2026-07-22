@@ -67,3 +67,24 @@ export async function acceptInvite(
     );
     return data;
 }
+
+export async function forgotPassword(
+    login_id: string,
+): Promise<ResponseTemplate<string>> {
+    const { data } = await client.post<ResponseTemplate<string>>(
+        "/auth/password/forgot",
+        { login_id },
+    );
+    return data;
+}
+
+export async function resetPassword(payload: {
+    token: string;
+    new_password: string;
+}): Promise<ResponseTemplate<unknown>> {
+    const { data } = await client.post<ResponseTemplate<unknown>>(
+        "/auth/password/reset",
+        payload,
+    );
+    return data;
+}
