@@ -1,4 +1,5 @@
 import { getAgents } from "@/api/agents";
+import type { ConversationDetail } from "@/api/conversations";
 import { getOrchestrators } from "@/api/orchestrators";
 import {
     DropdownMenu,
@@ -9,8 +10,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Bot, Check, ChevronsUpDown, Network } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ChatSanbox } from "../agents/-ChatSandbox";
@@ -196,6 +197,8 @@ function RouteComponent() {
     });
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     // Map agents + orchestrators to the unified Chatable shape.
     const agents: Chatable[] = (agentsData?.data ?? []).map((a) => ({
@@ -267,6 +270,41 @@ function RouteComponent() {
                 outputField={selected.outputField ?? "reply"}
                 welcomeTitle="Hello there"
                 welcomeImage={selected.image}
+                onSessionStart={(sessionId, msgs) => {
+                    // First reply on a new chat: refresh the list and switch the
+                    // URL to the real conversation so "New chat" works again.
+                    queryClient.invalidateQueries({
+                        queryKey: ["conversations"],
+                    });
+                    // Seed the /chat/$id cache with the transcript we already
+                    // have so the target route renders instantly (no loading
+                    // flash). refetchOnMount revalidates silently in the bg.
+                    const now = new Date().toISOString();
+                    const seeded: ConversationDetail = {
+                        conversation: {
+                            id: sessionId,
+                            agent_id: selected.id,
+                            agent_name: selected.name,
+                            started_at: now,
+                            ended_at: null,
+                            is_active: true,
+                        },
+                        messages: msgs.map((m, i) => ({
+                            id: `seed-${i}`,
+                            conversation_id: sessionId,
+                            role: m.role,
+                            content: m.text,
+                            attachments: null,
+                            data: null,
+                            created_at: now,
+                        })),
+                    };
+                    queryClient.setQueryData(
+                        ["conversation", sessionId],
+                        seeded,
+                    );
+                    navigate({ to: "/chat/$id", params: { id: sessionId } });
+                }}
                 welcomeSlot={
                     <AgentPicker
                         agents={agents}

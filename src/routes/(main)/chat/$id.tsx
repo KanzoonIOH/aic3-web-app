@@ -1,6 +1,6 @@
 import { getAgent } from "@/api/agents";
 import { getConversation } from "@/api/conversations";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
 import { ChatSanbox } from "../agents/-ChatSandbox";
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/(main)/chat/$id")({
 
 function RouteComponent() {
     const { id } = Route.useParams();
+    const queryClient = useQueryClient();
 
     const {
         data: conv,
@@ -76,7 +77,7 @@ function RouteComponent() {
             </div>
             <div className="flex-1 overflow-hidden">
                 <ChatSanbox
-                    key={`${id}:${initialMessages.length}`}
+                    key={id}
                     agentId={conv.conversation.agent_id}
                     agentName={conv.conversation.agent_name}
                     dynamicKeys={(agent?.webhook_body_fields ?? [])
@@ -88,6 +89,11 @@ function RouteComponent() {
                     outputField={agent?.webhook_output_field || "reply"}
                     initialSessionId={id}
                     initialMessages={initialMessages}
+                    onTurnComplete={() =>
+                        queryClient.invalidateQueries({
+                            queryKey: ["conversations"],
+                        })
+                    }
                 />
             </div>
         </div>

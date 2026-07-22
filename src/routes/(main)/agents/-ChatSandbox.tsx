@@ -581,6 +581,8 @@ function ChatDefault({
     welcomeSlot,
     welcomeImage,
     stream = true,
+    onSessionStart,
+    onTurnComplete,
 }: {
     agentId: string;
     agentName: string;
@@ -598,10 +600,20 @@ function ChatDefault({
     // Uses the streaming endpoint (/chat/{id}/stream) and appends the reply
     // live. Defaults true: all in-app chat streams.
     stream?: boolean;
+    // Fired once, when the first reply yields a session id on a brand-new chat.
+    // Passes the current transcript so the caller can seed the /chat/$id cache
+    // and navigate without a loading flash.
+    onSessionStart?: (sessionId: string, messages: Message[]) => void;
+    // Fired after every completed assistant turn (to refresh the chat list).
+    onTurnComplete?: () => void;
 }) {
     const [messages, setMessages] = useState<Message[]>(
         initialMessages ?? [],
     );
+    // Mirror of `messages` for reading the freshest transcript inside async
+    // callbacks (onSessionStart) without stale closures.
+    const messagesRef = useRef<Message[]>(messages);
+    messagesRef.current = messages;
     const [input, setInput] = useState("");
     const [dynamicValues, setDynamicValues] = useState<Record<string, string>>(
         {},
@@ -655,13 +667,19 @@ function ChatDefault({
                 outputField,
             ),
         onSuccess: (response) => {
-            if (response.sessionId) sessionIdRef.current = response.sessionId;
-            setMessages((prev) => [
-                ...prev,
+            const nextMessages: Message[] = [
+                ...messagesRef.current,
                 { role: "assistant", text: response.reply },
-            ]);
+            ];
+            setMessages(nextMessages);
             setNextSteps(response.next_step ?? null);
             setCcProducts(response.product ?? null);
+            if (response.sessionId) {
+                const isNew = !sessionIdRef.current;
+                sessionIdRef.current = response.sessionId;
+                if (isNew) onSessionStart?.(response.sessionId, nextMessages);
+            }
+            onTurnComplete?.();
         },
         onError: () => {
             // errors shown inline
@@ -716,7 +734,12 @@ function ChatDefault({
                 outputField,
                 (title) => setStepTitle(title),
             );
-            if (sessionId) sessionIdRef.current = sessionId;
+            if (sessionId) {
+                const isNew = !sessionIdRef.current;
+                sessionIdRef.current = sessionId;
+                if (isNew) onSessionStart?.(sessionId, messagesRef.current);
+            }
+            onTurnComplete?.();
         } catch {
             setStreamError(true);
         } finally {
@@ -982,6 +1005,8 @@ export function ChatSanbox({
     welcomeSlot,
     welcomeImage,
     stream = true,
+    onSessionStart,
+    onTurnComplete,
 }: {
     agentId: string;
     agentName: string;
@@ -995,6 +1020,8 @@ export function ChatSanbox({
     welcomeSlot?: React.ReactNode;
     welcomeImage?: string | null;
     stream?: boolean;
+    onSessionStart?: (sessionId: string, messages: Message[]) => void;
+    onTurnComplete?: () => void;
 }) {
     const [view, setView] = useState<ViewMode>("chatbot");
 
@@ -1045,6 +1072,8 @@ export function ChatSanbox({
                         welcomeSlot={welcomeSlot}
                         welcomeImage={welcomeImage}
                         stream={stream}
+                        onSessionStart={onSessionStart}
+                        onTurnComplete={onTurnComplete}
                     />
                 ) : (
                     <ChatSandboxWhatsApp
