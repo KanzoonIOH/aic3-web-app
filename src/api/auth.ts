@@ -1,4 +1,5 @@
 import { client } from "./client";
+import { getRefreshToken } from "@/stores/auth";
 import type { ResponseTemplate } from "./types";
 
 // ---------- Types ----------
@@ -24,6 +25,7 @@ export type UserRole =
 
 export interface AuthResponse {
     token: string;
+    refresh_token: string;
     user: {
         id: string;
         username: string;
@@ -47,10 +49,12 @@ export async function login(payload: LoginPayload): Promise<ResponseTemplate<Aut
 }
 
 export async function logout(): Promise<void> {
-    // Best-effort: records the LOGOUT audit event server-side. Never blocks the
-    // client from clearing its own session.
+    // Best-effort: revokes the refresh-token session + records the LOGOUT audit
+    // event server-side. Never blocks the client from clearing its own session.
     try {
-        await client.post("/auth/logout");
+        await client.post("/auth/logout", {
+            refresh_token: getRefreshToken(),
+        });
     } catch {
         // ignore — logout must always succeed client-side
     }

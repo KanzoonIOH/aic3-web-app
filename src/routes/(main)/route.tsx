@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { logout } from "@/api/auth";
-import { getToken, useAuthStore } from "@/stores/auth";
+import { hasSession, useAuthStore } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
 import {
     createFileRoute,
@@ -49,8 +49,7 @@ import { SettingsDialog } from "./-SettingsDialog";
 
 export const Route = createFileRoute("/(main)")({
     beforeLoad: () => {
-        const token = getToken();
-        if (!token) {
+        if (!hasSession()) {
             throw redirect({ to: "/login" });
         }
     },

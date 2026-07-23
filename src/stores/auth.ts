@@ -12,9 +12,11 @@ interface User {
 
 interface AuthState {
     token: string | null;
+    refreshToken: string | null;
     user: User | null;
     // Actions
     setAuth: (response: AuthResponse) => void;
+    setTokens: (token: string, refreshToken: string) => void;
     setUser: (user: Partial<User>) => void;
     clearAuth: () => void;
 }
@@ -23,12 +25,19 @@ export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             token: null,
+            refreshToken: null,
             user: null,
             setAuth: (response) =>
-                set({ token: response.token, user: response.user }),
+                set({
+                    token: response.token,
+                    refreshToken: response.refresh_token,
+                    user: response.user,
+                }),
+            setTokens: (token, refreshToken) => set({ token, refreshToken }),
             setUser: (patch) =>
                 set((s) => (s.user ? { user: { ...s.user, ...patch } } : s)),
-            clearAuth: () => set({ token: null, user: null }),
+            clearAuth: () =>
+                set({ token: null, refreshToken: null, user: null }),
         }),
         {
             name: "aic3-auth",
@@ -36,32 +45,23 @@ export const useAuthStore = create<AuthState>()(
     ),
 );
 
-// tokenExp returns the JWT `exp` (unix seconds) or null if the token is missing
-// or malformed. ponytail: atob decode, no jwt-decode dependency for one field.
-function tokenExp(token: string | null): number | null {
-    if (!token) return null;
-    try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        return typeof payload.exp === "number" ? payload.exp : null;
-    } catch {
-        return null;
-    }
-}
+export const getRefreshToken = () => useAuthStore.getState().refreshToken;
 
-// isTokenExpired reports whether the stored token's exp is in the past.
-// A token with no exp is treated as valid (server is the final authority).
-export const isTokenExpired = () => {
-    const exp = tokenExp(useAuthStore.getState().token);
-    return exp !== null && exp * 1000 <= Date.now();
-};
+// Selector helpers — call outside React for non-hook contexts (axios and
+// tanstack router beforeLoad).
+//
+// getToken returns the raw access token as-is, even if the JWT is expired: the
+// client's 401 interceptor silently refreshes and replays, so an expired access
+// token is not a logged-out state. Expiry-based logout now lives entirely in the
+// refresh flow (refresh token expired/revoked -> forced logout).
+export const getToken = () => useAuthStore.getState().token;
 
-// Selector helpers — call outside React for non-hook contexts (axios and tanstack router beforeLoad)
-export const getToken = () => {
-    if (isTokenExpired()) {
-        useAuthStore.getState().clearAuth();
-        return null;
-    }
-    return useAuthStore.getState().token;
+// hasSession reports whether the user still has a usable session for route
+// guards: an access token OR a refresh token means "logged in" (an expired
+// access token is recoverable via refresh).
+export const hasSession = () => {
+    const s = useAuthStore.getState();
+    return Boolean(s.token || s.refreshToken);
 };
 
 // PENDING users are signed up but not yet approved: no app access.
