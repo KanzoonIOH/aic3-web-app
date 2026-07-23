@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { logout } from "@/api/auth";
 import { getToken, useAuthStore } from "@/stores/auth";
 import { useThemeStore, type Theme } from "@/stores/theme";
 import {
@@ -140,7 +141,8 @@ function UserSection({
     const router = useRouter();
     const [settingsOpen, setSettingsOpen] = useState(false);
 
-    function handleLogout() {
+    async function handleLogout() {
+        await logout();
         clearAuth();
         router.navigate({ to: "/login" });
     }
@@ -249,7 +251,8 @@ function PendingGate() {
     const clearAuth = useAuthStore((s) => s.clearAuth);
     const router = useRouter();
 
-    function handleLogout() {
+    async function handleLogout() {
+        await logout();
         clearAuth();
         router.navigate({ to: "/login" });
     }

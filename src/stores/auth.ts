@@ -36,8 +36,33 @@ export const useAuthStore = create<AuthState>()(
     ),
 );
 
+// tokenExp returns the JWT `exp` (unix seconds) or null if the token is missing
+// or malformed. ponytail: atob decode, no jwt-decode dependency for one field.
+function tokenExp(token: string | null): number | null {
+    if (!token) return null;
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return typeof payload.exp === "number" ? payload.exp : null;
+    } catch {
+        return null;
+    }
+}
+
+// isTokenExpired reports whether the stored token's exp is in the past.
+// A token with no exp is treated as valid (server is the final authority).
+export const isTokenExpired = () => {
+    const exp = tokenExp(useAuthStore.getState().token);
+    return exp !== null && exp * 1000 <= Date.now();
+};
+
 // Selector helpers — call outside React for non-hook contexts (axios and tanstack router beforeLoad)
-export const getToken = () => useAuthStore.getState().token;
+export const getToken = () => {
+    if (isTokenExpired()) {
+        useAuthStore.getState().clearAuth();
+        return null;
+    }
+    return useAuthStore.getState().token;
+};
 
 // PENDING users are signed up but not yet approved: no app access.
 export const isPending = () =>
