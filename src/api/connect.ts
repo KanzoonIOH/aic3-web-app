@@ -23,6 +23,13 @@ export async function disconnectAgentKnowledge(
     await client.delete("/connect/agent-knowledge", { data: payload });
 }
 
+// Re-triggers RAG ingestion for a knowledge whose previous insertion failed.
+export async function retryAgentKnowledge(
+    payload: ConnectAgentKnowledgeRequest,
+): Promise<void> {
+    await client.post("/connect/agent-knowledge/retry", payload);
+}
+
 export interface ConnectAgentMcpRequest {
     agent_id: string;
     mcp_id: string;

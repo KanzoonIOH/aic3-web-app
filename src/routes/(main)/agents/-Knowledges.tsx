@@ -1,5 +1,8 @@
 import { getAgentKnowledges, type AgentKnowledge } from "@/api/agents";
-import { disconnectAgentKnowledge } from "@/api/connect";
+import {
+    disconnectAgentKnowledge,
+    retryAgentKnowledge,
+} from "@/api/connect";
 import { AgentKnowledgeAccessDialog } from "@/components/agent-knowledge-access-dialog";
 import { ListToolbar, type Option } from "@/components/list-toolbar";
 import { Button } from "@/components/ui/button";
@@ -23,7 +26,7 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, RotateCw } from "lucide-react";
 import { useState } from "react";
 import { createKnowledgeColumns } from "../knowledges/index";
 
@@ -35,22 +38,66 @@ const STATUS_STYLES: Record<string, string> = {
     failed: "bg-destructive/10 text-destructive",
 };
 
-const statusColumn: ColumnDef<AgentKnowledge> = {
-    id: "status",
-    header: "Status",
-    cell: ({ row }) => {
-        const status = row.original.status;
-        return (
-            <span
-                className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                    STATUS_STYLES[status] ?? "bg-muted text-muted-foreground"
-                }`}
-            >
-                {status}
-            </span>
-        );
-    },
-};
+// Hidden until the row is hovered; retries a failed knowledge insertion.
+function KnowledgeRetryButton({
+    agentId,
+    knowledge,
+}: {
+    agentId: string;
+    knowledge: AgentKnowledge;
+}) {
+    const queryClient = useQueryClient();
+    const { mutate: retry, isPending } = useMutation({
+        mutationFn: () =>
+            retryAgentKnowledge({
+                agent_id: agentId,
+                knowledge_id: knowledge.id,
+            }),
+        onSuccess: () =>
+            queryClient.invalidateQueries({ queryKey: ["agents"] }),
+    });
+    return (
+        <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            disabled={isPending}
+            onClick={() => retry()}
+            aria-label="Retry insertion"
+            title="Retry insertion"
+        >
+            <RotateCw className={`size-3.5 ${isPending ? "animate-spin" : ""}`} />
+        </Button>
+    );
+}
+
+function makeStatusColumn(agentId: string): ColumnDef<AgentKnowledge> {
+    return {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => {
+            const status = row.original.status;
+            return (
+                <div className="flex items-center gap-1">
+                    <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                            STATUS_STYLES[status] ??
+                            "bg-muted text-muted-foreground"
+                        }`}
+                    >
+                        {status}
+                    </span>
+                    {status === "failed" && (
+                        <KnowledgeRetryButton
+                            agentId={agentId}
+                            knowledge={row.original}
+                        />
+                    )}
+                </div>
+            );
+        },
+    };
+}
 
 // Removes (disconnects) this knowledge from the agent, with confirmation.
 function AgentKnowledgeRowActions({
@@ -156,7 +203,7 @@ export function Knowledges({ agentId }: { agentId: string }) {
     // insert Status before the trailing actions column
     const columns = [
         ...baseColumns.slice(0, -1),
-        statusColumn,
+        makeStatusColumn(agentId),
         baseColumns[baseColumns.length - 1],
     ];
 
@@ -201,6 +248,7 @@ export function Knowledges({ agentId }: { agentId: string }) {
                 columns={columns}
                 data={data?.data ?? []}
                 getRowKey={(knowledge) => knowledge.id}
+                rowClassName="group"
                 enableSorting={false}
                 isLoading={isPending}
                 isError={isError}
