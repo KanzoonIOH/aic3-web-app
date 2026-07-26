@@ -4,6 +4,7 @@ import {
     ShortcutsDialog,
     useKeyboardShortcuts,
 } from "@/components/keyboard-shortcuts";
+import { CommandPalette } from "@/components/command-palette";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,25 +25,15 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import {
-    BookOpen,
-    Bot,
     ChevronDown,
     ChevronsUpDownIcon,
     Clock,
-    History,
     Keyboard,
-    KeyRound,
-    LayoutDashboardIcon,
     LogOut,
-    MessagesSquare,
     Monitor,
     Moon,
-    Plug,
-    ScrollText,
     Settings,
     Sun,
-    Tag,
-    Users,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { SettingsDialog } from "./-SettingsDialog";
@@ -56,46 +47,7 @@ export const Route = createFileRoute("/(main)")({
     component: RouteComponent,
 });
 
-const navGroups = [
-    {
-        label: "Workspace",
-        items: [
-            { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
-            { to: "/chat", label: "Chat", icon: MessagesSquare },
-        ],
-    },
-    {
-        label: "Resources",
-        items: [
-            {
-                label: "Agents",
-                icon: Bot,
-                children: [
-                    { to: "/agents/orchestrator", label: "Agent Orchestrator" },
-                    { to: "/agents/garden", label: "Agent Garden" },
-                ],
-            },
-            { to: "/knowledges", label: "Knowledges", icon: BookOpen },
-            { to: "/mcps", label: "MCPs", icon: Plug },
-            { to: "/tags", label: "Tags", icon: Tag },
-        ],
-    },
-    {
-        label: "Operations",
-        items: [
-            { to: "/logs", label: "Message Log", icon: ScrollText },
-            { to: "/audit-logs", label: "Audit Log", icon: History },
-        ],
-    },
-    {
-        label: "Administration",
-        items: [
-            { to: "/members", label: "Members", icon: Users },
-            { to: "/api-keys", label: "API Keys", icon: KeyRound },
-            { to: "/global-config", label: "Global Config", icon: Settings },
-        ],
-    },
-] as const;
+import { navGroups } from "./-nav";
 
 const themeOptions: { value: Theme; label: string; icon: React.ElementType }[] =
     [
@@ -286,8 +238,10 @@ function RouteComponent() {
     const role = useAuthStore((s) => s.user?.role);
     const [agentsOpen, setAgentsOpen] = useState(true);
     const [shortcutsOpen, setShortcutsOpen] = useState(false);
+    const [paletteOpen, setPaletteOpen] = useState(false);
     const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
-    useKeyboardShortcuts(showShortcuts);
+    const openPalette = useCallback(() => setPaletteOpen(true), []);
+    useKeyboardShortcuts(showShortcuts, openPalette);
     if (role === "PENDING") {
         return <PendingGate />;
     }
@@ -389,6 +343,8 @@ function RouteComponent() {
                 open={shortcutsOpen}
                 onOpenChange={setShortcutsOpen}
             />
+
+            <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </div>
     );
 }

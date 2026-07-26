@@ -42,7 +42,10 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     },
     {
         title: "General",
-        shortcuts: [{ keys: ["?"], action: "help", label: "Show this help" }],
+        shortcuts: [
+            { keys: ["⌘", "K"], label: "Open command palette" },
+            { keys: ["?"], action: "help", label: "Show this help" },
+        ],
     },
 ];
 
@@ -65,7 +68,10 @@ function isTypingTarget(el: EventTarget | null): boolean {
 
 // Global key handler: `?` opens help, `g` then a nav key routes. The `g`
 // prefix is armed for 1.2s, matching common editor/GitHub muscle memory.
-export function useKeyboardShortcuts(onShowHelp: () => void) {
+export function useKeyboardShortcuts(
+    onShowHelp: () => void,
+    onOpenPalette: () => void,
+) {
     const router = useRouter();
 
     useEffect(() => {
@@ -78,6 +84,13 @@ export function useKeyboardShortcuts(onShowHelp: () => void) {
         }
 
         function onKeyDown(e: KeyboardEvent) {
+            // Cmd/Ctrl+K opens the command palette — checked before the
+            // modifier/typing guards so it fires from anywhere, incl. inputs.
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+                e.preventDefault();
+                onOpenPalette();
+                return;
+            }
             if (e.metaKey || e.ctrlKey || e.altKey) return;
             if (isTypingTarget(e.target)) return;
 
@@ -108,7 +121,7 @@ export function useKeyboardShortcuts(onShowHelp: () => void) {
             window.removeEventListener("keydown", onKeyDown);
             disarm();
         };
-    }, [router, onShowHelp]);
+    }, [router, onShowHelp, onOpenPalette]);
 }
 
 function Kbd({ children }: { children: React.ReactNode }) {
