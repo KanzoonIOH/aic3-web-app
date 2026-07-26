@@ -694,6 +694,12 @@ function ChatDefault({
         dynamicKeys.every((k) => (dynamicValues[k] ?? "").trim()) &&
         dynamicHeaderKeys.every((k) => (headerValues[k] ?? "").trim());
 
+    // Focus the input on arrival so the user can type right away. Runs once the
+    // textarea is enabled (dynamic fields ready); a disabled element can't focus.
+    useEffect(() => {
+        if (dynamicReady) textareaRef.current?.focus();
+    }, [dynamicReady]);
+
     const pending = stream ? streaming : mutation.isPending;
     const errored = stream ? streamError : mutation.isError;
 
