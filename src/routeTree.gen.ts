@@ -27,8 +27,10 @@ import { Route as mainChatRouteRouteImport } from './routes/(main)/chat/route'
 import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
 import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
 import { Route as mainGlobalConfigIndexRouteImport } from './routes/(main)/global-config/index'
+import { Route as mainDashboardsIndexRouteImport } from './routes/(main)/dashboards/index'
 import { Route as mainChatIndexRouteImport } from './routes/(main)/chat/index'
 import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
+import { Route as mainDashboardsIdRouteImport } from './routes/(main)/dashboards/$id'
 import { Route as mainChatIdRouteImport } from './routes/(main)/chat/$id'
 import { Route as mainAgentsOrchestratorIndexRouteImport } from './routes/(main)/agents/orchestrator/index'
 import { Route as mainAgentsGardenIndexRouteImport } from './routes/(main)/agents/garden/index'
@@ -123,6 +125,11 @@ const mainGlobalConfigIndexRoute = mainGlobalConfigIndexRouteImport.update({
   path: '/global-config/',
   getParentRoute: () => mainRouteRoute,
 } as any)
+const mainDashboardsIndexRoute = mainDashboardsIndexRouteImport.update({
+  id: '/dashboards/',
+  path: '/dashboards/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
 const mainChatIndexRoute = mainChatIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -131,6 +138,11 @@ const mainChatIndexRoute = mainChatIndexRouteImport.update({
 const mainAgentsIndexRoute = mainAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
+  getParentRoute: () => mainRouteRoute,
+} as any)
+const mainDashboardsIdRoute = mainDashboardsIdRouteImport.update({
+  id: '/dashboards/$id',
+  path: '/dashboards/$id',
   getParentRoute: () => mainRouteRoute,
 } as any)
 const mainChatIdRoute = mainChatIdRouteImport.update({
@@ -176,8 +188,10 @@ export interface FileRoutesByFullPath {
   '/members': typeof mainMembersRoute
   '/tags': typeof mainTagsRoute
   '/chat/$id': typeof mainChatIdRoute
+  '/dashboards/$id': typeof mainDashboardsIdRoute
   '/agents/': typeof mainAgentsIndexRoute
   '/chat/': typeof mainChatIndexRoute
+  '/dashboards/': typeof mainDashboardsIndexRoute
   '/global-config/': typeof mainGlobalConfigIndexRoute
   '/knowledges/': typeof mainKnowledgesIndexRoute
   '/mcps/': typeof mainMcpsIndexRoute
@@ -200,8 +214,10 @@ export interface FileRoutesByTo {
   '/members': typeof mainMembersRoute
   '/tags': typeof mainTagsRoute
   '/chat/$id': typeof mainChatIdRoute
+  '/dashboards/$id': typeof mainDashboardsIdRoute
   '/agents': typeof mainAgentsIndexRoute
   '/chat': typeof mainChatIndexRoute
+  '/dashboards': typeof mainDashboardsIndexRoute
   '/global-config': typeof mainGlobalConfigIndexRoute
   '/knowledges': typeof mainKnowledgesIndexRoute
   '/mcps': typeof mainMcpsIndexRoute
@@ -228,8 +244,10 @@ export interface FileRoutesById {
   '/(main)/members': typeof mainMembersRoute
   '/(main)/tags': typeof mainTagsRoute
   '/(main)/chat/$id': typeof mainChatIdRoute
+  '/(main)/dashboards/$id': typeof mainDashboardsIdRoute
   '/(main)/agents/': typeof mainAgentsIndexRoute
   '/(main)/chat/': typeof mainChatIndexRoute
+  '/(main)/dashboards/': typeof mainDashboardsIndexRoute
   '/(main)/global-config/': typeof mainGlobalConfigIndexRoute
   '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
   '/(main)/mcps/': typeof mainMcpsIndexRoute
@@ -255,8 +273,10 @@ export interface FileRouteTypes {
     | '/members'
     | '/tags'
     | '/chat/$id'
+    | '/dashboards/$id'
     | '/agents/'
     | '/chat/'
+    | '/dashboards/'
     | '/global-config/'
     | '/knowledges/'
     | '/mcps/'
@@ -279,8 +299,10 @@ export interface FileRouteTypes {
     | '/members'
     | '/tags'
     | '/chat/$id'
+    | '/dashboards/$id'
     | '/agents'
     | '/chat'
+    | '/dashboards'
     | '/global-config'
     | '/knowledges'
     | '/mcps'
@@ -306,8 +328,10 @@ export interface FileRouteTypes {
     | '/(main)/members'
     | '/(main)/tags'
     | '/(main)/chat/$id'
+    | '/(main)/dashboards/$id'
     | '/(main)/agents/'
     | '/(main)/chat/'
+    | '/(main)/dashboards/'
     | '/(main)/global-config/'
     | '/(main)/knowledges/'
     | '/(main)/mcps/'
@@ -451,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof mainGlobalConfigIndexRouteImport
       parentRoute: typeof mainRouteRoute
     }
+    '/(main)/dashboards/': {
+      id: '/(main)/dashboards/'
+      path: '/dashboards'
+      fullPath: '/dashboards/'
+      preLoaderRoute: typeof mainDashboardsIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
     '/(main)/chat/': {
       id: '/(main)/chat/'
       path: '/'
@@ -463,6 +494,13 @@ declare module '@tanstack/react-router' {
       path: '/agents'
       fullPath: '/agents/'
       preLoaderRoute: typeof mainAgentsIndexRouteImport
+      parentRoute: typeof mainRouteRoute
+    }
+    '/(main)/dashboards/$id': {
+      id: '/(main)/dashboards/$id'
+      path: '/dashboards/$id'
+      fullPath: '/dashboards/$id'
+      preLoaderRoute: typeof mainDashboardsIdRouteImport
       parentRoute: typeof mainRouteRoute
     }
     '/(main)/chat/$id': {
@@ -545,7 +583,9 @@ interface mainRouteRouteChildren {
   mainLogsRoute: typeof mainLogsRoute
   mainMembersRoute: typeof mainMembersRoute
   mainTagsRoute: typeof mainTagsRoute
+  mainDashboardsIdRoute: typeof mainDashboardsIdRoute
   mainAgentsIndexRoute: typeof mainAgentsIndexRoute
+  mainDashboardsIndexRoute: typeof mainDashboardsIndexRoute
   mainGlobalConfigIndexRoute: typeof mainGlobalConfigIndexRoute
   mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
   mainMcpsIndexRoute: typeof mainMcpsIndexRoute
@@ -563,7 +603,9 @@ const mainRouteRouteChildren: mainRouteRouteChildren = {
   mainLogsRoute: mainLogsRoute,
   mainMembersRoute: mainMembersRoute,
   mainTagsRoute: mainTagsRoute,
+  mainDashboardsIdRoute: mainDashboardsIdRoute,
   mainAgentsIndexRoute: mainAgentsIndexRoute,
+  mainDashboardsIndexRoute: mainDashboardsIndexRoute,
   mainGlobalConfigIndexRoute: mainGlobalConfigIndexRoute,
   mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,
   mainMcpsIndexRoute: mainMcpsIndexRoute,

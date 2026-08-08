@@ -4,6 +4,7 @@ import {
     History,
     KeyRound,
     LayoutDashboardIcon,
+    LayoutGridIcon,
     MessagesSquare,
     Plug,
     ScrollText,
@@ -18,7 +19,8 @@ export const navGroups = [
     {
         label: "Workspace",
         items: [
-            { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
+            { to: "/dashboard", label: "Analytics", icon: LayoutDashboardIcon },
+            { to: "/dashboards", label: "Dashboards", icon: LayoutGridIcon },
             { to: "/chat", label: "Chat", icon: MessagesSquare },
         ],
     },
