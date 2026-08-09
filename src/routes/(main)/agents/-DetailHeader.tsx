@@ -10,12 +10,14 @@ export function DetailHeader({
     image,
     isActive,
     editTrigger,
+    pin,
 }: {
     name: string;
     description?: string | null;
     image?: string | null;
     isActive: boolean;
     editTrigger?: ReactNode;
+    pin?: ReactNode;
 }) {
     return (
         <div className="flex items-start gap-4 px-6 py-4 bg-background border-b shrink-0">
@@ -37,6 +39,7 @@ export function DetailHeader({
                     {description}
                 </p>
             </div>
+            {pin}
             {editTrigger}
         </div>
     );

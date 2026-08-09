@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PinButton } from "@/components/pin-button";
 import {
     Dialog,
     DialogClose,
@@ -257,6 +258,7 @@ function MyDashboardCard({ d }: { d: Dashboard }) {
                             Imported
                         </Badge>
                     )}
+                    <PinButton entityType="dashboard" entityId={d.id} />
                 </div>
             </div>
             <div className="min-w-0">

@@ -54,6 +54,7 @@ import { Mcps } from "../-Mcps";
 import { Overview } from "../-Overview";
 import { Persona } from "../-Persona";
 import { DetailHeader } from "../-DetailHeader";
+import { PinButton } from "@/components/pin-button";
 
 export const Route = createFileRoute("/(main)/agents/garden/$id")({
     component: RouteComponent,
@@ -946,6 +947,13 @@ function RouteComponent() {
                 description={agent.data.description}
                 image={agent.data.image}
                 isActive={agent.data.is_active}
+                pin={
+                    <PinButton
+                        entityType="agent"
+                        entityId={agent.data.id}
+                        variant="labeled"
+                    />
+                }
                 editTrigger={<EditAgentDialog agent={agent.data} />}
             />
 

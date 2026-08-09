@@ -42,6 +42,7 @@ import { ChatSanbox } from "../-ChatSandbox";
 import { OrchestratorCustomization } from "../-OrchestratorCustomization";
 import { Overview } from "../-Overview";
 import { DetailHeader } from "../-DetailHeader";
+import { PinButton } from "@/components/pin-button";
 import type { OrchestratorAgent } from "@/api/orchestrators";
 import { UserAvatar } from "@/components/user-avatar";
 import { Link as RouterLink } from "@tanstack/react-router";
@@ -434,6 +435,13 @@ function RouteComponent() {
                 description={o.description}
                 image={o.image}
                 isActive={o.is_active}
+                pin={
+                    <PinButton
+                        entityType="orchestrator"
+                        entityId={o.id}
+                        variant="labeled"
+                    />
+                }
                 editTrigger={<EditOrchestratorDialog orch={o} />}
             />
 

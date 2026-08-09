@@ -48,6 +48,7 @@ export const Route = createFileRoute("/(main)")({
 });
 
 import { navGroups } from "./-nav";
+import { PinnedSection } from "./-PinnedSection";
 
 const themeOptions: { value: Theme; label: string; icon: React.ElementType }[] =
     [
@@ -254,6 +255,7 @@ function RouteComponent() {
                 </div>
                 {/*<Separator />*/}
                 <nav className="flex flex-col flex-1 gap-4 p-2 overflow-y-auto">
+                    <PinnedSection />
                     {navGroups.map((group) => (
                         <div
                             key={group.label}

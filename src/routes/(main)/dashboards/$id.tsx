@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn, resolveServerMessage } from "@/lib/utils";
+import { PinButton } from "@/components/pin-button";
 import { useAuthStore } from "@/stores/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -483,6 +484,11 @@ function DashboardHeader({
             </div>
 
             <div className="flex items-center gap-2">
+                <PinButton
+                    entityType="dashboard"
+                    entityId={dashboard.id}
+                    variant="labeled"
+                />
                 {/* Publish / unpublish */}
                 {isPublished && canUnpublish && (
                     <Button

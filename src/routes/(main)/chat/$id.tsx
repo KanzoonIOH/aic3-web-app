@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
 import { ChatSanbox } from "../agents/-ChatSandbox";
+import { PinButton } from "@/components/pin-button";
 
 export const Route = createFileRoute("/(main)/chat/$id")({
     component: RouteComponent,
@@ -66,13 +67,20 @@ function RouteComponent() {
     return (
         <div className="flex h-full flex-col overflow-hidden">
             <div className="shrink-0 border-b bg-background px-6 py-4">
-                <div className="flex items-baseline gap-2">
-                    <h1 className="font-heading text-2xl font-semibold">
-                        {conv.conversation.agent_name}
-                    </h1>
-                    <span className="text-sm text-muted-foreground">
-                        Continuing conversation
-                    </span>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="font-heading text-2xl font-semibold">
+                            {conv.conversation.agent_name}
+                        </h1>
+                        <span className="text-sm text-muted-foreground">
+                            Continuing conversation
+                        </span>
+                    </div>
+                    <PinButton
+                        entityType="chat"
+                        entityId={id}
+                        variant="labeled"
+                    />
                 </div>
             </div>
             <div className="flex-1 overflow-hidden">
