@@ -140,7 +140,7 @@ function CreateAgentButton() {
             setChoiceOpen(false);
             setShowTemplates(false);
             navigate({
-                to: "/agents/garden/$id",
+                to: "/admin/agents/garden/$id",
                 params: { id: res.data.id },
             });
         },
@@ -696,7 +696,7 @@ function AgentCard({ agent }: { agent: Agent }) {
             onDelete={() => deleteAgent(agent.id)}
             onOpen={() =>
                 navigate({
-                    to: "/agents/garden/$id",
+                    to: "/admin/agents/garden/$id",
                     params: { id: agent.id },
                 })
             }

@@ -71,7 +71,7 @@ function CreateDashboardDialog() {
             form.reset();
             // Jump straight into the editor for the new dashboard.
             navigate({
-                to: "/dashboards/$id",
+                to: "/admin/dashboards/$id",
                 params: { id: res.data.id },
             });
         },
@@ -263,7 +263,7 @@ function MyDashboardCard({ d }: { d: Dashboard }) {
             </div>
             <div className="min-w-0">
                 <Link
-                    to="/dashboards/$id"
+                    to="/admin/dashboards/$id"
                     params={{ id: d.id }}
                     className="font-medium text-sm hover:underline"
                 >
@@ -279,7 +279,7 @@ function MyDashboardCard({ d }: { d: Dashboard }) {
             </div>
             <div className="mt-1 flex items-center gap-2">
                 <Button asChild size="sm" variant="outline" className="flex-1">
-                    <Link to="/dashboards/$id" params={{ id: d.id }}>
+                    <Link to="/admin/dashboards/$id" params={{ id: d.id }}>
                         {owned ? "Open & edit" : "View"}
                     </Link>
                 </Button>
@@ -368,13 +368,13 @@ function CatalogCard({ d }: { d: Dashboard }) {
             </div>
             {d.is_owner ? (
                 <Button asChild size="sm" variant="outline">
-                    <Link to="/dashboards/$id" params={{ id: d.id }}>
+                    <Link to="/admin/dashboards/$id" params={{ id: d.id }}>
                         Open
                     </Link>
                 </Button>
             ) : d.imported ? (
                 <Button asChild size="sm" variant="outline">
-                    <Link to="/dashboards/$id" params={{ id: d.id }}>
+                    <Link to="/admin/dashboards/$id" params={{ id: d.id }}>
                         View
                     </Link>
                 </Button>

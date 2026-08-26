@@ -33,7 +33,7 @@ function RouteComponent() {
         mutationFn: (password: string) => acceptInvite({ token: key, password }),
         onSuccess: (data) => {
             setAuth(data.data);
-            void router.navigate({ to: "/dashboard" });
+            void router.navigate({ to: "/admin/dashboard" });
         },
     });
 

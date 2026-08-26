@@ -303,7 +303,7 @@ function RouteComponent() {
                         ["conversation", sessionId],
                         seeded,
                     );
-                    navigate({ to: "/chat/$id", params: { id: sessionId } });
+                    navigate({ to: "/admin/chat/$id", params: { id: sessionId } });
                 }}
                 welcomeSlot={
                     <AgentPicker

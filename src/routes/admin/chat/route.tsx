@@ -51,7 +51,7 @@ function ChatLayout() {
             queryClient.invalidateQueries({ queryKey: ["conversations"] });
             setPendingDelete(null);
             // If we deleted the open conversation, go back to the new-chat view.
-            if (activeId === id) navigate({ to: "/chat" });
+            if (activeId === id) navigate({ to: "/admin/chat" });
         },
     });
 
@@ -63,7 +63,7 @@ function ChatLayout() {
             <aside className="flex w-72 shrink-0 flex-col border-r bg-background">
                 <div className="shrink-0 p-3">
                     <Link
-                        to="/chat"
+                        to="/admin/chat"
                         className={cn(
                             "flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted",
                             !activeId && "ring-1 ring-border",
@@ -87,7 +87,7 @@ function ChatLayout() {
                             {conversations.map((c) => (
                                 <li key={c.id} className="group relative">
                                     <Link
-                                        to="/chat/$id"
+                                        to="/admin/chat/$id"
                                         params={{ id: c.id }}
                                         className={cn(
                                             "block rounded-md py-2 pl-3 pr-9 text-sm transition-colors hover:bg-muted",

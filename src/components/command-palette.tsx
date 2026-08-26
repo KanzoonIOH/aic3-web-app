@@ -130,7 +130,7 @@ export function CommandPalette({
                                 value={`agent:${a.id}`}
                                 onSelect={() =>
                                     navigate({
-                                        to: "/agents/garden/$id",
+                                        to: "/admin/agents/garden/$id",
                                         params: { id: a.id },
                                     }).then(() => handleOpenChange(false))
                                 }
@@ -152,7 +152,7 @@ export function CommandPalette({
                                     value={`orch:${o.id}`}
                                     onSelect={() =>
                                         navigate({
-                                            to: "/agents/orchestrator/$id",
+                                            to: "/admin/agents/orchestrator/$id",
                                             params: { id: o.id },
                                         }).then(() => handleOpenChange(false))
                                     }
@@ -171,7 +171,7 @@ export function CommandPalette({
                                 key={k.id}
                                 value={`know:${k.id}`}
                                 // No knowledge detail route: land on the list.
-                                onSelect={() => go("/knowledges")}
+                                onSelect={() => go("/admin/knowledges")}
                             >
                                 <BookOpen />
                                 {k.name}
@@ -187,7 +187,7 @@ export function CommandPalette({
                                 key={m.id}
                                 value={`mcp:${m.id}`}
                                 // No MCP detail route: land on the list.
-                                onSelect={() => go("/mcps")}
+                                onSelect={() => go("/admin/mcps")}
                             >
                                 <Plug />
                                 {m.name}

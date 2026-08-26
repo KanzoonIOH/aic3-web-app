@@ -19,9 +19,9 @@ export const navGroups = [
     {
         label: "Workspace",
         items: [
-            { to: "/dashboard", label: "Analytics", icon: LayoutDashboardIcon },
-            { to: "/dashboards", label: "Dashboards", icon: LayoutGridIcon },
-            { to: "/chat", label: "Chat", icon: MessagesSquare },
+            { to: "/admin/dashboard", label: "Analytics", icon: LayoutDashboardIcon },
+            { to: "/admin/dashboards", label: "Dashboards", icon: LayoutGridIcon },
+            { to: "/admin/chat", label: "Chat", icon: MessagesSquare },
         ],
     },
     {
@@ -31,28 +31,28 @@ export const navGroups = [
                 label: "Agents",
                 icon: Bot,
                 children: [
-                    { to: "/agents/orchestrator", label: "Agent Orchestrator" },
-                    { to: "/agents/garden", label: "Agent Garden" },
+                    { to: "/admin/agents/orchestrator", label: "Agent Orchestrator" },
+                    { to: "/admin/agents/garden", label: "Agent Garden" },
                 ],
             },
-            { to: "/knowledges", label: "Knowledges", icon: BookOpen },
-            { to: "/mcps", label: "MCPs", icon: Plug },
-            { to: "/tags", label: "Tags", icon: Tag },
+            { to: "/admin/knowledges", label: "Knowledges", icon: BookOpen },
+            { to: "/admin/mcps", label: "MCPs", icon: Plug },
+            { to: "/admin/tags", label: "Tags", icon: Tag },
         ],
     },
     {
         label: "Operations",
         items: [
-            { to: "/logs", label: "Message Log", icon: ScrollText },
-            { to: "/audit-logs", label: "Audit Log", icon: History },
+            { to: "/admin/logs", label: "Message Log", icon: ScrollText },
+            { to: "/admin/audit-logs", label: "Audit Log", icon: History },
         ],
     },
     {
         label: "Administration",
         items: [
-            { to: "/members", label: "Members", icon: Users },
-            { to: "/api-keys", label: "API Keys", icon: KeyRound },
-            { to: "/global-config", label: "Global Config", icon: Settings },
+            { to: "/admin/members", label: "Members", icon: Users },
+            { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
+            { to: "/admin/global-config", label: "Global Config", icon: Settings },
         ],
     },
 ] as const;

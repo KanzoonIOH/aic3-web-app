@@ -5,7 +5,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 export const Route = createFileRoute("/(auth)")({
     beforeLoad: () => {
         if (hasSession()) {
-            throw redirect({ to: "/dashboard" });
+            throw redirect({ to: "/admin/dashboard" });
         }
     },
     component: RouteComponent,

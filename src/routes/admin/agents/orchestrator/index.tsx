@@ -364,7 +364,7 @@ function OrchestratorCard({ orchestrator }: { orchestrator: Orchestrator }) {
             onDelete={() => deleteOrchestrator(orchestrator.id)}
             onOpen={() =>
                 navigate({
-                    to: "/agents/orchestrator/$id",
+                    to: "/admin/agents/orchestrator/$id",
                     params: { id: orchestrator.id },
                 })
             }

@@ -33,7 +33,7 @@ function RouteComponent() {
     mutationFn: register,
     onSuccess: (data) => {
       setAuth(data.data);
-      void router.navigate({ to: "/dashboard" });
+      void router.navigate({ to: "/admin/dashboard" });
     },
   });
 

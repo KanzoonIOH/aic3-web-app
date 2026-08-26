@@ -287,7 +287,7 @@ function RouteComponent() {
                     {resolveServerMessage(error) || "Dashboard not found"}
                 </p>
                 <Button asChild variant="outline" size="sm">
-                    <Link to="/dashboards">
+                    <Link to="/admin/dashboards">
                         <ArrowLeft className="size-3.5" /> Back
                     </Link>
                 </Button>
@@ -438,7 +438,7 @@ function DashboardHeader({
         <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-3">
                 <Button asChild variant="ghost" size="icon-sm" className="mt-0.5">
-                    <Link to="/dashboards">
+                    <Link to="/admin/dashboards">
                         <ArrowLeft className="size-4" />
                     </Link>
                 </Button>

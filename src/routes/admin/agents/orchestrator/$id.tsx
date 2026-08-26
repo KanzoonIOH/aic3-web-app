@@ -368,7 +368,7 @@ function AgentsTab({ agents }: { agents: OrchestratorAgent[] }) {
                     {agents.map((agent) => (
                         <RouterLink
                             key={agent.agent_id}
-                            to="/agents/garden/$id"
+                            to="/admin/agents/garden/$id"
                             params={{ id: agent.agent_id }}
                         >
                             <div className="flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors hover:bg-muted/40">
