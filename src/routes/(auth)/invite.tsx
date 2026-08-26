@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resolveServerMessage } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth";
+import { homeFor, useAuthStore } from "@/stores/auth";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
@@ -33,7 +33,7 @@ function RouteComponent() {
         mutationFn: (password: string) => acceptInvite({ token: key, password }),
         onSuccess: (data) => {
             setAuth(data.data);
-            void router.navigate({ to: "/admin/dashboard" });
+            void router.navigate({ to: homeFor(data.data.user.role) });
         },
     });
 

@@ -67,3 +67,12 @@ export const hasSession = () => {
 // PENDING users are signed up but not yet approved: no app access.
 export const isPending = () =>
     useAuthStore.getState().user?.role === "PENDING";
+
+// Single source of truth for "where does this role land after auth".
+// PENDING falls through to /admin on purpose: the admin layout renders the
+// awaiting-approval gate instead of the console.
+export const homeFor = (role?: UserRole) =>
+    role === "VIEWER" ? ("/app" as const) : ("/admin/dashboard" as const);
+
+export const homeForCurrentUser = () =>
+    homeFor(useAuthStore.getState().user?.role);

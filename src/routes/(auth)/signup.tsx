@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { register } from "@/api/auth";
-import { useAuthStore } from "@/stores/auth";
+import { homeFor, useAuthStore } from "@/stores/auth";
 import { resolveServerMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ function RouteComponent() {
     mutationFn: register,
     onSuccess: (data) => {
       setAuth(data.data);
-      void router.navigate({ to: "/admin/dashboard" });
+      void router.navigate({ to: homeFor(data.data.user.role) });
     },
   });
 

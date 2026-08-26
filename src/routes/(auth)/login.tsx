@@ -3,7 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { login } from "@/api/auth";
-import { useAuthStore } from "@/stores/auth";
+import { homeFor, useAuthStore } from "@/stores/auth";
 import { resolveServerMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +29,7 @@ function RouteComponent() {
         mutationFn: login,
         onSuccess: (data) => {
             setAuth(data.data);
-            console.log(data.data)
-            void router.navigate({ to: "/admin/dashboard" });
+            void router.navigate({ to: homeFor(data.data.user.role) });
         },
     });
 
@@ -98,7 +97,7 @@ function RouteComponent() {
                             {field.state.meta.isTouched &&
                                 field.state.meta.errors.length > 0 && (
                                     <p className="text-xs text-destructive">
-                                        {field.state.meta.errors[0] && ""}
+                                        {field.state.meta.errors[0]}
                                     </p>
                                 )}
                         </div>

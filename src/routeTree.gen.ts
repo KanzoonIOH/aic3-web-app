@@ -9,9 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteRouteImport } from './routes/app/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppKnowledgesRouteImport } from './routes/app/knowledges'
+import { Route as AppChatRouteImport } from './routes/app/chat'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as AdminMembersRouteImport } from './routes/admin/members'
 import { Route as AdminLogsRouteImport } from './routes/admin/logs'
@@ -37,6 +41,11 @@ import { Route as AdminAgentsGardenIndexRouteImport } from './routes/admin/agent
 import { Route as AdminAgentsOrchestratorIdRouteImport } from './routes/admin/agents/orchestrator/$id'
 import { Route as AdminAgentsGardenIdRouteImport } from './routes/admin/agents/garden/$id'
 
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -50,6 +59,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppKnowledgesRoute = AppKnowledgesRouteImport.update({
+  id: '/knowledges',
+  path: '/knowledges',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AdminTagsRoute = AdminTagsRouteImport.update({
   id: '/tags',
@@ -177,6 +201,7 @@ const AdminAgentsGardenIdRoute = AdminAgentsGardenIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
+  '/app': typeof AppRouteRouteWithChildren
   '/admin/chat': typeof AdminChatRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/invite': typeof authInviteRoute
@@ -189,6 +214,9 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/app/chat': typeof AppChatRoute
+  '/app/knowledges': typeof AppKnowledgesRoute
+  '/app/': typeof AppIndexRoute
   '/admin/chat/$id': typeof AdminChatIdRoute
   '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
   '/admin/agents/': typeof AdminAgentsIndexRoute
@@ -216,6 +244,9 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/app/chat': typeof AppChatRoute
+  '/app/knowledges': typeof AppKnowledgesRoute
+  '/app': typeof AppIndexRoute
   '/admin/chat/$id': typeof AdminChatIdRoute
   '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
   '/admin/agents': typeof AdminAgentsIndexRoute
@@ -234,6 +265,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/(auth)': typeof authRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
+  '/app': typeof AppRouteRouteWithChildren
   '/admin/chat': typeof AdminChatRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/invite': typeof authInviteRoute
@@ -246,6 +278,9 @@ export interface FileRoutesById {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/app/chat': typeof AppChatRoute
+  '/app/knowledges': typeof AppKnowledgesRoute
+  '/app/': typeof AppIndexRoute
   '/admin/chat/$id': typeof AdminChatIdRoute
   '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
   '/admin/agents/': typeof AdminAgentsIndexRoute
@@ -264,6 +299,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/app'
     | '/admin/chat'
     | '/forgot-password'
     | '/invite'
@@ -276,6 +312,9 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/members'
     | '/admin/tags'
+    | '/app/chat'
+    | '/app/knowledges'
+    | '/app/'
     | '/admin/chat/$id'
     | '/admin/dashboards/$id'
     | '/admin/agents/'
@@ -303,6 +342,9 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/members'
     | '/admin/tags'
+    | '/app/chat'
+    | '/app/knowledges'
+    | '/app'
     | '/admin/chat/$id'
     | '/admin/dashboards/$id'
     | '/admin/agents'
@@ -320,6 +362,7 @@ export interface FileRouteTypes {
     | '/'
     | '/(auth)'
     | '/admin'
+    | '/app'
     | '/admin/chat'
     | '/(auth)/forgot-password'
     | '/(auth)/invite'
@@ -332,6 +375,9 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/members'
     | '/admin/tags'
+    | '/app/chat'
+    | '/app/knowledges'
+    | '/app/'
     | '/admin/chat/$id'
     | '/admin/dashboards/$id'
     | '/admin/agents/'
@@ -350,10 +396,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   authRouteRoute: typeof authRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
+  AppRouteRoute: typeof AppRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -374,6 +428,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/knowledges': {
+      id: '/app/knowledges'
+      path: '/knowledges'
+      fullPath: '/app/knowledges'
+      preLoaderRoute: typeof AppKnowledgesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/chat': {
+      id: '/app/chat'
+      path: '/chat'
+      fullPath: '/app/chat'
+      preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/admin/tags': {
       id: '/admin/tags'
@@ -624,10 +699,27 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
   AdminRouteRouteChildren,
 )
 
+interface AppRouteRouteChildren {
+  AppChatRoute: typeof AppChatRoute
+  AppKnowledgesRoute: typeof AppKnowledgesRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppChatRoute: AppChatRoute,
+  AppKnowledgesRoute: AppKnowledgesRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   authRouteRoute: authRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
+  AppRouteRoute: AppRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

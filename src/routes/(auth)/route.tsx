@@ -1,11 +1,11 @@
 import { Card } from "@/components/ui/card";
-import { hasSession } from "@/stores/auth";
+import { hasSession, homeForCurrentUser } from "@/stores/auth";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(auth)")({
     beforeLoad: () => {
         if (hasSession()) {
-            throw redirect({ to: "/admin/dashboard" });
+            throw redirect({ to: homeForCurrentUser() });
         }
     },
     component: RouteComponent,
