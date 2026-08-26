@@ -6,7 +6,7 @@ import { Bot } from "lucide-react";
 import { ChatSanbox } from "../agents/-ChatSandbox";
 import { PinButton } from "@/components/pin-button";
 
-export const Route = createFileRoute("/(main)/chat/$id")({
+export const Route = createFileRoute("/admin/chat/$id")({
     component: RouteComponent,
 });
 

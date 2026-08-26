@@ -71,7 +71,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { z } from "zod";
 
-export const Route = createFileRoute("/(main)/mcps/")({
+export const Route = createFileRoute("/admin/mcps/")({
     component: RouteComponent,
 });
 

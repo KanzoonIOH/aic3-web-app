@@ -26,19 +26,21 @@ import {
 } from "@tanstack/react-router";
 import {
     ChevronDown,
+    ChevronRight,
     ChevronsUpDownIcon,
     Clock,
     Keyboard,
     LogOut,
     Monitor,
     Moon,
+    Repeat2,
     Settings,
     Sun,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { SettingsDialog } from "./-SettingsDialog";
 
-export const Route = createFileRoute("/(main)")({
+export const Route = createFileRoute("/admin")({
     beforeLoad: () => {
         if (!hasSession()) {
             throw redirect({ to: "/login" });
@@ -154,6 +156,27 @@ function UserSection({
                         </Button>
                     </div>
 
+                    <Separator />
+                    <div className="p-1">
+                        <button
+                            type="button"
+                            className="group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left hover:bg-accent transition-colors"
+                            onClick={() => setSettingsOpen(true)}
+                        >
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted text-muted-foreground group-hover:text-foreground transition-colors">
+                                <Repeat2 className="size-4" />
+                            </span>
+                            <span className="flex min-w-0 flex-col">
+                                <span className="truncate text-sm font-medium">
+                                    Switch to User
+                                </span>
+                                <span className="truncate text-[11px] text-muted-foreground">
+                                    Currently in Admin view
+                                </span>
+                            </span>
+                            <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                    </div>
                     <Separator />
 
                     <ThemeToggle />
@@ -345,7 +368,6 @@ function RouteComponent() {
                 open={shortcutsOpen}
                 onOpenChange={setShortcutsOpen}
             />
-
             <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </div>
     );

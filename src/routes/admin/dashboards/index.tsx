@@ -49,7 +49,7 @@ import {
 import { useState } from "react";
 import { z } from "zod";
 
-export const Route = createFileRoute("/(main)/dashboards/")({
+export const Route = createFileRoute("/admin/dashboards/")({
     component: RouteComponent,
 });
 

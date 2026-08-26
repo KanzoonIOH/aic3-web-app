@@ -13,7 +13,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Building2, Info, ShieldCheck, Tag } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/(main)/global-config/")({
+export const Route = createFileRoute("/admin/global-config/")({
     component: RouteComponent,
 });
 

@@ -9,36 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as mainRouteRouteImport } from './routes/(main)/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as mainTagsRouteImport } from './routes/(main)/tags'
-import { Route as mainMembersRouteImport } from './routes/(main)/members'
-import { Route as mainLogsRouteImport } from './routes/(main)/logs'
-import { Route as mainDashboardRouteImport } from './routes/(main)/dashboard'
-import { Route as mainAuditLogsRouteImport } from './routes/(main)/audit-logs'
-import { Route as mainApiKeysRouteImport } from './routes/(main)/api-keys'
+import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminMembersRouteImport } from './routes/admin/members'
+import { Route as AdminLogsRouteImport } from './routes/admin/logs'
+import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminAuditLogsRouteImport } from './routes/admin/audit-logs'
+import { Route as AdminApiKeysRouteImport } from './routes/admin/api-keys'
 import { Route as authSignupRouteImport } from './routes/(auth)/signup'
 import { Route as authResetPasswordRouteImport } from './routes/(auth)/reset-password'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authInviteRouteImport } from './routes/(auth)/invite'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
-import { Route as mainChatRouteRouteImport } from './routes/(main)/chat/route'
-import { Route as mainMcpsIndexRouteImport } from './routes/(main)/mcps/index'
-import { Route as mainKnowledgesIndexRouteImport } from './routes/(main)/knowledges/index'
-import { Route as mainGlobalConfigIndexRouteImport } from './routes/(main)/global-config/index'
-import { Route as mainDashboardsIndexRouteImport } from './routes/(main)/dashboards/index'
-import { Route as mainChatIndexRouteImport } from './routes/(main)/chat/index'
-import { Route as mainAgentsIndexRouteImport } from './routes/(main)/agents/index'
-import { Route as mainDashboardsIdRouteImport } from './routes/(main)/dashboards/$id'
-import { Route as mainChatIdRouteImport } from './routes/(main)/chat/$id'
-import { Route as mainAgentsOrchestratorIndexRouteImport } from './routes/(main)/agents/orchestrator/index'
-import { Route as mainAgentsGardenIndexRouteImport } from './routes/(main)/agents/garden/index'
-import { Route as mainAgentsOrchestratorIdRouteImport } from './routes/(main)/agents/orchestrator/$id'
-import { Route as mainAgentsGardenIdRouteImport } from './routes/(main)/agents/garden/$id'
+import { Route as AdminChatRouteRouteImport } from './routes/admin/chat/route'
+import { Route as AdminMcpsIndexRouteImport } from './routes/admin/mcps/index'
+import { Route as AdminKnowledgesIndexRouteImport } from './routes/admin/knowledges/index'
+import { Route as AdminGlobalConfigIndexRouteImport } from './routes/admin/global-config/index'
+import { Route as AdminDashboardsIndexRouteImport } from './routes/admin/dashboards/index'
+import { Route as AdminChatIndexRouteImport } from './routes/admin/chat/index'
+import { Route as AdminAgentsIndexRouteImport } from './routes/admin/agents/index'
+import { Route as AdminDashboardsIdRouteImport } from './routes/admin/dashboards/$id'
+import { Route as AdminChatIdRouteImport } from './routes/admin/chat/$id'
+import { Route as AdminAgentsOrchestratorIndexRouteImport } from './routes/admin/agents/orchestrator/index'
+import { Route as AdminAgentsGardenIndexRouteImport } from './routes/admin/agents/garden/index'
+import { Route as AdminAgentsOrchestratorIdRouteImport } from './routes/admin/agents/orchestrator/$id'
+import { Route as AdminAgentsGardenIdRouteImport } from './routes/admin/agents/garden/$id'
 
-const mainRouteRoute = mainRouteRouteImport.update({
-  id: '/(main)',
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authRouteRoute = authRouteRouteImport.update({
@@ -50,35 +51,35 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const mainTagsRoute = mainTagsRouteImport.update({
+const AdminTagsRoute = AdminTagsRouteImport.update({
   id: '/tags',
   path: '/tags',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainMembersRoute = mainMembersRouteImport.update({
+const AdminMembersRoute = AdminMembersRouteImport.update({
   id: '/members',
   path: '/members',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainLogsRoute = mainLogsRouteImport.update({
+const AdminLogsRoute = AdminLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainDashboardRoute = mainDashboardRouteImport.update({
+const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainAuditLogsRoute = mainAuditLogsRouteImport.update({
+const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
   id: '/audit-logs',
   path: '/audit-logs',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainApiKeysRoute = mainApiKeysRouteImport.update({
+const AdminApiKeysRoute = AdminApiKeysRouteImport.update({
   id: '/api-keys',
   path: '/api-keys',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const authSignupRoute = authSignupRouteImport.update({
   id: '/signup',
@@ -105,255 +106,259 @@ const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => authRouteRoute,
 } as any)
-const mainChatRouteRoute = mainChatRouteRouteImport.update({
+const AdminChatRouteRoute = AdminChatRouteRouteImport.update({
   id: '/chat',
   path: '/chat',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainMcpsIndexRoute = mainMcpsIndexRouteImport.update({
+const AdminMcpsIndexRoute = AdminMcpsIndexRouteImport.update({
   id: '/mcps/',
   path: '/mcps/',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainKnowledgesIndexRoute = mainKnowledgesIndexRouteImport.update({
+const AdminKnowledgesIndexRoute = AdminKnowledgesIndexRouteImport.update({
   id: '/knowledges/',
   path: '/knowledges/',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainGlobalConfigIndexRoute = mainGlobalConfigIndexRouteImport.update({
+const AdminGlobalConfigIndexRoute = AdminGlobalConfigIndexRouteImport.update({
   id: '/global-config/',
   path: '/global-config/',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainDashboardsIndexRoute = mainDashboardsIndexRouteImport.update({
+const AdminDashboardsIndexRoute = AdminDashboardsIndexRouteImport.update({
   id: '/dashboards/',
   path: '/dashboards/',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainChatIndexRoute = mainChatIndexRouteImport.update({
+const AdminChatIndexRoute = AdminChatIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => mainChatRouteRoute,
+  getParentRoute: () => AdminChatRouteRoute,
 } as any)
-const mainAgentsIndexRoute = mainAgentsIndexRouteImport.update({
+const AdminAgentsIndexRoute = AdminAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainDashboardsIdRoute = mainDashboardsIdRouteImport.update({
+const AdminDashboardsIdRoute = AdminDashboardsIdRouteImport.update({
   id: '/dashboards/$id',
   path: '/dashboards/$id',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainChatIdRoute = mainChatIdRouteImport.update({
+const AdminChatIdRoute = AdminChatIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => mainChatRouteRoute,
+  getParentRoute: () => AdminChatRouteRoute,
 } as any)
-const mainAgentsOrchestratorIndexRoute =
-  mainAgentsOrchestratorIndexRouteImport.update({
+const AdminAgentsOrchestratorIndexRoute =
+  AdminAgentsOrchestratorIndexRouteImport.update({
     id: '/agents/orchestrator/',
     path: '/agents/orchestrator/',
-    getParentRoute: () => mainRouteRoute,
+    getParentRoute: () => AdminRouteRoute,
   } as any)
-const mainAgentsGardenIndexRoute = mainAgentsGardenIndexRouteImport.update({
+const AdminAgentsGardenIndexRoute = AdminAgentsGardenIndexRouteImport.update({
   id: '/agents/garden/',
   path: '/agents/garden/',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const mainAgentsOrchestratorIdRoute =
-  mainAgentsOrchestratorIdRouteImport.update({
+const AdminAgentsOrchestratorIdRoute =
+  AdminAgentsOrchestratorIdRouteImport.update({
     id: '/agents/orchestrator/$id',
     path: '/agents/orchestrator/$id',
-    getParentRoute: () => mainRouteRoute,
+    getParentRoute: () => AdminRouteRoute,
   } as any)
-const mainAgentsGardenIdRoute = mainAgentsGardenIdRouteImport.update({
+const AdminAgentsGardenIdRoute = AdminAgentsGardenIdRouteImport.update({
   id: '/agents/garden/$id',
   path: '/agents/garden/$id',
-  getParentRoute: () => mainRouteRoute,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/chat': typeof mainChatRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/admin/chat': typeof AdminChatRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/invite': typeof authInviteRoute
   '/login': typeof authLoginRoute
   '/reset-password': typeof authResetPasswordRoute
   '/signup': typeof authSignupRoute
-  '/api-keys': typeof mainApiKeysRoute
-  '/audit-logs': typeof mainAuditLogsRoute
-  '/dashboard': typeof mainDashboardRoute
-  '/logs': typeof mainLogsRoute
-  '/members': typeof mainMembersRoute
-  '/tags': typeof mainTagsRoute
-  '/chat/$id': typeof mainChatIdRoute
-  '/dashboards/$id': typeof mainDashboardsIdRoute
-  '/agents/': typeof mainAgentsIndexRoute
-  '/chat/': typeof mainChatIndexRoute
-  '/dashboards/': typeof mainDashboardsIndexRoute
-  '/global-config/': typeof mainGlobalConfigIndexRoute
-  '/knowledges/': typeof mainKnowledgesIndexRoute
-  '/mcps/': typeof mainMcpsIndexRoute
-  '/agents/garden/$id': typeof mainAgentsGardenIdRoute
-  '/agents/orchestrator/$id': typeof mainAgentsOrchestratorIdRoute
-  '/agents/garden/': typeof mainAgentsGardenIndexRoute
-  '/agents/orchestrator/': typeof mainAgentsOrchestratorIndexRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/chat/$id': typeof AdminChatIdRoute
+  '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
+  '/admin/agents/': typeof AdminAgentsIndexRoute
+  '/admin/chat/': typeof AdminChatIndexRoute
+  '/admin/dashboards/': typeof AdminDashboardsIndexRoute
+  '/admin/global-config/': typeof AdminGlobalConfigIndexRoute
+  '/admin/knowledges/': typeof AdminKnowledgesIndexRoute
+  '/admin/mcps/': typeof AdminMcpsIndexRoute
+  '/admin/agents/garden/$id': typeof AdminAgentsGardenIdRoute
+  '/admin/agents/orchestrator/$id': typeof AdminAgentsOrchestratorIdRoute
+  '/admin/agents/garden/': typeof AdminAgentsGardenIndexRoute
+  '/admin/agents/orchestrator/': typeof AdminAgentsOrchestratorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/forgot-password': typeof authForgotPasswordRoute
   '/invite': typeof authInviteRoute
   '/login': typeof authLoginRoute
   '/reset-password': typeof authResetPasswordRoute
   '/signup': typeof authSignupRoute
-  '/api-keys': typeof mainApiKeysRoute
-  '/audit-logs': typeof mainAuditLogsRoute
-  '/dashboard': typeof mainDashboardRoute
-  '/logs': typeof mainLogsRoute
-  '/members': typeof mainMembersRoute
-  '/tags': typeof mainTagsRoute
-  '/chat/$id': typeof mainChatIdRoute
-  '/dashboards/$id': typeof mainDashboardsIdRoute
-  '/agents': typeof mainAgentsIndexRoute
-  '/chat': typeof mainChatIndexRoute
-  '/dashboards': typeof mainDashboardsIndexRoute
-  '/global-config': typeof mainGlobalConfigIndexRoute
-  '/knowledges': typeof mainKnowledgesIndexRoute
-  '/mcps': typeof mainMcpsIndexRoute
-  '/agents/garden/$id': typeof mainAgentsGardenIdRoute
-  '/agents/orchestrator/$id': typeof mainAgentsOrchestratorIdRoute
-  '/agents/garden': typeof mainAgentsGardenIndexRoute
-  '/agents/orchestrator': typeof mainAgentsOrchestratorIndexRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/chat/$id': typeof AdminChatIdRoute
+  '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
+  '/admin/agents': typeof AdminAgentsIndexRoute
+  '/admin/chat': typeof AdminChatIndexRoute
+  '/admin/dashboards': typeof AdminDashboardsIndexRoute
+  '/admin/global-config': typeof AdminGlobalConfigIndexRoute
+  '/admin/knowledges': typeof AdminKnowledgesIndexRoute
+  '/admin/mcps': typeof AdminMcpsIndexRoute
+  '/admin/agents/garden/$id': typeof AdminAgentsGardenIdRoute
+  '/admin/agents/orchestrator/$id': typeof AdminAgentsOrchestratorIdRoute
+  '/admin/agents/garden': typeof AdminAgentsGardenIndexRoute
+  '/admin/agents/orchestrator': typeof AdminAgentsOrchestratorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(auth)': typeof authRouteRouteWithChildren
-  '/(main)': typeof mainRouteRouteWithChildren
-  '/(main)/chat': typeof mainChatRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
+  '/admin/chat': typeof AdminChatRouteRouteWithChildren
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/invite': typeof authInviteRoute
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/reset-password': typeof authResetPasswordRoute
   '/(auth)/signup': typeof authSignupRoute
-  '/(main)/api-keys': typeof mainApiKeysRoute
-  '/(main)/audit-logs': typeof mainAuditLogsRoute
-  '/(main)/dashboard': typeof mainDashboardRoute
-  '/(main)/logs': typeof mainLogsRoute
-  '/(main)/members': typeof mainMembersRoute
-  '/(main)/tags': typeof mainTagsRoute
-  '/(main)/chat/$id': typeof mainChatIdRoute
-  '/(main)/dashboards/$id': typeof mainDashboardsIdRoute
-  '/(main)/agents/': typeof mainAgentsIndexRoute
-  '/(main)/chat/': typeof mainChatIndexRoute
-  '/(main)/dashboards/': typeof mainDashboardsIndexRoute
-  '/(main)/global-config/': typeof mainGlobalConfigIndexRoute
-  '/(main)/knowledges/': typeof mainKnowledgesIndexRoute
-  '/(main)/mcps/': typeof mainMcpsIndexRoute
-  '/(main)/agents/garden/$id': typeof mainAgentsGardenIdRoute
-  '/(main)/agents/orchestrator/$id': typeof mainAgentsOrchestratorIdRoute
-  '/(main)/agents/garden/': typeof mainAgentsGardenIndexRoute
-  '/(main)/agents/orchestrator/': typeof mainAgentsOrchestratorIndexRoute
+  '/admin/api-keys': typeof AdminApiKeysRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
+  '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/chat/$id': typeof AdminChatIdRoute
+  '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
+  '/admin/agents/': typeof AdminAgentsIndexRoute
+  '/admin/chat/': typeof AdminChatIndexRoute
+  '/admin/dashboards/': typeof AdminDashboardsIndexRoute
+  '/admin/global-config/': typeof AdminGlobalConfigIndexRoute
+  '/admin/knowledges/': typeof AdminKnowledgesIndexRoute
+  '/admin/mcps/': typeof AdminMcpsIndexRoute
+  '/admin/agents/garden/$id': typeof AdminAgentsGardenIdRoute
+  '/admin/agents/orchestrator/$id': typeof AdminAgentsOrchestratorIdRoute
+  '/admin/agents/garden/': typeof AdminAgentsGardenIndexRoute
+  '/admin/agents/orchestrator/': typeof AdminAgentsOrchestratorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/chat'
+    | '/admin'
+    | '/admin/chat'
     | '/forgot-password'
     | '/invite'
     | '/login'
     | '/reset-password'
     | '/signup'
-    | '/api-keys'
-    | '/audit-logs'
-    | '/dashboard'
-    | '/logs'
-    | '/members'
-    | '/tags'
-    | '/chat/$id'
-    | '/dashboards/$id'
-    | '/agents/'
-    | '/chat/'
-    | '/dashboards/'
-    | '/global-config/'
-    | '/knowledges/'
-    | '/mcps/'
-    | '/agents/garden/$id'
-    | '/agents/orchestrator/$id'
-    | '/agents/garden/'
-    | '/agents/orchestrator/'
+    | '/admin/api-keys'
+    | '/admin/audit-logs'
+    | '/admin/dashboard'
+    | '/admin/logs'
+    | '/admin/members'
+    | '/admin/tags'
+    | '/admin/chat/$id'
+    | '/admin/dashboards/$id'
+    | '/admin/agents/'
+    | '/admin/chat/'
+    | '/admin/dashboards/'
+    | '/admin/global-config/'
+    | '/admin/knowledges/'
+    | '/admin/mcps/'
+    | '/admin/agents/garden/$id'
+    | '/admin/agents/orchestrator/$id'
+    | '/admin/agents/garden/'
+    | '/admin/agents/orchestrator/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/forgot-password'
     | '/invite'
     | '/login'
     | '/reset-password'
     | '/signup'
-    | '/api-keys'
-    | '/audit-logs'
-    | '/dashboard'
-    | '/logs'
-    | '/members'
-    | '/tags'
-    | '/chat/$id'
-    | '/dashboards/$id'
-    | '/agents'
-    | '/chat'
-    | '/dashboards'
-    | '/global-config'
-    | '/knowledges'
-    | '/mcps'
-    | '/agents/garden/$id'
-    | '/agents/orchestrator/$id'
-    | '/agents/garden'
-    | '/agents/orchestrator'
+    | '/admin/api-keys'
+    | '/admin/audit-logs'
+    | '/admin/dashboard'
+    | '/admin/logs'
+    | '/admin/members'
+    | '/admin/tags'
+    | '/admin/chat/$id'
+    | '/admin/dashboards/$id'
+    | '/admin/agents'
+    | '/admin/chat'
+    | '/admin/dashboards'
+    | '/admin/global-config'
+    | '/admin/knowledges'
+    | '/admin/mcps'
+    | '/admin/agents/garden/$id'
+    | '/admin/agents/orchestrator/$id'
+    | '/admin/agents/garden'
+    | '/admin/agents/orchestrator'
   id:
     | '__root__'
     | '/'
     | '/(auth)'
-    | '/(main)'
-    | '/(main)/chat'
+    | '/admin'
+    | '/admin/chat'
     | '/(auth)/forgot-password'
     | '/(auth)/invite'
     | '/(auth)/login'
     | '/(auth)/reset-password'
     | '/(auth)/signup'
-    | '/(main)/api-keys'
-    | '/(main)/audit-logs'
-    | '/(main)/dashboard'
-    | '/(main)/logs'
-    | '/(main)/members'
-    | '/(main)/tags'
-    | '/(main)/chat/$id'
-    | '/(main)/dashboards/$id'
-    | '/(main)/agents/'
-    | '/(main)/chat/'
-    | '/(main)/dashboards/'
-    | '/(main)/global-config/'
-    | '/(main)/knowledges/'
-    | '/(main)/mcps/'
-    | '/(main)/agents/garden/$id'
-    | '/(main)/agents/orchestrator/$id'
-    | '/(main)/agents/garden/'
-    | '/(main)/agents/orchestrator/'
+    | '/admin/api-keys'
+    | '/admin/audit-logs'
+    | '/admin/dashboard'
+    | '/admin/logs'
+    | '/admin/members'
+    | '/admin/tags'
+    | '/admin/chat/$id'
+    | '/admin/dashboards/$id'
+    | '/admin/agents/'
+    | '/admin/chat/'
+    | '/admin/dashboards/'
+    | '/admin/global-config/'
+    | '/admin/knowledges/'
+    | '/admin/mcps/'
+    | '/admin/agents/garden/$id'
+    | '/admin/agents/orchestrator/$id'
+    | '/admin/agents/garden/'
+    | '/admin/agents/orchestrator/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   authRouteRoute: typeof authRouteRouteWithChildren
-  mainRouteRoute: typeof mainRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/(main)': {
-      id: '/(main)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof mainRouteRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)': {
@@ -370,47 +375,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(main)/tags': {
-      id: '/(main)/tags'
+    '/admin/tags': {
+      id: '/admin/tags'
       path: '/tags'
-      fullPath: '/tags'
-      preLoaderRoute: typeof mainTagsRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/tags'
+      preLoaderRoute: typeof AdminTagsRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/members': {
-      id: '/(main)/members'
+    '/admin/members': {
+      id: '/admin/members'
       path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof mainMembersRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/logs': {
-      id: '/(main)/logs'
+    '/admin/logs': {
+      id: '/admin/logs'
       path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof mainLogsRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/dashboard': {
-      id: '/(main)/dashboard'
+    '/admin/dashboard': {
+      id: '/admin/dashboard'
       path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof mainDashboardRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/audit-logs': {
-      id: '/(main)/audit-logs'
+    '/admin/audit-logs': {
+      id: '/admin/audit-logs'
       path: '/audit-logs'
-      fullPath: '/audit-logs'
-      preLoaderRoute: typeof mainAuditLogsRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/audit-logs'
+      preLoaderRoute: typeof AdminAuditLogsRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/api-keys': {
-      id: '/(main)/api-keys'
+    '/admin/api-keys': {
+      id: '/admin/api-keys'
       path: '/api-keys'
-      fullPath: '/api-keys'
-      preLoaderRoute: typeof mainApiKeysRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/api-keys'
+      preLoaderRoute: typeof AdminApiKeysRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/(auth)/signup': {
       id: '/(auth)/signup'
@@ -447,96 +452,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof authRouteRoute
     }
-    '/(main)/chat': {
-      id: '/(main)/chat'
+    '/admin/chat': {
+      id: '/admin/chat'
       path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof mainChatRouteRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/chat'
+      preLoaderRoute: typeof AdminChatRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/mcps/': {
-      id: '/(main)/mcps/'
+    '/admin/mcps/': {
+      id: '/admin/mcps/'
       path: '/mcps'
-      fullPath: '/mcps/'
-      preLoaderRoute: typeof mainMcpsIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/mcps/'
+      preLoaderRoute: typeof AdminMcpsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/knowledges/': {
-      id: '/(main)/knowledges/'
+    '/admin/knowledges/': {
+      id: '/admin/knowledges/'
       path: '/knowledges'
-      fullPath: '/knowledges/'
-      preLoaderRoute: typeof mainKnowledgesIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/knowledges/'
+      preLoaderRoute: typeof AdminKnowledgesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/global-config/': {
-      id: '/(main)/global-config/'
+    '/admin/global-config/': {
+      id: '/admin/global-config/'
       path: '/global-config'
-      fullPath: '/global-config/'
-      preLoaderRoute: typeof mainGlobalConfigIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/global-config/'
+      preLoaderRoute: typeof AdminGlobalConfigIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/dashboards/': {
-      id: '/(main)/dashboards/'
+    '/admin/dashboards/': {
+      id: '/admin/dashboards/'
       path: '/dashboards'
-      fullPath: '/dashboards/'
-      preLoaderRoute: typeof mainDashboardsIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/dashboards/'
+      preLoaderRoute: typeof AdminDashboardsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/chat/': {
-      id: '/(main)/chat/'
+    '/admin/chat/': {
+      id: '/admin/chat/'
       path: '/'
-      fullPath: '/chat/'
-      preLoaderRoute: typeof mainChatIndexRouteImport
-      parentRoute: typeof mainChatRouteRoute
+      fullPath: '/admin/chat/'
+      preLoaderRoute: typeof AdminChatIndexRouteImport
+      parentRoute: typeof AdminChatRouteRoute
     }
-    '/(main)/agents/': {
-      id: '/(main)/agents/'
+    '/admin/agents/': {
+      id: '/admin/agents/'
       path: '/agents'
-      fullPath: '/agents/'
-      preLoaderRoute: typeof mainAgentsIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/agents/'
+      preLoaderRoute: typeof AdminAgentsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/dashboards/$id': {
-      id: '/(main)/dashboards/$id'
+    '/admin/dashboards/$id': {
+      id: '/admin/dashboards/$id'
       path: '/dashboards/$id'
-      fullPath: '/dashboards/$id'
-      preLoaderRoute: typeof mainDashboardsIdRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/dashboards/$id'
+      preLoaderRoute: typeof AdminDashboardsIdRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/chat/$id': {
-      id: '/(main)/chat/$id'
+    '/admin/chat/$id': {
+      id: '/admin/chat/$id'
       path: '/$id'
-      fullPath: '/chat/$id'
-      preLoaderRoute: typeof mainChatIdRouteImport
-      parentRoute: typeof mainChatRouteRoute
+      fullPath: '/admin/chat/$id'
+      preLoaderRoute: typeof AdminChatIdRouteImport
+      parentRoute: typeof AdminChatRouteRoute
     }
-    '/(main)/agents/orchestrator/': {
-      id: '/(main)/agents/orchestrator/'
+    '/admin/agents/orchestrator/': {
+      id: '/admin/agents/orchestrator/'
       path: '/agents/orchestrator'
-      fullPath: '/agents/orchestrator/'
-      preLoaderRoute: typeof mainAgentsOrchestratorIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/agents/orchestrator/'
+      preLoaderRoute: typeof AdminAgentsOrchestratorIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/agents/garden/': {
-      id: '/(main)/agents/garden/'
+    '/admin/agents/garden/': {
+      id: '/admin/agents/garden/'
       path: '/agents/garden'
-      fullPath: '/agents/garden/'
-      preLoaderRoute: typeof mainAgentsGardenIndexRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/agents/garden/'
+      preLoaderRoute: typeof AdminAgentsGardenIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/agents/orchestrator/$id': {
-      id: '/(main)/agents/orchestrator/$id'
+    '/admin/agents/orchestrator/$id': {
+      id: '/admin/agents/orchestrator/$id'
       path: '/agents/orchestrator/$id'
-      fullPath: '/agents/orchestrator/$id'
-      preLoaderRoute: typeof mainAgentsOrchestratorIdRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/agents/orchestrator/$id'
+      preLoaderRoute: typeof AdminAgentsOrchestratorIdRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/(main)/agents/garden/$id': {
-      id: '/(main)/agents/garden/$id'
+    '/admin/agents/garden/$id': {
+      id: '/admin/agents/garden/$id'
       path: '/agents/garden/$id'
-      fullPath: '/agents/garden/$id'
-      preLoaderRoute: typeof mainAgentsGardenIdRouteImport
-      parentRoute: typeof mainRouteRoute
+      fullPath: '/admin/agents/garden/$id'
+      preLoaderRoute: typeof AdminAgentsGardenIdRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
@@ -561,68 +566,68 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
   authRouteRouteChildren,
 )
 
-interface mainChatRouteRouteChildren {
-  mainChatIdRoute: typeof mainChatIdRoute
-  mainChatIndexRoute: typeof mainChatIndexRoute
+interface AdminChatRouteRouteChildren {
+  AdminChatIdRoute: typeof AdminChatIdRoute
+  AdminChatIndexRoute: typeof AdminChatIndexRoute
 }
 
-const mainChatRouteRouteChildren: mainChatRouteRouteChildren = {
-  mainChatIdRoute: mainChatIdRoute,
-  mainChatIndexRoute: mainChatIndexRoute,
+const AdminChatRouteRouteChildren: AdminChatRouteRouteChildren = {
+  AdminChatIdRoute: AdminChatIdRoute,
+  AdminChatIndexRoute: AdminChatIndexRoute,
 }
 
-const mainChatRouteRouteWithChildren = mainChatRouteRoute._addFileChildren(
-  mainChatRouteRouteChildren,
+const AdminChatRouteRouteWithChildren = AdminChatRouteRoute._addFileChildren(
+  AdminChatRouteRouteChildren,
 )
 
-interface mainRouteRouteChildren {
-  mainChatRouteRoute: typeof mainChatRouteRouteWithChildren
-  mainApiKeysRoute: typeof mainApiKeysRoute
-  mainAuditLogsRoute: typeof mainAuditLogsRoute
-  mainDashboardRoute: typeof mainDashboardRoute
-  mainLogsRoute: typeof mainLogsRoute
-  mainMembersRoute: typeof mainMembersRoute
-  mainTagsRoute: typeof mainTagsRoute
-  mainDashboardsIdRoute: typeof mainDashboardsIdRoute
-  mainAgentsIndexRoute: typeof mainAgentsIndexRoute
-  mainDashboardsIndexRoute: typeof mainDashboardsIndexRoute
-  mainGlobalConfigIndexRoute: typeof mainGlobalConfigIndexRoute
-  mainKnowledgesIndexRoute: typeof mainKnowledgesIndexRoute
-  mainMcpsIndexRoute: typeof mainMcpsIndexRoute
-  mainAgentsGardenIdRoute: typeof mainAgentsGardenIdRoute
-  mainAgentsOrchestratorIdRoute: typeof mainAgentsOrchestratorIdRoute
-  mainAgentsGardenIndexRoute: typeof mainAgentsGardenIndexRoute
-  mainAgentsOrchestratorIndexRoute: typeof mainAgentsOrchestratorIndexRoute
+interface AdminRouteRouteChildren {
+  AdminChatRouteRoute: typeof AdminChatRouteRouteWithChildren
+  AdminApiKeysRoute: typeof AdminApiKeysRoute
+  AdminAuditLogsRoute: typeof AdminAuditLogsRoute
+  AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminLogsRoute: typeof AdminLogsRoute
+  AdminMembersRoute: typeof AdminMembersRoute
+  AdminTagsRoute: typeof AdminTagsRoute
+  AdminDashboardsIdRoute: typeof AdminDashboardsIdRoute
+  AdminAgentsIndexRoute: typeof AdminAgentsIndexRoute
+  AdminDashboardsIndexRoute: typeof AdminDashboardsIndexRoute
+  AdminGlobalConfigIndexRoute: typeof AdminGlobalConfigIndexRoute
+  AdminKnowledgesIndexRoute: typeof AdminKnowledgesIndexRoute
+  AdminMcpsIndexRoute: typeof AdminMcpsIndexRoute
+  AdminAgentsGardenIdRoute: typeof AdminAgentsGardenIdRoute
+  AdminAgentsOrchestratorIdRoute: typeof AdminAgentsOrchestratorIdRoute
+  AdminAgentsGardenIndexRoute: typeof AdminAgentsGardenIndexRoute
+  AdminAgentsOrchestratorIndexRoute: typeof AdminAgentsOrchestratorIndexRoute
 }
 
-const mainRouteRouteChildren: mainRouteRouteChildren = {
-  mainChatRouteRoute: mainChatRouteRouteWithChildren,
-  mainApiKeysRoute: mainApiKeysRoute,
-  mainAuditLogsRoute: mainAuditLogsRoute,
-  mainDashboardRoute: mainDashboardRoute,
-  mainLogsRoute: mainLogsRoute,
-  mainMembersRoute: mainMembersRoute,
-  mainTagsRoute: mainTagsRoute,
-  mainDashboardsIdRoute: mainDashboardsIdRoute,
-  mainAgentsIndexRoute: mainAgentsIndexRoute,
-  mainDashboardsIndexRoute: mainDashboardsIndexRoute,
-  mainGlobalConfigIndexRoute: mainGlobalConfigIndexRoute,
-  mainKnowledgesIndexRoute: mainKnowledgesIndexRoute,
-  mainMcpsIndexRoute: mainMcpsIndexRoute,
-  mainAgentsGardenIdRoute: mainAgentsGardenIdRoute,
-  mainAgentsOrchestratorIdRoute: mainAgentsOrchestratorIdRoute,
-  mainAgentsGardenIndexRoute: mainAgentsGardenIndexRoute,
-  mainAgentsOrchestratorIndexRoute: mainAgentsOrchestratorIndexRoute,
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminChatRouteRoute: AdminChatRouteRouteWithChildren,
+  AdminApiKeysRoute: AdminApiKeysRoute,
+  AdminAuditLogsRoute: AdminAuditLogsRoute,
+  AdminDashboardRoute: AdminDashboardRoute,
+  AdminLogsRoute: AdminLogsRoute,
+  AdminMembersRoute: AdminMembersRoute,
+  AdminTagsRoute: AdminTagsRoute,
+  AdminDashboardsIdRoute: AdminDashboardsIdRoute,
+  AdminAgentsIndexRoute: AdminAgentsIndexRoute,
+  AdminDashboardsIndexRoute: AdminDashboardsIndexRoute,
+  AdminGlobalConfigIndexRoute: AdminGlobalConfigIndexRoute,
+  AdminKnowledgesIndexRoute: AdminKnowledgesIndexRoute,
+  AdminMcpsIndexRoute: AdminMcpsIndexRoute,
+  AdminAgentsGardenIdRoute: AdminAgentsGardenIdRoute,
+  AdminAgentsOrchestratorIdRoute: AdminAgentsOrchestratorIdRoute,
+  AdminAgentsGardenIndexRoute: AdminAgentsGardenIndexRoute,
+  AdminAgentsOrchestratorIndexRoute: AdminAgentsOrchestratorIndexRoute,
 }
 
-const mainRouteRouteWithChildren = mainRouteRoute._addFileChildren(
-  mainRouteRouteChildren,
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   authRouteRoute: authRouteRouteWithChildren,
-  mainRouteRoute: mainRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

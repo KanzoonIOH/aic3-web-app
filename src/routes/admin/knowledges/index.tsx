@@ -55,7 +55,7 @@ import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { z } from "zod";
 
-export const Route = createFileRoute("/(main)/knowledges/")({
+export const Route = createFileRoute("/admin/knowledges/")({
     component: RouteComponent,
 });
 

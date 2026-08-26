@@ -62,7 +62,7 @@ import { EditAgentDialog } from "./$id";
 import { AGENT_TEMPLATES, type AgentTemplate } from "../-agent-templates";
 import { EntityCard } from "../-EntityCard";
 
-export const Route = createFileRoute("/(main)/agents/garden/")({
+export const Route = createFileRoute("/admin/agents/garden/")({
     component: RouteComponent,
 });
 

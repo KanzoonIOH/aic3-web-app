@@ -10,7 +10,7 @@ import {
     CommandItem,
     CommandList,
 } from "@/components/ui/command";
-import { navGroups } from "@/routes/(main)/-nav";
+import { navGroups } from "@/routes/admin/-nav";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { BookOpen, Bot, Network, Plug } from "lucide-react";

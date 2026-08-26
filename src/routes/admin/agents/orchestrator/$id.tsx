@@ -47,7 +47,7 @@ import type { OrchestratorAgent } from "@/api/orchestrators";
 import { UserAvatar } from "@/components/user-avatar";
 import { Link as RouterLink } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/(main)/agents/orchestrator/$id")({
+export const Route = createFileRoute("/admin/agents/orchestrator/$id")({
     component: RouteComponent,
 });
 

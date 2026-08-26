@@ -38,7 +38,7 @@ import { Check, Copy, KeyRound, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
-export const Route = createFileRoute("/(main)/api-keys")({
+export const Route = createFileRoute("/admin/api-keys")({
     component: RouteComponent,
 });
 

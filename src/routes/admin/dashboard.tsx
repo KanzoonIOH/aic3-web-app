@@ -19,7 +19,7 @@ import { CheckCircle2, Download, MessagesSquare } from "lucide-react";
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-export const Route = createFileRoute("/(main)/dashboard")({
+export const Route = createFileRoute("/admin/dashboard")({
     component: RouteComponent,
 });
 
@@ -303,10 +303,8 @@ const trendConfig: ChartConfig = {
 
 function ResponseTrend({
     series,
-    isPending,
 }: {
     series: { label: string; p50_response_ms: number }[];
-    isPending: boolean;
 }) {
     return (
         <Card size="sm" className="gap-4 p-6">
@@ -323,11 +321,7 @@ function ResponseTrend({
                     ms
                 </span>
             </div>
-            {isPending ? (
-                <div className="flex h-44 items-center justify-center text-sm text-muted-foreground">
-                    Loading...
-                </div>
-            ) : series.length === 0 ? (
+            {series.length === 0 ? (
                 <div className="flex h-44 items-center justify-center text-sm text-muted-foreground">
                     No data
                 </div>
@@ -537,7 +531,7 @@ function RouteComponent() {
     }));
 
     const successRate =
-        summary != null ? `${(summary.success_rate * 100).toFixed(1)}` : "—";
+        summary != null ? `${(summary.success_rate * 100).toFixed(1)}` : "NaN";
 
     return (
         <div className="flex-1 space-y-6 overflow-y-auto p-6 lg:p-8">
@@ -582,7 +576,7 @@ function RouteComponent() {
                     value={
                         summary != null
                             ? summary.uniq_conversations.toLocaleString()
-                            : "—"
+                            : "0"
                     }
                     icon={MessagesSquare}
                     sub={
@@ -592,7 +586,7 @@ function RouteComponent() {
                               } · ${summary.avg_messages_per_convo.toFixed(
                                   1,
                               )} msg / convo`
-                            : "Loading..."
+                            : "Handled by 0 AI agents · 0.0 msg / convo"
                     }
                 />
                 <KpiCard
@@ -610,7 +604,12 @@ function RouteComponent() {
                                 succeeded · {summary.failure_count} failed
                             </>
                         ) : (
-                            "Loading..."
+                            <>
+                                <span className="text-emerald-500">
+                                    0 of 0 requests
+                                </span>{" "}
+                                succeeded · 0 failed
+                            </>
                         )
                     }
                 />
@@ -636,10 +635,7 @@ function RouteComponent() {
             />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <LatencyDistribution summary={summary} />
-                <ResponseTrend
-                    series={series}
-                    isPending={timeseriesQuery.isPending}
-                />
+                <ResponseTrend series={series} />
             </div>
 
             {/* Customer experience (SAMPLE) */}

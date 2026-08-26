@@ -34,7 +34,7 @@ import { useState } from "react";
 import { EditOrchestratorDialog } from "./$id";
 import { EntityCard } from "../-EntityCard";
 
-export const Route = createFileRoute("/(main)/agents/orchestrator/")({
+export const Route = createFileRoute("/admin/agents/orchestrator/")({
     component: RouteComponent,
 });
 

@@ -41,7 +41,7 @@ import {
     type WidgetTemplate,
 } from "./-widgets";
 
-export const Route = createFileRoute("/(main)/dashboards/$id")({
+export const Route = createFileRoute("/admin/dashboards/$id")({
     component: RouteComponent,
 });
 

@@ -12,7 +12,7 @@ import {
 import { SquarePen, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/(main)/chat")({
+export const Route = createFileRoute("/admin/chat")({
     component: ChatLayout,
 });
 

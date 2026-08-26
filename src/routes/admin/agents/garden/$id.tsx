@@ -56,7 +56,7 @@ import { Persona } from "../-Persona";
 import { DetailHeader } from "../-DetailHeader";
 import { PinButton } from "@/components/pin-button";
 
-export const Route = createFileRoute("/(main)/agents/garden/$id")({
+export const Route = createFileRoute("/admin/agents/garden/$id")({
     component: RouteComponent,
 });
 

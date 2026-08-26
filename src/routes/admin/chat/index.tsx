@@ -16,7 +16,7 @@ import { Bot, Check, ChevronsUpDown, Network } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ChatSanbox } from "../agents/-ChatSandbox";
 
-export const Route = createFileRoute("/(main)/chat/")({
+export const Route = createFileRoute("/admin/chat/")({
     component: RouteComponent,
 });
 

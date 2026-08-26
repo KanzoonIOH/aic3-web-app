@@ -1,7 +1,7 @@
 import { LogsTable } from "@/components/logs-table";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/(main)/logs")({
+export const Route = createFileRoute("/admin/logs")({
     component: RouteComponent,
 });
 

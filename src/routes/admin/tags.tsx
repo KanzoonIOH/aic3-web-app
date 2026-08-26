@@ -22,7 +22,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Pencil, Plus, Tag as TagIcon, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/(main)/tags")({
+export const Route = createFileRoute("/admin/tags")({
     component: RouteComponent,
 });
 
