@@ -26,7 +26,7 @@ FROM nginx:stable-alpine AS runner
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy built output from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html/aic3
 
 # nginx config for SPA — entrypoint runs envsubst on templates → conf.d
 ENV WEB_PORT=6700

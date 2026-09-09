@@ -27,10 +27,11 @@ interface Chatable {
     description: string | null;
     image: string | null;
     isOrchestrator: boolean;
-    // Agent-only fields (undefined for orchestrators):
     dynamicKeys?: string[];
     dynamicHeaderKeys?: string[];
     outputField?: string;
+    // false when the upstream has no /stream sibling.
+    stream?: boolean;
 }
 
 function ChatableAvatar({
@@ -214,6 +215,7 @@ function RouteComponent() {
             .filter((f) => f.type === "dynamic")
             .map((f) => f.key),
         outputField: a.webhook_output_field || "reply",
+        stream: a.webhook_stream_enabled ?? true,
     }));
 
     const orchestrators: Chatable[] = (orchData?.data ?? []).map((o) => ({
@@ -222,7 +224,14 @@ function RouteComponent() {
         description: o.description,
         image: o.image,
         isOrchestrator: true,
-        outputField: "reply",
+        dynamicKeys: (o.webhook_body_fields ?? [])
+            .filter((f) => f.type === "dynamic")
+            .map((f) => f.key),
+        dynamicHeaderKeys: (o.webhook_header_fields ?? [])
+            .filter((f) => f.type === "dynamic")
+            .map((f) => f.key),
+        outputField: o.webhook_output_field || "reply",
+        stream: o.webhook_stream_enabled ?? true,
     }));
 
     const all = [...agents, ...orchestrators];
@@ -268,6 +277,7 @@ function RouteComponent() {
                 dynamicKeys={selected.dynamicKeys ?? []}
                 dynamicHeaderKeys={selected.dynamicHeaderKeys ?? []}
                 outputField={selected.outputField ?? "reply"}
+                stream={selected.stream ?? true}
                 welcomeTitle="Hello there"
                 welcomeImage={selected.image}
                 onSessionStart={(sessionId, msgs) => {

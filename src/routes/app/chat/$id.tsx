@@ -1,12 +1,11 @@
-import { getAgent } from "@/api/agents";
 import { getConversation, toAttachments } from "@/api/conversations";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Bot } from "lucide-react";
-import { ChatSanbox } from "../agents/-ChatSandbox";
-import { PinButton } from "@/components/pin-button";
+import { ChatSanbox } from "../../admin/agents/-ChatSandbox";
+import { useChatables } from "../-chatables";
 
-export const Route = createFileRoute("/admin/chat/$id")({
+export const Route = createFileRoute("/app/chat/$id")({
     component: RouteComponent,
 });
 
@@ -25,12 +24,10 @@ function RouteComponent() {
         refetchOnMount: "always",
     });
 
-    // Agent config (dynamic fields, output field) needed to continue the chat.
-    const { data: agentRes } = useQuery({
-        queryKey: ["agent", conv?.conversation.agent_id],
-        queryFn: () => getAgent(conv!.conversation.agent_id),
-        enabled: !!conv?.conversation.agent_id,
-    });
+    // The chatable list already carries the config needed to keep chatting,
+    // and covers orchestrators too (GET /agents/{id} would 404 for those).
+    const { all } = useChatables();
+    const chatable = all.find((c) => c.id === conv?.conversation.agent_id);
 
     if (isPending) {
         return (
@@ -53,10 +50,8 @@ function RouteComponent() {
         );
     }
 
-    const agent = agentRes?.data;
-
-    // Only text turns are re-rendered; attachment/report-only turns are skipped
-    // for the transcript view (they carry no chat bubble text).
+    // Only text turns are re-rendered; attachment/report-only turns carry no
+    // chat bubble text.
     const initialMessages = conv.messages
         .filter((m) => m.role !== "system" && (m.content || m.attachments))
         .map((m) => ({
@@ -68,20 +63,13 @@ function RouteComponent() {
     return (
         <div className="flex h-full flex-col overflow-hidden">
             <div className="shrink-0 border-b bg-background px-6 py-4">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-baseline gap-2">
-                        <h1 className="font-heading text-2xl font-semibold">
-                            {conv.conversation.agent_name}
-                        </h1>
-                        <span className="text-sm text-muted-foreground">
-                            Continuing conversation
-                        </span>
-                    </div>
-                    <PinButton
-                        entityType="chat"
-                        entityId={id}
-                        variant="labeled"
-                    />
+                <div className="flex items-baseline gap-2">
+                    <h1 className="font-heading text-2xl font-semibold">
+                        {conv.conversation.agent_name}
+                    </h1>
+                    <span className="text-sm text-muted-foreground">
+                        Continuing conversation
+                    </span>
                 </div>
             </div>
             <div className="flex-1 overflow-hidden">
@@ -89,14 +77,10 @@ function RouteComponent() {
                     key={id}
                     agentId={conv.conversation.agent_id}
                     agentName={conv.conversation.agent_name}
-                    dynamicKeys={(agent?.webhook_body_fields ?? [])
-                        .filter((f) => f.type === "dynamic")
-                        .map((f) => f.key)}
-                    dynamicHeaderKeys={(agent?.webhook_header_fields ?? [])
-                        .filter((f) => f.type === "dynamic")
-                        .map((f) => f.key)}
-                    outputField={agent?.webhook_output_field || "reply"}
-                    stream={agent?.webhook_stream_enabled ?? true}
+                    dynamicKeys={chatable?.dynamicKeys ?? []}
+                    dynamicHeaderKeys={chatable?.dynamicHeaderKeys ?? []}
+                    outputField={chatable?.outputField ?? "reply"}
+                    stream={chatable?.stream ?? true}
                     initialSessionId={id}
                     initialMessages={initialMessages}
                     onTurnComplete={() =>

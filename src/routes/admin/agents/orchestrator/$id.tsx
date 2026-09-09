@@ -1,4 +1,4 @@
-import { uploadImage } from "@/api/agents";
+import { uploadImage, type BodyField } from "@/api/agents";
 import {
     getOrchestrator,
     updateOrchestrator,
@@ -6,6 +6,11 @@ import {
     type OrchestratorDetail,
 } from "@/api/orchestrators";
 import { AvatarPicker } from "@/components/avatar-picker";
+import {
+    BodyFieldsEditor,
+    bodyFieldsToRows,
+    cleanBodyFields,
+} from "@/components/body-fields-editor";
 import { LogsTable } from "@/components/logs-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +75,21 @@ export function EditOrchestratorDialog({
     const [image, setImage] = useState(orch.image ?? "");
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [webhookUri, setWebhookUri] = useState(orch.webhook_uri ?? "");
+    const [inputField, setInputField] = useState(
+        orch.webhook_input_field ?? "",
+    );
+    const [outputField, setOutputField] = useState(
+        orch.webhook_output_field ?? "",
+    );
+    const [bodyFields, setBodyFields] = useState<BodyField[]>(
+        bodyFieldsToRows(orch.webhook_body_fields),
+    );
+    const [headerFields, setHeaderFields] = useState<BodyField[]>(
+        bodyFieldsToRows(orch.webhook_header_fields),
+    );
+    const [streamEnabled, setStreamEnabled] = useState(
+        orch.webhook_stream_enabled ?? true,
+    );
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
@@ -85,6 +105,11 @@ export function EditOrchestratorDialog({
                 guardrail: orch.guardrail,
                 image: imageUrl || null,
                 webhook_uri: webhookUri.trim(),
+                webhook_input_field: inputField.trim(),
+                webhook_output_field: outputField.trim(),
+                webhook_body_fields: cleanBodyFields(bodyFields),
+                webhook_header_fields: cleanBodyFields(headerFields),
+                webhook_stream_enabled: streamEnabled,
             });
         },
         onSuccess: () => {
@@ -103,6 +128,11 @@ export function EditOrchestratorDialog({
         setImage(orch.image ?? "");
         setImageFile(null);
         setWebhookUri(orch.webhook_uri ?? "");
+        setInputField(orch.webhook_input_field ?? "");
+        setOutputField(orch.webhook_output_field ?? "");
+        setBodyFields(bodyFieldsToRows(orch.webhook_body_fields));
+        setHeaderFields(bodyFieldsToRows(orch.webhook_header_fields));
+        setStreamEnabled(orch.webhook_stream_enabled ?? true);
     }
 
     const canSubmit = name.trim().length > 0;
@@ -191,6 +221,77 @@ export function EditOrchestratorDialog({
                                 Append /stream for the streaming variant.
                             </p>
                         </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor="orch-input-field">
+                                    Input field
+                                </Label>
+                                <Input
+                                    id="orch-input-field"
+                                    value={inputField}
+                                    onChange={(e) => {
+                                        setInputField(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="chatInput"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <Label htmlFor="orch-output-field">
+                                    Output field
+                                </Label>
+                                <Input
+                                    id="orch-output-field"
+                                    value={outputField}
+                                    onChange={(e) => {
+                                        setOutputField(e.target.value);
+                                        mutation.reset();
+                                    }}
+                                    placeholder="output"
+                                />
+                            </div>
+                        </div>
+
+                        <BodyFieldsEditor
+                            rows={bodyFields}
+                            onChange={(r) => {
+                                setBodyFields(r);
+                                mutation.reset();
+                            }}
+                        />
+
+                        <BodyFieldsEditor
+                            rows={headerFields}
+                            onChange={(r) => {
+                                setHeaderFields(r);
+                                mutation.reset();
+                            }}
+                            label="Webhook auth / headers"
+                            description="HTTP headers sent to the orchestrator. Static for a fixed value (e.g. Authorization: Bearer xxx); dynamic is provided per request. Leave empty for an open target."
+                            keyPlaceholder="Header name (e.g. Authorization)"
+                            addLabel="Add header"
+                        />
+
+                        <label className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm">
+                            <input
+                                type="checkbox"
+                                checked={streamEnabled}
+                                onChange={(e) => {
+                                    setStreamEnabled(e.target.checked);
+                                    mutation.reset();
+                                }}
+                                className="mt-0.5 size-4 accent-primary"
+                            />
+                            <span className="flex flex-col gap-0.5">
+                                <span>Upstream supports streaming</span>
+                                <span className="text-xs text-muted-foreground">
+                                    Chat calls {"{webhook URI}"}/stream for
+                                    token-by-token replies. Turn off if the
+                                    upstream only serves the plain URL.
+                                </span>
+                            </span>
+                        </label>
 
                         <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                             <input
@@ -488,7 +589,18 @@ function RouteComponent() {
                     <OrchestratorCustomization orchestratorId={id} />
                 </TabsContent>
                 <TabsContent value="chat" className="overflow-hidden">
-                    <ChatSanbox agentId={id} agentName={o.name} outputField="reply" />
+                    <ChatSanbox
+                        agentId={id}
+                        agentName={o.name}
+                        dynamicKeys={(o.webhook_body_fields ?? [])
+                            .filter((f) => f.type === "dynamic")
+                            .map((f) => f.key)}
+                        dynamicHeaderKeys={(o.webhook_header_fields ?? [])
+                            .filter((f) => f.type === "dynamic")
+                            .map((f) => f.key)}
+                        outputField={o.webhook_output_field || "reply"}
+                        stream={o.webhook_stream_enabled ?? true}
+                    />
                 </TabsContent>
                 <TabsContent value="logs" className="overflow-y-auto">
                     <div className="p-6">

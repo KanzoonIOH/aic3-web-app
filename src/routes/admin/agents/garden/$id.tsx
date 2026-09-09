@@ -101,21 +101,36 @@ export function EditAgentDialog({
     const [tags, setTags] = useState<string[]>(
         (agent.tags ?? []).map((t) => t.name),
     );
+    const [streamEnabled, setStreamEnabled] = useState(
+        agent.webhook_stream_enabled ?? true,
+    );
     const [image, setImage] = useState(agent.image ?? "");
     // Cropped picture pending upload; uploaded on submit, not on crop.
     const [imageFile, setImageFile] = useState<File | null>(null);
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: (
-            payload: UpdateAgentValues & {
-                webhook_body_fields: BodyField[];
-                webhook_header_fields: BodyField[];
-                guardrail: string;
-                tags: string[];
-                image: string | null;
-            },
-        ) => updateAgent(agent.id, payload),
+        // Validation lives in here so a schema failure surfaces as
+        // mutation.isError instead of silently no-op'ing the Save button.
+        mutationFn: async (value: UpdateAgentValues) => {
+            const result = updateAgentSchema.safeParse(value);
+            if (!result.success) {
+                throw new Error(
+                    result.error.issues[0]?.message ?? "Invalid agent details",
+                );
+            }
+            const imageUrl = imageFile ? await uploadImage(imageFile) : image;
+            return updateAgent(agent.id, {
+                ...result.data,
+                webhook_body_fields: cleanBodyFields(bodyFields),
+                webhook_header_fields: cleanBodyFields(headerFields),
+                webhook_stream_enabled: streamEnabled,
+                // guardrail is edited on the Persona tab; preserve it here.
+                guardrail: agent.guardrail,
+                tags,
+                image: imageUrl || null,
+            });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["agents"] });
             queryClient.invalidateQueries({ queryKey: ["agents", agent.id] });
@@ -126,26 +141,14 @@ export function EditAgentDialog({
     const form = useForm({
         defaultValues: {
             name: agent.name,
-            description: agent.description,
+            description: agent.description ?? "",
             is_active: agent.is_active,
-            webhook_uri: agent.webhook_uri,
-            webhook_input_field: agent.webhook_input_field,
-            webhook_output_field: agent.webhook_output_field,
+            webhook_uri: agent.webhook_uri ?? "",
+            webhook_input_field: agent.webhook_input_field ?? "",
+            webhook_output_field: agent.webhook_output_field ?? "",
         },
         onSubmit: async ({ value }) => {
-            const result = updateAgentSchema.safeParse(value);
-            if (!result.success) return;
-
-            const imageUrl = imageFile ? await uploadImage(imageFile) : image;
-            await mutation.mutateAsync({
-                ...result.data,
-                webhook_body_fields: cleanBodyFields(bodyFields),
-                webhook_header_fields: cleanBodyFields(headerFields),
-                // guardrail is edited on the Persona tab; preserve it here.
-                guardrail: agent.guardrail,
-                tags,
-                image: imageUrl || null,
-            });
+            await mutation.mutateAsync(value);
         },
     });
 
@@ -157,13 +160,14 @@ export function EditAgentDialog({
         setTags((agent.tags ?? []).map((t) => t.name));
         setImage(agent.image ?? "");
         setImageFile(null);
+        setStreamEnabled(agent.webhook_stream_enabled ?? true);
         form.reset({
             name: agent.name,
-            description: agent.description,
+            description: agent.description ?? "",
             is_active: agent.is_active,
-            webhook_uri: agent.webhook_uri,
-            webhook_input_field: agent.webhook_input_field,
-            webhook_output_field: agent.webhook_output_field,
+            webhook_uri: agent.webhook_uri ?? "",
+            webhook_input_field: agent.webhook_input_field ?? "",
+            webhook_output_field: agent.webhook_output_field ?? "",
         });
     }
 
@@ -430,6 +434,27 @@ export function EditAgentDialog({
                             addLabel="Add header"
                         />
 
+                        <label className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm">
+                            <input
+                                type="checkbox"
+                                checked={streamEnabled}
+                                onChange={(e) => {
+                                    setStreamEnabled(e.target.checked);
+                                    mutation.reset();
+                                }}
+                                className="mt-0.5 size-4 accent-primary"
+                            />
+                            <span className="flex flex-col gap-0.5">
+                                <span>Upstream supports streaming</span>
+                                <span className="text-xs text-muted-foreground">
+                                    Chat calls {"{webhook URI}"}/stream for
+                                    token-by-token replies. Turn off if the
+                                    upstream only serves the plain URL — replies
+                                    then arrive in one piece.
+                                </span>
+                            </span>
+                        </label>
+
                         <TagsInput
                             value={tags}
                             onChange={(t) => {
@@ -527,6 +552,27 @@ function buildWidgetSnippet(endpointUrl: string, outputField: string) {
   var API_URL = ${JSON.stringify(endpointUrl)};
   var API_KEY = "PASTE_YOUR_API_KEY_HERE"; // <-- your API key
   var OUTPUT_FIELD = ${JSON.stringify(outputField)};
+
+  // Reads OUTPUT_FIELD from the response: a plain key ("output") or a path
+  // with array indices ("choices[0].message.content").
+  function pluck(body, path) {
+    if (body && typeof body === "object" && path in body) return body[path];
+    var v = body;
+    var segs = path.split(".");
+    for (var s = 0; s < segs.length; s++) {
+      var parts = segs[s].split("[");
+      if (parts[0]) {
+        if (!v || typeof v !== "object") return undefined;
+        v = v[parts[0]];
+      }
+      for (var p = 1; p < parts.length; p++) {
+        var i = Number(parts[p].replace("]", ""));
+        if (!Array.isArray(v) || !Number.isInteger(i)) return undefined;
+        v = v[i];
+      }
+    }
+    return v;
+  }
 
   // ── THEME — all colors in one place (oklch, from the console palette) ──────
   var THEME = {
@@ -665,7 +711,7 @@ function buildWidgetSnippet(endpointUrl: string, outputField: string) {
         return r.json();
       })
       .then(function (data) {
-        typing.innerHTML = mdToHtml(data[OUTPUT_FIELD] || "(no reply)");
+        typing.innerHTML = mdToHtml(pluck(data, OUTPUT_FIELD) || "(no reply)");
       })
       .catch(function () {
         typing.textContent = "Something went wrong. Try again.";
@@ -1019,6 +1065,7 @@ function RouteComponent() {
                             .filter((f) => f.type === "dynamic")
                             .map((f) => f.key)}
                         outputField={agent.data.webhook_output_field || "reply"}
+                        stream={agent.data.webhook_stream_enabled ?? true}
                     />
                 </TabsContent>
                 <TabsContent value="logs" className="overflow-y-auto">

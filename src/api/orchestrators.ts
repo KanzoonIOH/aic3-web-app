@@ -1,4 +1,5 @@
 import { client } from "./client";
+import type { BodyField } from "./agents";
 import type { ListParams, ResponseTemplate } from "./types";
 
 // A sub-agent mapping under an orchestrator. tool_name/description are stored;
@@ -25,6 +26,15 @@ export interface Orchestrator {
     guardrail: string;
     image: string | null;
     webhook_uri: string;
+    webhook_input_field: string;
+    webhook_output_field: string;
+    webhook_body_fields: BodyField[] | null;
+    webhook_header_fields: BodyField[] | null;
+    webhook_stream_enabled: boolean;
+    // Webhook payload switches: persona gates tone/length/style,
+    // guardrail gates the systemPrompt object.
+    persona_enabled: boolean;
+    guardrail_enabled: boolean;
     agents_count: number;
 }
 
@@ -83,6 +93,15 @@ export interface UpdateOrchestratorRequest {
     guardrail: string;
     image?: string | null;
     webhook_uri: string;
+    // Omit a webhook_*_fields key to leave the stored value untouched; send []
+    // to clear it.
+    webhook_input_field?: string;
+    webhook_output_field?: string;
+    webhook_body_fields?: BodyField[];
+    webhook_header_fields?: BodyField[];
+    webhook_stream_enabled?: boolean;
+    persona_enabled?: boolean;
+    guardrail_enabled?: boolean;
 }
 
 export async function updateOrchestrator(

@@ -14,8 +14,6 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as AppKnowledgesRouteImport } from './routes/app/knowledges'
-import { Route as AppChatRouteImport } from './routes/app/chat'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as AdminMembersRouteImport } from './routes/admin/members'
 import { Route as AdminLogsRouteImport } from './routes/admin/logs'
@@ -28,12 +26,14 @@ import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authInviteRouteImport } from './routes/(auth)/invite'
 import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as AdminChatRouteRouteImport } from './routes/admin/chat/route'
+import { Route as AppChatIndexRouteImport } from './routes/app/chat/index'
 import { Route as AdminMcpsIndexRouteImport } from './routes/admin/mcps/index'
 import { Route as AdminKnowledgesIndexRouteImport } from './routes/admin/knowledges/index'
 import { Route as AdminGlobalConfigIndexRouteImport } from './routes/admin/global-config/index'
 import { Route as AdminDashboardsIndexRouteImport } from './routes/admin/dashboards/index'
 import { Route as AdminChatIndexRouteImport } from './routes/admin/chat/index'
 import { Route as AdminAgentsIndexRouteImport } from './routes/admin/agents/index'
+import { Route as AppChatIdRouteImport } from './routes/app/chat/$id'
 import { Route as AdminDashboardsIdRouteImport } from './routes/admin/dashboards/$id'
 import { Route as AdminChatIdRouteImport } from './routes/admin/chat/$id'
 import { Route as AdminAgentsOrchestratorIndexRouteImport } from './routes/admin/agents/orchestrator/index'
@@ -63,16 +63,6 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppKnowledgesRoute = AppKnowledgesRouteImport.update({
-  id: '/knowledges',
-  path: '/knowledges',
-  getParentRoute: () => AppRouteRoute,
-} as any)
-const AppChatRoute = AppChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AdminTagsRoute = AdminTagsRouteImport.update({
@@ -135,6 +125,11 @@ const AdminChatRouteRoute = AdminChatRouteRouteImport.update({
   path: '/chat',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AppChatIndexRoute = AppChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AdminMcpsIndexRoute = AdminMcpsIndexRouteImport.update({
   id: '/mcps/',
   path: '/mcps/',
@@ -164,6 +159,11 @@ const AdminAgentsIndexRoute = AdminAgentsIndexRouteImport.update({
   id: '/agents/',
   path: '/agents/',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const AppChatIdRoute = AppChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 const AdminDashboardsIdRoute = AdminDashboardsIdRouteImport.update({
   id: '/dashboards/$id',
@@ -214,17 +214,17 @@ export interface FileRoutesByFullPath {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/tags': typeof AdminTagsRoute
-  '/app/chat': typeof AppChatRoute
-  '/app/knowledges': typeof AppKnowledgesRoute
   '/app/': typeof AppIndexRoute
   '/admin/chat/$id': typeof AdminChatIdRoute
   '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
+  '/app/chat/$id': typeof AppChatIdRoute
   '/admin/agents/': typeof AdminAgentsIndexRoute
   '/admin/chat/': typeof AdminChatIndexRoute
   '/admin/dashboards/': typeof AdminDashboardsIndexRoute
   '/admin/global-config/': typeof AdminGlobalConfigIndexRoute
   '/admin/knowledges/': typeof AdminKnowledgesIndexRoute
   '/admin/mcps/': typeof AdminMcpsIndexRoute
+  '/app/chat/': typeof AppChatIndexRoute
   '/admin/agents/garden/$id': typeof AdminAgentsGardenIdRoute
   '/admin/agents/orchestrator/$id': typeof AdminAgentsOrchestratorIdRoute
   '/admin/agents/garden/': typeof AdminAgentsGardenIndexRoute
@@ -244,17 +244,17 @@ export interface FileRoutesByTo {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/tags': typeof AdminTagsRoute
-  '/app/chat': typeof AppChatRoute
-  '/app/knowledges': typeof AppKnowledgesRoute
   '/app': typeof AppIndexRoute
   '/admin/chat/$id': typeof AdminChatIdRoute
   '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
+  '/app/chat/$id': typeof AppChatIdRoute
   '/admin/agents': typeof AdminAgentsIndexRoute
   '/admin/chat': typeof AdminChatIndexRoute
   '/admin/dashboards': typeof AdminDashboardsIndexRoute
   '/admin/global-config': typeof AdminGlobalConfigIndexRoute
   '/admin/knowledges': typeof AdminKnowledgesIndexRoute
   '/admin/mcps': typeof AdminMcpsIndexRoute
+  '/app/chat': typeof AppChatIndexRoute
   '/admin/agents/garden/$id': typeof AdminAgentsGardenIdRoute
   '/admin/agents/orchestrator/$id': typeof AdminAgentsOrchestratorIdRoute
   '/admin/agents/garden': typeof AdminAgentsGardenIndexRoute
@@ -278,17 +278,17 @@ export interface FileRoutesById {
   '/admin/logs': typeof AdminLogsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/tags': typeof AdminTagsRoute
-  '/app/chat': typeof AppChatRoute
-  '/app/knowledges': typeof AppKnowledgesRoute
   '/app/': typeof AppIndexRoute
   '/admin/chat/$id': typeof AdminChatIdRoute
   '/admin/dashboards/$id': typeof AdminDashboardsIdRoute
+  '/app/chat/$id': typeof AppChatIdRoute
   '/admin/agents/': typeof AdminAgentsIndexRoute
   '/admin/chat/': typeof AdminChatIndexRoute
   '/admin/dashboards/': typeof AdminDashboardsIndexRoute
   '/admin/global-config/': typeof AdminGlobalConfigIndexRoute
   '/admin/knowledges/': typeof AdminKnowledgesIndexRoute
   '/admin/mcps/': typeof AdminMcpsIndexRoute
+  '/app/chat/': typeof AppChatIndexRoute
   '/admin/agents/garden/$id': typeof AdminAgentsGardenIdRoute
   '/admin/agents/orchestrator/$id': typeof AdminAgentsOrchestratorIdRoute
   '/admin/agents/garden/': typeof AdminAgentsGardenIndexRoute
@@ -312,17 +312,17 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/members'
     | '/admin/tags'
-    | '/app/chat'
-    | '/app/knowledges'
     | '/app/'
     | '/admin/chat/$id'
     | '/admin/dashboards/$id'
+    | '/app/chat/$id'
     | '/admin/agents/'
     | '/admin/chat/'
     | '/admin/dashboards/'
     | '/admin/global-config/'
     | '/admin/knowledges/'
     | '/admin/mcps/'
+    | '/app/chat/'
     | '/admin/agents/garden/$id'
     | '/admin/agents/orchestrator/$id'
     | '/admin/agents/garden/'
@@ -342,17 +342,17 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/members'
     | '/admin/tags'
-    | '/app/chat'
-    | '/app/knowledges'
     | '/app'
     | '/admin/chat/$id'
     | '/admin/dashboards/$id'
+    | '/app/chat/$id'
     | '/admin/agents'
     | '/admin/chat'
     | '/admin/dashboards'
     | '/admin/global-config'
     | '/admin/knowledges'
     | '/admin/mcps'
+    | '/app/chat'
     | '/admin/agents/garden/$id'
     | '/admin/agents/orchestrator/$id'
     | '/admin/agents/garden'
@@ -375,17 +375,17 @@ export interface FileRouteTypes {
     | '/admin/logs'
     | '/admin/members'
     | '/admin/tags'
-    | '/app/chat'
-    | '/app/knowledges'
     | '/app/'
     | '/admin/chat/$id'
     | '/admin/dashboards/$id'
+    | '/app/chat/$id'
     | '/admin/agents/'
     | '/admin/chat/'
     | '/admin/dashboards/'
     | '/admin/global-config/'
     | '/admin/knowledges/'
     | '/admin/mcps/'
+    | '/app/chat/'
     | '/admin/agents/garden/$id'
     | '/admin/agents/orchestrator/$id'
     | '/admin/agents/garden/'
@@ -434,20 +434,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/app/knowledges': {
-      id: '/app/knowledges'
-      path: '/knowledges'
-      fullPath: '/app/knowledges'
-      preLoaderRoute: typeof AppKnowledgesRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
-    '/app/chat': {
-      id: '/app/chat'
-      path: '/chat'
-      fullPath: '/app/chat'
-      preLoaderRoute: typeof AppChatRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/admin/tags': {
@@ -534,6 +520,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminChatRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/app/chat/': {
+      id: '/app/chat/'
+      path: '/chat'
+      fullPath: '/app/chat/'
+      preLoaderRoute: typeof AppChatIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/admin/mcps/': {
       id: '/admin/mcps/'
       path: '/mcps'
@@ -575,6 +568,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/agents/'
       preLoaderRoute: typeof AdminAgentsIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/app/chat/$id': {
+      id: '/app/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/app/chat/$id'
+      preLoaderRoute: typeof AppChatIdRouteImport
+      parentRoute: typeof AppRouteRoute
     }
     '/admin/dashboards/$id': {
       id: '/admin/dashboards/$id'
@@ -700,15 +700,15 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 )
 
 interface AppRouteRouteChildren {
-  AppChatRoute: typeof AppChatRoute
-  AppKnowledgesRoute: typeof AppKnowledgesRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppChatIdRoute: typeof AppChatIdRoute
+  AppChatIndexRoute: typeof AppChatIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
-  AppChatRoute: AppChatRoute,
-  AppKnowledgesRoute: AppKnowledgesRoute,
   AppIndexRoute: AppIndexRoute,
+  AppChatIdRoute: AppChatIdRoute,
+  AppChatIndexRoute: AppChatIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(

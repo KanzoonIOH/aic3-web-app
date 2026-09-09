@@ -4,6 +4,7 @@ import {
     serializePersona,
     updateOrchestrator,
 } from "@/api/orchestrators";
+import { EnabledToggle } from "./-Persona";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn, textareaClass } from "@/lib/utils";
@@ -191,6 +192,12 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
     const [savedGuardrail, setSavedGuardrail] = useState("");
     const [routing, setRouting] = useState("");
     const [savedRouting, setSavedRouting] = useState("");
+    // Webhook payload switches: off means the field is left out of the
+    // outbound body entirely.
+    const [personaEnabled, setPersonaEnabled] = useState(true);
+    const [savedPersonaEnabled, setSavedPersonaEnabled] = useState(true);
+    const [guardrailEnabled, setGuardrailEnabled] = useState(true);
+    const [savedGuardrailEnabled, setSavedGuardrailEnabled] = useState(true);
     // Prefill once when the record arrives (adjust-state-on-change, no effect).
     const [loadedFor, setLoadedFor] = useState<string | null>(null);
     if (orch?.data && loadedFor !== orch.data.id) {
@@ -209,6 +216,12 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
         setSavedRouting(rg);
         setPersona(parsed);
         setSavedPersona(parsed);
+        const pe = orch.data.persona_enabled ?? true;
+        const ge = orch.data.guardrail_enabled ?? true;
+        setPersonaEnabled(pe);
+        setSavedPersonaEnabled(pe);
+        setGuardrailEnabled(ge);
+        setSavedGuardrailEnabled(ge);
     }
 
     const isDirty =
@@ -216,7 +229,9 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
         persona.length !== savedPersona.length ||
         persona.communicationStyle !== savedPersona.communicationStyle ||
         guardrail !== savedGuardrail ||
-        routing !== savedRouting;
+        routing !== savedRouting ||
+        personaEnabled !== savedPersonaEnabled ||
+        guardrailEnabled !== savedGuardrailEnabled;
 
     const mutation = useMutation({
         mutationFn: async () => {
@@ -235,12 +250,16 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
                 }),
                 image: o.image,
                 webhook_uri: o.webhook_uri,
+                persona_enabled: personaEnabled,
+                guardrail_enabled: guardrailEnabled,
             });
         },
         onSuccess: () => {
             setSavedPersona(persona);
             setSavedGuardrail(guardrail);
             setSavedRouting(routing);
+            setSavedPersonaEnabled(personaEnabled);
+            setSavedGuardrailEnabled(guardrailEnabled);
             queryClient.invalidateQueries({ queryKey: ["orchestrators", orchestratorId] });
             queryClient.invalidateQueries({ queryKey: ["orchestrators"] });
         },
@@ -250,6 +269,8 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
         setPersona(savedPersona);
         setGuardrail(savedGuardrail);
         setRouting(savedRouting);
+        setPersonaEnabled(savedPersonaEnabled);
+        setGuardrailEnabled(savedGuardrailEnabled);
         mutation.reset();
     }
 
@@ -272,6 +293,14 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
                 />
                 <Card size="sm">
                     <CardContent className="flex flex-col gap-3">
+                        <EnabledToggle
+                            checked={guardrailEnabled}
+                            onChange={(v) => {
+                                setGuardrailEnabled(v);
+                                mutation.reset();
+                            }}
+                            label="Send system prompt & guardrail to the webhook"
+                        />
                         <textarea
                             value={guardrail}
                             onChange={(e) => {
@@ -314,6 +343,15 @@ export function OrchestratorCustomization({ orchestratorId }: { orchestratorId: 
                         description="How the orchestrator sounds and behaves. Pick one option per category."
                     />
                 </div>
+
+                <EnabledToggle
+                    checked={personaEnabled}
+                    onChange={(v) => {
+                        setPersonaEnabled(v);
+                        mutation.reset();
+                    }}
+                    label="Send tone, length & style to the webhook"
+                />
 
                 <Section
                     title="Tone"

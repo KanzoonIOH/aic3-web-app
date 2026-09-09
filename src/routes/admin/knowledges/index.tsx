@@ -208,12 +208,22 @@ function CreateKnowledgeDialog() {
                         name="name"
                         validators={{
                             onChange: ({ value }) => {
-                                const r = createKnowledgeSchema.shape.name.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
+                                const r =
+                                    createKnowledgeSchema.shape.name.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
                             },
                             onSubmit: ({ value }) => {
-                                const r = createKnowledgeSchema.shape.name.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
+                                const r =
+                                    createKnowledgeSchema.shape.name.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
                             },
                         }}
                     >
@@ -230,7 +240,9 @@ function CreateKnowledgeDialog() {
                                         mutation.reset();
                                     }}
                                     placeholder="My knowledge base"
-                                    aria-invalid={field.state.meta.errors.length > 0}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
                                     autoFocus
                                 />
                                 {field.state.meta.errors.length > 0 && (
@@ -297,7 +309,9 @@ function CreateKnowledgeDialog() {
                                 {!file ? (
                                     <button
                                         type="button"
-                                        onClick={() => fileInputRef.current?.click()}
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
                                         onDragOver={(e) => {
                                             e.preventDefault();
                                             setDragging(true);
@@ -346,7 +360,9 @@ function CreateKnowledgeDialog() {
                                     <input
                                         type="checkbox"
                                         checked={crawl}
-                                        onChange={(e) => setCrawl(e.target.checked)}
+                                        onChange={(e) =>
+                                            setCrawl(e.target.checked)
+                                        }
                                         className="mt-0.5 size-4"
                                     />
                                     <span>
@@ -375,7 +391,10 @@ function CreateKnowledgeDialog() {
                             </Button>
                         </DialogClose>
                         <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            selector={(state) => [
+                                state.canSubmit,
+                                state.isSubmitting,
+                            ]}
                         >
                             {([canSubmit, isSubmitting]) => (
                                 <Button
@@ -387,7 +406,9 @@ function CreateKnowledgeDialog() {
                                         (mode === "file" ? !file : !url.trim())
                                     }
                                 >
-                                    {mutation.isPending ? "Creating..." : "Create"}
+                                    {mutation.isPending
+                                        ? "Creating..."
+                                        : "Create"}
                                 </Button>
                             )}
                         </form.Subscribe>
@@ -440,7 +461,10 @@ function EditKnowledgeDialog({
         onOpenChange(nextOpen);
         mutation.reset();
         setTags((knowledge.tags ?? []).map((t) => t.name));
-        form.reset({ name: knowledge.name, description: knowledge.description ?? "" });
+        form.reset({
+            name: knowledge.name,
+            description: knowledge.description ?? "",
+        });
     }
 
     return (
@@ -472,12 +496,22 @@ function EditKnowledgeDialog({
                         name="name"
                         validators={{
                             onChange: ({ value }) => {
-                                const r = editKnowledgeSchema.shape.name.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
+                                const r =
+                                    editKnowledgeSchema.shape.name.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
                             },
                             onSubmit: ({ value }) => {
-                                const r = editKnowledgeSchema.shape.name.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
+                                const r =
+                                    editKnowledgeSchema.shape.name.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
                             },
                         }}
                     >
@@ -493,7 +527,9 @@ function EditKnowledgeDialog({
                                         field.handleChange(e.target.value);
                                         mutation.reset();
                                     }}
-                                    aria-invalid={field.state.meta.errors.length > 0}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
                                     autoFocus
                                 />
                                 {field.state.meta.errors.length > 0 && (
@@ -510,12 +546,22 @@ function EditKnowledgeDialog({
                         name="description"
                         validators={{
                             onChange: ({ value }) => {
-                                const r = editKnowledgeSchema.shape.description.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
+                                const r =
+                                    editKnowledgeSchema.shape.description.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
                             },
                             onSubmit: ({ value }) => {
-                                const r = editKnowledgeSchema.shape.description.safeParse(value);
-                                return r.success ? undefined : r.error.issues[0]?.message;
+                                const r =
+                                    editKnowledgeSchema.shape.description.safeParse(
+                                        value,
+                                    );
+                                return r.success
+                                    ? undefined
+                                    : r.error.issues[0]?.message;
                             },
                         }}
                     >
@@ -532,7 +578,9 @@ function EditKnowledgeDialog({
                                         mutation.reset();
                                     }}
                                     className={textareaClass}
-                                    aria-invalid={field.state.meta.errors.length > 0}
+                                    aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                    }
                                 />
                                 {field.state.meta.errors.length > 0 && (
                                     <p className="text-xs text-destructive">
@@ -558,12 +606,19 @@ function EditKnowledgeDialog({
                             </Button>
                         </DialogClose>
                         <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            selector={(state) => [
+                                state.canSubmit,
+                                state.isSubmitting,
+                            ]}
                         >
                             {([canSubmit, isSubmitting]) => (
                                 <Button
                                     type="submit"
-                                    disabled={!canSubmit || isSubmitting || mutation.isPending}
+                                    disabled={
+                                        !canSubmit ||
+                                        isSubmitting ||
+                                        mutation.isPending
+                                    }
                                 >
                                     {mutation.isPending ? "Saving..." : "Save"}
                                 </Button>
@@ -662,7 +717,9 @@ export function createKnowledgeColumns({
         {
             id: "description",
             header: "Description",
-            meta: { className: "text-muted-foreground text-sm max-w-56 truncate" },
+            meta: {
+                className: "text-muted-foreground text-sm max-w-56 truncate",
+            },
             cell: ({ row }) =>
                 row.original.description ?? (
                     <span className="italic text-muted-foreground/50">—</span>
@@ -684,7 +741,9 @@ export function createKnowledgeColumns({
                 const tags = row.original.tags ?? [];
                 if (tags.length === 0)
                     return (
-                        <span className="italic text-muted-foreground/50">—</span>
+                        <span className="italic text-muted-foreground/50">
+                            —
+                        </span>
                     );
                 return (
                     <div className="flex flex-wrap items-center gap-1">
@@ -796,9 +855,10 @@ function RouteComponent() {
     // what's loaded and keep the active one so the selection never vanishes.
     const sourceTypeOptions: Option[] = Array.from(
         new Set(
-            [...(knowledges?.data ?? []).map((k) => k.source_type), sourceType].filter(
-                Boolean,
-            ),
+            [
+                ...(knowledges?.data ?? []).map((k) => k.source_type),
+                sourceType,
+            ].filter(Boolean),
         ),
     ).map((t) => ({ label: t, value: t }));
 

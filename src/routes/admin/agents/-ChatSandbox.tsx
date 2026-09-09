@@ -1,6 +1,8 @@
 import {
     chatWithAgent,
     chatWithAgentStream,
+    uploadDocument,
+    type Attachment,
     type CcProduct,
     type NextStep,
     type SuggestionItem,
@@ -13,8 +15,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ArrowUp,
     BotMessageSquare,
+    FileText,
     MessageSquare,
+    Paperclip,
     Smartphone,
+    X,
 } from "lucide-react";
 import { ChatSandboxWhatsApp } from "./-ChatSandboxWhatsApp";
 import { MarkdownMessage } from "./-MarkdownMessage";
@@ -24,11 +29,67 @@ import { MarkdownMessage } from "./-MarkdownMessage";
 interface Message {
     role: "user" | "assistant";
     text: string;
+    attachments?: Attachment[];
 }
 
 interface SuggestionGroup {
     service_category: string;
     list: SuggestionItem[];
+}
+
+// ---------- Attachment chip ----------
+
+function formatBytes(bytes: number): string {
+    if (!bytes) return "";
+    const units = ["B", "KB", "MB", "GB"];
+    let i = 0;
+    let n = bytes;
+    while (n >= 1024 && i < units.length - 1) {
+        n /= 1024;
+        i++;
+    }
+    return `${n < 10 && i > 0 ? n.toFixed(1) : Math.round(n)} ${units[i]}`;
+}
+
+// One document, in the pre-send tray (with onRemove) or in a sent bubble.
+function AttachmentChip({
+    file,
+    onRemove,
+}: {
+    file: Attachment;
+    onRemove?: () => void;
+}) {
+    return (
+        <span className="flex max-w-full items-center gap-1.5 rounded-lg border bg-muted/50 py-1 pl-2 pr-1 text-xs">
+            <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+            <a
+                href={file.url}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate hover:underline"
+                title={file.name}
+            >
+                {file.name}
+            </a>
+            {file.size > 0 && (
+                <span className="shrink-0 text-muted-foreground">
+                    {formatBytes(file.size)}
+                </span>
+            )}
+            {onRemove ? (
+                <button
+                    type="button"
+                    onClick={onRemove}
+                    aria-label={`Remove ${file.name}`}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                    <X className="size-3" />
+                </button>
+            ) : (
+                <span className="w-1" />
+            )}
+        </span>
+    );
 }
 
 // ---------- Constants ----------
@@ -615,6 +676,12 @@ function ChatDefault({
     const messagesRef = useRef<Message[]>(messages);
     messagesRef.current = messages;
     const [input, setInput] = useState("");
+    // Documents picked but not sent yet. They upload to object storage on
+    // pick, so sending is just passing the returned URLs along.
+    const [pendingFiles, setPendingFiles] = useState<Attachment[]>([]);
+    const [uploading, setUploading] = useState(0);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [dynamicValues, setDynamicValues] = useState<Record<string, string>>(
         {},
     );
@@ -653,9 +720,11 @@ function ChatDefault({
         mutationFn: ({
             text,
             suggestion,
+            attachments,
         }: {
             text: string;
             suggestion?: SuggestionItem;
+            attachments?: Attachment[];
         }) =>
             chatWithAgent(
                 agentId,
@@ -665,6 +734,7 @@ function ChatDefault({
                 dynamicValues,
                 headerValues,
                 outputField,
+                attachments,
             ),
         onSuccess: (response) => {
             const nextMessages: Message[] = [
@@ -705,7 +775,11 @@ function ChatDefault({
 
     // Streaming send: append an empty assistant bubble, then grow it as chunks
     // arrive. next_step/product cards aren't emitted mid-stream, so cleared.
-    async function sendTextStream(text: string, suggestion?: SuggestionItem) {
+    async function sendTextStream(
+        text: string,
+        suggestion?: SuggestionItem,
+        attachments?: Attachment[],
+    ) {
         if (streamingRef.current) return; // already streaming this turn
         streamingRef.current = true;
         setStreamError(false);
@@ -739,6 +813,8 @@ function ChatDefault({
                 headerValues,
                 outputField,
                 (title) => setStepTitle(title),
+                undefined,
+                attachments,
             );
             if (sessionId) {
                 const isNew = !sessionIdRef.current;
@@ -756,18 +832,42 @@ function ChatDefault({
     }
 
     function sendText(text: string, suggestion?: SuggestionItem) {
-        if (!text.trim() || pending || !dynamicReady) return;
+        if (!text.trim() || pending || !dynamicReady || uploading > 0) return;
+        // Attachments ride along with this turn only; clear the tray so the
+        // next message starts empty.
+        const attachments = pendingFiles.length ? pendingFiles : undefined;
         setShowInitialSuggestions(false);
         setNextSteps(null);
         setCcProducts(null);
         setInput("");
-        setMessages((prev) => [...prev, { role: "user", text }]);
+        setPendingFiles([]);
+        setUploadError(null);
+        setMessages((prev) => [...prev, { role: "user", text, attachments }]);
         if (stream) {
-            void sendTextStream(text, suggestion);
+            void sendTextStream(text, suggestion, attachments);
         } else {
-            mutation.mutate({ text, suggestion });
+            mutation.mutate({ text, suggestion, attachments });
         }
         requestAnimationFrame(() => resizeTextarea());
+    }
+
+    async function handleFilesPicked(files: FileList | null) {
+        if (!files?.length) return;
+        setUploadError(null);
+        setUploading((n) => n + files.length);
+        await Promise.all(
+            Array.from(files).map(async (file) => {
+                try {
+                    const uploaded = await uploadDocument(file);
+                    setPendingFiles((prev) => [...prev, uploaded]);
+                } catch {
+                    setUploadError(`Failed to upload ${file.name}`);
+                } finally {
+                    setUploading((n) => n - 1);
+                }
+            }),
+        );
+        if (fileInputRef.current) fileInputRef.current.value = "";
     }
 
     function handleSend() {
@@ -835,10 +935,25 @@ function ChatDefault({
                 <div className="flex flex-col gap-4">
                     {messages.map((msg, i) =>
                         msg.role === "user" ? (
-                            <div key={i} className="flex justify-end">
-                                <div className="max-w-[75%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-sm text-primary-foreground">
-                                    {msg.text}
-                                </div>
+                            <div
+                                key={i}
+                                className="flex flex-col items-end gap-1.5"
+                            >
+                                {!!msg.attachments?.length && (
+                                    <div className="flex max-w-[75%] flex-wrap justify-end gap-1.5">
+                                        {msg.attachments.map((a, ai) => (
+                                            <AttachmentChip
+                                                key={`${a.url}-${ai}`}
+                                                file={a}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                                {msg.text && (
+                                    <div className="max-w-[75%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-sm text-primary-foreground">
+                                        {msg.text}
+                                    </div>
+                                )}
                             </div>
                         ) : msg.text.length === 0 ? null : (
                             <div key={i} className="flex justify-start">
@@ -960,7 +1075,54 @@ function ChatDefault({
 
             <div className="shrink-0 px-4 pb-6 pt-3">
                 <div className="mx-auto w-full max-w-3xl">
-                    <div className="flex items-end gap-2 rounded-3xl border border-input bg-background p-2 pl-4 shadow-sm transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+                    {/* Picked-but-unsent documents, listed above the input. */}
+                    {(pendingFiles.length > 0 ||
+                        uploading > 0 ||
+                        uploadError) && (
+                        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                            {pendingFiles.map((f, i) => (
+                                <AttachmentChip
+                                    key={`${f.url}-${i}`}
+                                    file={f}
+                                    onRemove={() =>
+                                        setPendingFiles((prev) =>
+                                            prev.filter((_, idx) => idx !== i),
+                                        )
+                                    }
+                                />
+                            ))}
+                            {uploading > 0 && (
+                                <span className="text-xs text-muted-foreground animate-pulse">
+                                    Uploading {uploading} file
+                                    {uploading > 1 ? "s" : ""}…
+                                </span>
+                            )}
+                            {uploadError && (
+                                <span className="text-xs text-destructive">
+                                    {uploadError}
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    <div className="flex items-end gap-2 rounded-3xl border border-input bg-background p-2 pl-2 shadow-sm transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => void handleFilesPicked(e.target.files)}
+                        />
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="size-9 shrink-0 rounded-full"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={pending || !dynamicReady}
+                            aria-label="Attach document"
+                        >
+                            <Paperclip className="size-4" />
+                        </Button>
                         <textarea
                             ref={textareaRef}
                             className="max-h-48 flex-1 resize-none self-center bg-transparent py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
@@ -979,7 +1141,12 @@ function ChatDefault({
                             size="icon"
                             className="size-9 shrink-0 rounded-full"
                             onClick={handleSend}
-                            disabled={!input.trim() || pending || !dynamicReady}
+                            disabled={
+                                !input.trim() ||
+                                pending ||
+                                !dynamicReady ||
+                                uploading > 0
+                            }
                             aria-label="Send message"
                         >
                             <ArrowUp className="size-4" />

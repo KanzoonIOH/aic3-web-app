@@ -4,7 +4,7 @@
 REGISTRY    ?= 10.10.1.122/agent
 IMAGE       ?= aic3-web-app
 TAG         ?= latest
-VITE_API_URL ?= http://api.aic3.ioh.local/api
+VITE_API_URL ?= https://platform-ai.ioh.co.id/aic3-api/api
 
 IMG := $(REGISTRY)/$(IMAGE):$(TAG)
 TARFILE := $(IMAGE)-$(TAG).tar.gz
@@ -29,5 +29,8 @@ load: ## Load the image from the .tar.gz file (run this ON the server)
 
 push: ## Push the image to the registry (run this ON the server)
 	docker push $(IMG)
+
+copy:
+	rsync -avPR $(TARFILE) root@aiplatform2:/home/ubuntu/aic3/builds
 
 release: build push ## Build then push

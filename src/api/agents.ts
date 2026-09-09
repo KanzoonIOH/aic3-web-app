@@ -35,6 +35,12 @@ export interface Agent {
     image: string | null; // emoji string or object-storage URL
     can_act: boolean;
     template_id: string; // static template id ("product", "booking", ...) or ""
+    // false when the upstream has no webhook_uri + "/stream" sibling.
+    webhook_stream_enabled: boolean;
+    // Webhook payload switches: persona gates tone/length/style,
+    // guardrail gates the systemPrompt object.
+    persona_enabled: boolean;
+    guardrail_enabled: boolean;
     knowledges_count: number;
     mcps_count: number;
     pinned: boolean;
@@ -52,6 +58,9 @@ export interface UpdateAgentRequest {
     guardrail: string;
     tags: string[];
     image?: string | null;
+    webhook_stream_enabled?: boolean;
+    persona_enabled?: boolean;
+    guardrail_enabled?: boolean;
     // milvus_collection is immutable after create — not sent on update.
 }
 
@@ -69,6 +78,9 @@ export interface CreateAgentRequest {
     image?: string | null;
     can_act: boolean;
     template_id: string;
+    webhook_stream_enabled?: boolean;
+    persona_enabled?: boolean;
+    guardrail_enabled?: boolean;
 }
 
 // Uploads an agent picture and returns its public URL. Emojis are stored as
@@ -82,6 +94,28 @@ export async function uploadImage(file: File): Promise<string> {
         { headers: { "Content-Type": "multipart/form-data" } },
     );
     return data.data.url;
+}
+
+// A document attached to a chat turn. Stored in object storage only — chat
+// attachments are never indexed into a Knowledge.
+// Sent to the agent as two keys: `attachments` (plain URL strings, for agents
+// that just want links) and `attachments_details` (this full shape).
+export interface Attachment {
+    name: string;
+    url: string;
+    content_type: string;
+    size: number;
+}
+
+export async function uploadDocument(file: File): Promise<Attachment> {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await client.post<ResponseTemplate<Attachment>>(
+        "/uploads/document",
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    return data.data;
 }
 
 // ---------- API functions ----------
@@ -218,8 +252,33 @@ export async function saveAgentPersona(
     await client.patch(`/agents/${id}/persona`, payload);
 }
 
+// Resolves an output-field path against a JSON response. A plain key
+// ("output") matches first, so keys containing dots still work; otherwise the
+// path is walked with optional array indices, e.g "choices[0].message.content".
+// Mirrors pluckField in core-services/internal/handler/webhooks.go.
+export function pluckField(body: unknown, path: string): unknown {
+    if (body && typeof body === "object" && path in body) {
+        return (body as Record<string, unknown>)[path];
+    }
+    let v: unknown = body;
+    for (const seg of path.split(".")) {
+        const [key, ...idx] = seg.split("[");
+        if (key) {
+            if (!v || typeof v !== "object") return undefined;
+            v = (v as Record<string, unknown>)[key];
+        }
+        for (const raw of idx) {
+            const i = Number(raw.replace("]", ""));
+            if (!Array.isArray(v) || !Number.isInteger(i)) return undefined;
+            v = v[i];
+        }
+    }
+    return v;
+}
+
 // The upstream webhook returns the reply under whatever key the agent is
-// configured with (agent.webhook_output_field, e.g. "reply", "output", "data").
+// configured with (agent.webhook_output_field, e.g. "reply", "output", "data",
+// or a path like "choices[0].message.content").
 // outputField tells us which key to read; defaults to "reply" for agents
 // created before this was configurable.
 export async function chatWithAgent(
@@ -230,6 +289,7 @@ export async function chatWithAgent(
     dynamicFields?: Record<string, string>,
     dynamicHeaders?: Record<string, string>,
     outputField = "reply",
+    attachments?: Attachment[],
 ): Promise<ChatResponse> {
     const response = await client.post<Record<string, unknown>>(
         `/chat/${id}`,
@@ -240,6 +300,10 @@ export async function chatWithAgent(
                 Object.keys(dynamicHeaders).length > 0 && {
                     headers: dynamicHeaders,
                 }),
+            ...(attachments?.length && {
+                attachments: attachments.map((a) => a.url),
+                attachments_details: attachments,
+            }),
             ...(suggestion && { milvus: true, ...suggestion }),
         },
         {
@@ -249,7 +313,7 @@ export async function chatWithAgent(
         },
     );
     const data = response.data;
-    const reply = data[outputField];
+    const reply = pluckField(data, outputField);
     return {
         reply: typeof reply === "string" ? reply : "",
         next_step: data.next_step as NextStep[] | null | undefined,
@@ -274,6 +338,7 @@ export async function chatWithAgentStream(
     outputField = "reply",
     onStep?: (title: string) => void,
     signal?: AbortSignal,
+    attachments?: Attachment[],
 ): Promise<{ reply: string; sessionId?: string }> {
     const token = getToken();
     const res = await fetch(`${import.meta.env.VITE_API_URL}/chat/${id}/stream`, {
@@ -291,6 +356,10 @@ export async function chatWithAgentStream(
                 Object.keys(dynamicHeaders).length > 0 && {
                     headers: dynamicHeaders,
                 }),
+            ...(attachments?.length && {
+                attachments: attachments.map((a) => a.url),
+                attachments_details: attachments,
+            }),
             ...(suggestion && { milvus: true, ...suggestion }),
         }),
     });
@@ -330,7 +399,7 @@ export async function chatWithAgentStream(
                 return;
             }
             // Full answer field (final/one-shot) -> replace the running reply.
-            const full = obj[outputField] ?? obj.reply ?? obj.output;
+            const full = pluckField(obj, outputField) ?? obj.reply ?? obj.output;
             if (typeof full === "string" && full) {
                 reply = full;
                 onChunk(reply);
@@ -375,7 +444,7 @@ export async function chatWithAgentStream(
         let text = body;
         try {
             const obj = JSON.parse(body);
-            text = obj[outputField] ?? obj.reply ?? obj.output ?? "";
+            text = pluckField(obj, outputField) ?? obj.reply ?? obj.output ?? "";
         } catch {
             // not JSON — show the raw text as-is
         }

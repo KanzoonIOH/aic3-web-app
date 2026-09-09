@@ -191,6 +191,30 @@ function SectionHeader({
     );
 }
 
+// Webhook payload switch. Off means the fields below are stored but left out
+// of the outbound webhook body.
+export function EnabledToggle({
+    checked,
+    onChange,
+    label,
+}: {
+    checked: boolean;
+    onChange: (v: boolean) => void;
+    label: string;
+}) {
+    return (
+        <label className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+            <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => onChange(e.target.checked)}
+                className="size-4 accent-primary"
+            />
+            <span>{label}</span>
+        </label>
+    );
+}
+
 function Section<T extends string>({
     title,
     description,
@@ -245,6 +269,12 @@ export function Persona({ agentId }: { agentId: string }) {
     const serverGuardrail = agent?.data?.guardrail ?? "";
     const [guardrail, setGuardrail] = useState("");
     const [savedGuardrail, setSavedGuardrail] = useState("");
+    // Webhook payload switches: off means the field is left out of the
+    // outbound body entirely.
+    const [personaEnabled, setPersonaEnabled] = useState(true);
+    const [savedPersonaEnabled, setSavedPersonaEnabled] = useState(true);
+    const [guardrailEnabled, setGuardrailEnabled] = useState(true);
+    const [savedGuardrailEnabled, setSavedGuardrailEnabled] = useState(true);
     // Prefill from the server the first time it arrives (adjust-state-on-change
     // pattern — no effect, no cascading render).
     const [loadedFor, setLoadedFor] = useState<string | null>(null);
@@ -252,6 +282,12 @@ export function Persona({ agentId }: { agentId: string }) {
         setLoadedFor(agent.data.id);
         setGuardrail(serverGuardrail);
         setSavedGuardrail(serverGuardrail);
+        const pe = agent.data.persona_enabled ?? true;
+        const ge = agent.data.guardrail_enabled ?? true;
+        setPersonaEnabled(pe);
+        setSavedPersonaEnabled(pe);
+        setGuardrailEnabled(ge);
+        setSavedGuardrailEnabled(ge);
         const serverPersona: PersonaState = {
             tone: agent.data.tone as Tone,
             length: agent.data.response_length as Length,
@@ -265,7 +301,9 @@ export function Persona({ agentId }: { agentId: string }) {
         persona.tone !== savedPersona.tone ||
         persona.length !== savedPersona.length ||
         persona.communicationStyle !== savedPersona.communicationStyle ||
-        guardrail !== savedGuardrail;
+        guardrail !== savedGuardrail ||
+        personaEnabled !== savedPersonaEnabled ||
+        guardrailEnabled !== savedGuardrailEnabled;
 
     const mutation = useMutation({
         mutationFn: async (state: {
@@ -277,9 +315,14 @@ export function Persona({ agentId }: { agentId: string }) {
                 response_length: state.persona.length,
                 communication_style: state.persona.communicationStyle,
             });
-            // guardrail lives on the agent record; send it via the agent update
-            // endpoint, preserving the rest of the agent's config.
-            if (agent?.data && state.guardrail !== savedGuardrail) {
+            // guardrail and the toggles live on the agent record; send them via
+            // the agent update endpoint, preserving the rest of the config.
+            if (
+                agent?.data &&
+                (state.guardrail !== savedGuardrail ||
+                    personaEnabled !== savedPersonaEnabled ||
+                    guardrailEnabled !== savedGuardrailEnabled)
+            ) {
                 const a = agent.data;
                 await updateAgent(agentId, {
                     name: a.name,
@@ -295,13 +338,20 @@ export function Persona({ agentId }: { agentId: string }) {
                         a.webhook_header_fields ?? [],
                     ),
                     guardrail: state.guardrail,
+                    persona_enabled: personaEnabled,
+                    guardrail_enabled: guardrailEnabled,
                     tags: (a.tags ?? []).map((t) => t.name),
+                    // This tab only means to change the guardrail — echo the
+                    // avatar back so the agent update doesn't null it out.
+                    image: a.image,
                 });
             }
         },
         onSuccess: () => {
             setSavedPersona(persona);
             setSavedGuardrail(guardrail);
+            setSavedPersonaEnabled(personaEnabled);
+            setSavedGuardrailEnabled(guardrailEnabled);
             queryClient.invalidateQueries({ queryKey: ["agents", agentId] });
         },
     });
@@ -313,6 +363,8 @@ export function Persona({ agentId }: { agentId: string }) {
     function handleReset() {
         setPersona(savedPersona);
         setGuardrail(savedGuardrail);
+        setPersonaEnabled(savedPersonaEnabled);
+        setGuardrailEnabled(savedGuardrailEnabled);
         mutation.reset();
     }
 
@@ -338,6 +390,14 @@ export function Persona({ agentId }: { agentId: string }) {
 
                 <Card size="sm">
                     <CardContent className="flex flex-col gap-3">
+                        <EnabledToggle
+                            checked={guardrailEnabled}
+                            onChange={(v) => {
+                                setGuardrailEnabled(v);
+                                mutation.reset();
+                            }}
+                            label="Send system prompt & guardrail to the webhook"
+                        />
                         <textarea
                             value={guardrail}
                             onChange={(e) => {
@@ -358,6 +418,15 @@ export function Persona({ agentId }: { agentId: string }) {
                         description="How the agent sounds and behaves. Pick one option per category."
                     />
                 </div>
+
+                <EnabledToggle
+                    checked={personaEnabled}
+                    onChange={(v) => {
+                        setPersonaEnabled(v);
+                        mutation.reset();
+                    }}
+                    label="Send tone, length & style to the webhook"
+                />
 
                 <Section
                     title="Tone"
