@@ -7,7 +7,6 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-    base: "/aic3/",
     plugins: [
         tanstackRouter({ target: "react", autoCodeSplitting: true }),
         tailwindcss(),
